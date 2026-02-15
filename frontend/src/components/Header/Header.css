@@ -1,0 +1,100 @@
+/* --- Perspective Container for 3D Tilt --- */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* --- Brand Typography --- */
+.tracking-tightest {
+  letter-spacing: -0.05em;
+}
+
+/* --- System Log Marquee Animation --- */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  animation: marquee 30s linear infinite;
+  min-width: 200%;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* --- Scanline Effect for HUD Card --- */
+.header-hud-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(6, 182, 212, 0.2);
+  z-index: 5;
+  pointer-events: none;
+  animation: scanline 4s linear infinite;
+}
+
+@keyframes scanline {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+/* --- Glitch/Shadow Layers --- */
+.text-glow-cyan {
+  text-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+}
+
+/* --- Glassmorphism Enhancements --- */
+.backdrop-blur-3xl {
+  backdrop-filter: blur(60px);
+  -webkit-backdrop-filter: blur(60px);
+}
+
+/* --- Hardware Integrity Bar Glow --- */
+.integrity-glow {
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 1024px) {
+  .animate-marquee {
+    animation-duration: 20s;
+  }
+}
+
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 5rem !important;
+  }
+  
+  .perspective-1000 {
+    perspective: none; /* Disable 3D on mobile for better performance */
+  }
+}
+
+/* --- Navbar Transition --- */
+nav {
+  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.5s ease;
+}
+
+/* --- Custom Scrollbar for Terminal Feel (Optional) --- */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #06b6d433;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #06b6d466;
+}

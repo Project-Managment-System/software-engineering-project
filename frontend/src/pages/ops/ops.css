@@ -1,0 +1,75 @@
+/* ===== OPS AUTH STYLES ===== */
+
+.ops-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+}
+
+.ops-card {
+  background: #ffffff;
+  padding: 35px;
+  width: 360px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.ops-card h2 {
+  margin-bottom: 20px;
+  color: #1f2937;
+}
+
+.ops-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ops-card input {
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.ops-card input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.ops-card button {
+  padding: 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.ops-card button:hover {
+  background: #1d4ed8;
+}
+
+.ops-card p {
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.ops-card a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.error {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 8px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}

@@ -1,0 +1,122 @@
+/* ===== General Page Styles ===== */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== Card Container ===== */
+.user-register-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px;
+}
+
+.register-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 40px 30px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.register-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+}
+
+.register-card h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #333;
+}
+
+/* ===== Form Styles ===== */
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input {
+  padding: 12px 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #2575fc;
+  box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
+  outline: none;
+}
+
+/* ===== Button Styles ===== */
+.btn-register {
+  width: 100%;
+  padding: 12px;
+  background: #2575fc;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-register:hover {
+  background: #6a11cb;
+}
+
+/* ===== Error Message ===== */
+.error-msg {
+  background: #ffcccc;
+  color: #b80000;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ===== Login Link ===== */
+.login-link {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  color: #555;
+}
+
+.login-link a {
+  color: #2575fc;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+  color: #6a11cb;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+  .register-card {
+    padding: 30px 20px;
+  }
+}

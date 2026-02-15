@@ -1,0 +1,211 @@
+/* --- Global Layout Variables --- */
+:root {
+  --admin-color: #ef4444;    /* Red */
+  --engineer-color: #06b6d4; /* Cyan */
+  --user-color: #10b981;     /* Emerald */
+  --ops-color: #8b5cf6;      /* Violet */
+  --portal-bg-dark: #010409;
+  --portal-bg-light: #f8fafc;
+  --glass-dark: rgba(13, 17, 23, 0.7);
+  --glass-light: rgba(255, 255, 255, 0.8);
+}
+
+/* --- Base Layout --- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Flexbox push: Routes fill the middle */
+main {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Theme Controls --- */
+.dark-theme {
+  background-color: var(--portal-bg-dark);
+  color: #f1f5f9;
+}
+
+.light-theme {
+  background-color: var(--portal-bg-light);
+  color: #0f172a;
+}
+
+/* --- Navigation & Scroll Progress --- */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #06b6d4;
+  z-index: 1000;
+  transform-origin: 0%;
+}
+
+/* --- Enhanced Portal Container --- */
+.portal-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6rem 1.5rem;
+  width: 100%;
+}
+
+/* --- Modern Card Grid --- */
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  width: 100%;
+  max-width: 1400px;
+  margin-top: 2rem;
+  z-index: 10;
+}
+
+/* --- Portal Cards: Glassmorphism Evolution --- */
+.portal-card {
+  position: relative;
+  padding: 3rem 2rem;
+  border-radius: 24px;
+  text-align: center;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid transparent;
+}
+
+.dark-theme .portal-card {
+  background: var(--glass-dark);
+  backdrop-filter: blur(12px);
+  border-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.light-theme .portal-card {
+  background: var(--glass-light);
+  backdrop-filter: blur(12px);
+  border-color: rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+}
+
+.portal-card:hover {
+  transform: translateY(-15px) scale(1.02);
+  border-color: var(--role-color);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+}
+
+/* Neural Glow Effect behind card on hover */
+.portal-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, var(--role-color) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: -1;
+}
+
+.portal-card:hover::after {
+  opacity: 0.1;
+}
+
+/* --- Component Utilities --- */
+
+/* For the Marquee Log Ticker in Header */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+/* For the scan-overlay fingerprint pulse */
+@keyframes scan-line {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+.scan-overlay::before {
+  content: "";
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: #06b6d4;
+  box-shadow: 0 0 15px #06b6d4;
+  animation: scan-line 2s linear infinite;
+  z-index: 201;
+}
+
+/* --- Buttons: High-Tech Styling --- */
+.portal-btn {
+  margin-top: 2rem;
+  padding: 1rem 2.5rem;
+  border-radius: 14px;
+  font-family: 'JetBrains Mono', monospace; /* Technical font */
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dark-theme .portal-btn {
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+}
+
+.light-theme .portal-btn {
+  background: #0f172a;
+  color: #fff;
+}
+
+.portal-btn:hover {
+  background: var(--role-color) !important;
+  color: white;
+  box-shadow: 0 0 20px var(--role-color);
+  transform: scale(1.05);
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+  .portal-grid {
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+  
+  h1.text-7xl {
+    font-size: 3.5rem;
+  }
+}
