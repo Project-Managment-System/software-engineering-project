@@ -55,21 +55,36 @@ const EngineerRegister = () => {
     setIsSubmitting(true);
 
     try {
-      const res = await axios.post("http://127.0.0.1:5000/api/auth/engineer/enroll", {
+      /**
+       * FIX 1: Corrected API Endpoint URL
+       * Removed "/engineer" to match app.use('/api/auth', ...) in server.js
+       */
+      const res = await axios.post("http://127.0.0.1:5000/api/auth/enroll", {
         fullName: formData.name,
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        role: "engineer", 
-        unitId: formData.sector
+        role: "engineer", // Logic in controller handles this
+        unitId: formData.sector,
+        recoveryQuestion: formData.recoveryQuestion,
+        recoveryAnswer: formData.recoveryAnswer
       });
 
-      setShowSuccess(true);
-      setTimeout(() => navigate("/engineer/login"), 2000);
+      if (res.data.status === "SUCCESS") {
+        setShowSuccess(true);
+        setTimeout(() => navigate("/engineer/login"), 2000);
+      }
 
     } catch (err) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || "Registry failed";
-      alert(`Engineering Error: ${errorMessage}`);
+      /**
+       * FIX 2: Better error capturing
+       * Using the "details" or "message" fields we added to the backend controller
+       */
+      const errorDetail = err.response?.data?.details || err.response?.data?.message || "";
+      const errorMessage = err.response?.data?.error || "Registry failed";
+      
+      alert(`Engineering Error: ${errorMessage}\nDetail: ${errorDetail}`);
+      console.error("Registration Error:", err.response?.data);
     } finally {
       setIsSubmitting(false);
     }

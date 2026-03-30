@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Terminal } from 'lucide-react'; // Using lucide for better icons
+import { ArrowLeft } from 'lucide-react'; 
 import axios from 'axios';
 
-const UserLogin = () => {
+// Added isDark prop to match your App.js routing
+const UserLogin = ({ isDark }) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [passkey, setPasskey] = useState('');
@@ -28,14 +29,17 @@ const UserLogin = () => {
     setStatusText("Authenticating credentials...");
 
     try {
+      // Ensure your backend is running on port 5000
       const res = await axios.post("http://127.0.0.1:5000/api/auth/login", {
         email: email,
         password: passkey
       });
 
+      // Saving user data for session management
       localStorage.setItem('user', JSON.stringify(res.data));
       setStatusText("ACCESS GRANTED. Redirecting...");
 
+      // The key redirect to your hand-drawn dashboard
       setTimeout(() => {
         navigate('/user/dashboard');
       }, 1500);
@@ -43,7 +47,7 @@ const UserLogin = () => {
     } catch (err) {
       const errorMsg = err.response?.data?.error || "CONNECTION_FAILURE";
       setStatusText(`ERROR: ${errorMsg}`);
-      alert(`Access Denied: ${errorMsg}`);
+      // Using statusText instead of alert for a cleaner 'hacker' feel
     } finally {
       setIsSubmitting(false);
     }
@@ -54,9 +58,9 @@ const UserLogin = () => {
       
       {/* BACKGROUND DECORATION */}
       <div className="absolute inset-0 opacity-10 pointer-events-none" 
-           style={{ backgroundImage: 'linear-gradient(#22d3ee 1px, transparent 1px), linear-gradient(90deg, #22d3ee 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+            style={{ backgroundImage: 'linear-gradient(#22d3ee 1px, transparent 1px), linear-gradient(90deg, #22d3ee 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
 
-      {/* BACK TO PORTAL BUTTON - ADDED HERE */}
+      {/* BACK TO PORTAL BUTTON */}
       <button 
         onClick={() => navigate('/')}
         className="absolute top-8 left-8 group flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/5 hover:border-cyan-500/30 transition-all duration-300"
@@ -74,10 +78,10 @@ const UserLogin = () => {
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
           <div className="relative w-20 h-20 bg-[#16162a] rounded-3xl flex items-center justify-center mb-6 border border-cyan-500/20 shadow-inner overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent h-1/2 w-full animate-scan pointer-events-none" />
-             <svg className="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 3c1.268 0 2.39.246 3.41.679M12 11a10.008 10.008 0 003.73 8.031" />
-             </svg>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent h-1/2 w-full animate-scan pointer-events-none" />
+              <svg className="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A10.003 10.003 0 0012 3c1.268 0 2.39.246 3.41.679M12 11a10.008 10.008 0 003.73 8.031" />
+              </svg>
           </div>
           <h2 className="text-cyan-400 text-[10px] font-bold tracking-[0.4em] uppercase mb-2 opacity-80">CEMS Security Protocol V4.2</h2>
           <h1 className="text-white text-3xl font-bold tracking-tight">Field Identity</h1>

@@ -11,7 +11,7 @@ exports.enroll = async (req, res, next) => {
       password, 
       confirmPassword,
       role, 
-      unitId, // This comes from 'sector' in Register.jsx
+      unitId, 
       recoveryQuestion,
       recoveryAnswer
     } = req.body;
@@ -32,24 +32,28 @@ exports.enroll = async (req, res, next) => {
       return res.status(400).json({ error: "USER_EXISTS" });
     }
 
-    // 3. PREPARE USER OBJECT (Matching User.js Schema exactly)
+    // 3. PREPARE USER OBJECT
+    const userRole = role ? role.toLowerCase() : "ops";
+    
     const user = new User({
       fullName,
       email: email.toLowerCase(),
       password,
-      role: role || "ops", 
+      role: userRole,
+      // SET TO TRUE: Prevents the "Maintenance Required" block for new users
+      isVerified: true, 
       attributes: {
         unitId: unitId || "Unassigned",
-        clearanceLevel: "LVL_1", // MANDATORY: Must match Model Enum ["LVL_1", "LVL_2", "LVL_3"]
-        discipline: "Civil Engineering",
-        designation: "Field Officer"
+        clearanceLevel: "LVL_1", 
+        discipline: userRole === "engineer" ? "Engineering" : "Civil Engineering",
+        designation: userRole === "engineer" ? "Structural Engineer" : "Field Officer"
       },
       recoveryQuestion: recoveryQuestion || "system_override",
       recoveryAnswer: recoveryAnswer || "default_recovery"
     });
 
     // 4. SAVE TO DATABASE
-    console.log(">>> [DB]: ATTEMPTING TO SAVE USER TO civilManagement...");
+    console.log(`>>> [DB]: ATTEMPTING TO SAVE ${userRole.toUpperCase()} TO DATABASE...`);
     await user.save();
     
     console.log(">>> [DB]: SAVE SUCCESSFUL. USER_ID:", user._id);
@@ -58,13 +62,15 @@ exports.enroll = async (req, res, next) => {
     res.status(201).json({
       status: "SUCCESS",
       message: "User registered successfully",
+      userId: user._id
     });
 
   } catch (err) {
     console.error(">>> [CONTROLLER ERROR]:", err);
     res.status(500).json({ 
       error: "REGISTRATION_FAILED", 
-      details: err.message 
+      message: err.message, 
+      details: err.errors ? Object.keys(err.errors) : "Internal Server Error"
     });
   }
 };
@@ -80,19 +86,36 @@ exports.login = async (req, res, next) => {
       return res.status(404).json({ error: "USER_NOT_FOUND" });
     }
 
+    /**
+     * FIX: AUTOMATIC ACCOUNT ACTIVATION
+     * If the user is found but not verified, we force it to true here.
+     * This handles old accounts that were created before we fixed the enroll function.
+     */
+    if (user.isVerified === false) {
+      console.log(`>>> [AUTH]: AUTO-VERIFYING ACCOUNT FOR: ${email}`);
+      user.isVerified = true;
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ error: "INVALID_PASSWORD" });
     }
 
+    // Update login timestamp
     user.lastLogin = new Date();
-    await user.save();
+    
+    // Save the verification status and login time
+    await user.save({ validateBeforeSave: false });
+
+    console.log(`>>> [AUTH]: LOGIN GRANTED FOR ${user.fullName}`);
 
     res.json({
       status: "LOGIN_SUCCESS",
       role: user.role,
       userId: user._id,
       fullName: user.fullName,
+      // Explicitly send true so the frontend allows the session
+      isVerified: true 
     });
   } catch (err) {
     console.error(">>> [LOGIN ERROR]:", err);

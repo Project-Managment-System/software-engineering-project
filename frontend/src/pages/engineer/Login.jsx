@@ -32,9 +32,9 @@ const EngineerLogin = () => {
 
     try {
       // Note: Ensure your backend endpoint is configured for engineers if needed
-      const res = await axios.post("http://127.0.0.1:5000/api/auth/engineer-login", {
-        email: email,
-        password: passkey
+      const res = await axios.post("http://127.0.0.1:5000/api/auth/login", {
+      email: email,
+      password: passkey
       });
 
       localStorage.setItem('engineer', JSON.stringify(res.data));

@@ -1,0 +1,306 @@
+/* --- THE SCOPE BARRIER --- */
+#cems-user-dashboard {
+  min-height: 100vh;
+  width: 100%;
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+#cems-user-dashboard .dashboard-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* --- SIDEBAR & PROFILE SQUARE --- */
+#cems-user-dashboard .sidebar {
+  width: 280px;
+  background: #161b22;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #30363d;
+}
+
+#cems-user-dashboard .profile-box {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid #30363d;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+#cems-user-dashboard .profile-photo {
+  width: 90px;
+  height: 90px;
+  background: #0d1117;
+  margin: 0 auto 1rem;
+  border-radius: 12px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #58a6ff;
+  color: #58a6ff;
+  overflow: hidden;
+}
+
+#cems-user-dashboard .profile-info h3 {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #f0f6fc;
+}
+
+#cems-user-dashboard .reg-number {
+  font-size: 0.8rem;
+  color: #8b949e;
+  font-family: monospace;
+  margin-top: 0.4rem;
+}
+
+/* --- NAVIGATION BUTTONS --- */
+#cems-user-dashboard .sidebar-nav {
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+#cems-user-dashboard .nav-item {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  text-align: left;
+  padding: 0.85rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95rem;
+}
+
+#cems-user-dashboard .nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #f0f6fc;
+}
+
+#cems-user-dashboard .nav-item.active {
+  background: #1f6feb; 
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(31, 111, 235, 0.2);
+}
+
+/* --- MAIN CONTENT AREA & HEADER NAVIGATION --- */
+#cems-user-dashboard .dashboard-content {
+  flex-grow: 1;
+  padding: 2.5rem;
+  background: #0d1117;
+}
+
+#cems-user-dashboard .header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+#cems-user-dashboard .header-left h1 {
+  font-size: 1.75rem;
+  color: #ffffff;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+#cems-user-dashboard .back-arrow-icon {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+/* --- UPDATE PROGRESS SPECIFIC FEATURES --- */
+#cems-user-dashboard .update-progress-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+#cems-user-dashboard .job-select-dropdown {
+  width: 100%;
+  max-width: 400px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #30363d;
+  background-color: #f0f6fc; 
+  color: #000000 !important; /* Black text for dropdown items */
+  font-weight: 500;
+}
+
+/* Rectangle 1: Job Info */
+#cems-user-dashboard .info-rectangle {
+  background: #161b22;
+  border: 1px solid #30363d;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+#cems-user-dashboard .info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+#cems-user-dashboard .info-parallel {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Rectangle 2: Inputs */
+#cems-user-dashboard .input-rectangle {
+  background: #161b22;
+  border: 1px solid #30363d;
+  padding: 2rem;
+  border-radius: 12px;
+}
+
+#cems-user-dashboard .input-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Hybrid Manual + Calendar Date Input */
+#cems-user-dashboard .hybrid-date-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+#cems-user-dashboard .hybrid-date-input input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  padding-right: 45px; /* Space for the calendar icon */
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: white;
+}
+
+#cems-user-dashboard .calendar-trigger {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: #58a6ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  transition: color 0.2s ease;
+}
+
+#cems-user-dashboard .calendar-trigger:hover {
+  color: #79c0ff;
+}
+
+#cems-user-dashboard .input-group label {
+  color: #8b949e;
+  font-size: 0.9rem;
+}
+
+#cems-user-dashboard .input-group input[type="number"] {
+  width: 100%;
+  padding: 12px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: white;
+  margin-top: 8px;
+}
+
+#cems-user-dashboard .submission-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #30363d;
+}
+
+#cems-user-dashboard .btn-send {
+  background: #238636;
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+#cems-user-dashboard .btn-send:hover {
+  background: #2ea043;
+}
+
+/* --- THE JOB TABLE --- */
+#cems-user-dashboard .project-table-section {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#cems-user-dashboard .project-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#cems-user-dashboard .project-table th {
+  text-align: left;
+  background: #21262d;
+  color: #8b949e;
+  padding: 1.2rem 1rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+#cems-user-dashboard .project-table td {
+  padding: 1.2rem 1rem;
+  color: #c9d1d9;
+  border-bottom: 1px solid #30363d;
+}
+
+/* --- MISC & LIGHT MODE --- */
+#cems-user-dashboard .font-mono { font-family: 'JetBrains Mono', monospace; color: #58a6ff; }
+#cems-user-dashboard .font-bold { font-weight: 600; color: #f0f6fc; }
+#cems-user-dashboard .deadline-tag { background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; border: 1px solid rgba(88, 166, 255, 0.2); }
+
+#cems-user-dashboard.light-mode .sidebar { background: #f1f5f9; border-color: #e2e8f0; color: #1e293b; }
+#cems-user-dashboard.light-mode .dashboard-content { background: #ffffff; }
+#cems-user-dashboard.light-mode .info-rectangle, 
+#cems-user-dashboard.light-mode .input-rectangle { background: #f8fafc; border-color: #e2e8f0; }
+#cems-user-dashboard.light-mode .info-rectangle p { color: #1e293b; }
+
+.placeholder-content {
+  padding: 4rem;
+  text-align: center;
+  color: #8b949e;
+  border: 2px dashed #30363d;
+  border-radius: 12px;
+}

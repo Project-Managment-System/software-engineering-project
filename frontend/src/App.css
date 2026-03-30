@@ -21,6 +21,8 @@
 body {
   overflow-x: hidden;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  /* Ensure the background doesn't default to white during transitions */
+  background-color: var(--portal-bg-dark); 
 }
 
 .App {
@@ -30,11 +32,13 @@ body {
   transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Flexbox push: Routes fill the middle */
+/** * CRITICAL FIX: 
+ * We removed 'display: flex' from 'main'. 
+ * This allows each page to define its own layout 
+ * without forcing the Home page layout onto the Dashboard.
+ */
 main {
   flex: 1 0 auto;
-  display: flex;
-  flex-direction: column;
 }
 
 /* --- Theme Controls --- */
@@ -60,7 +64,8 @@ main {
   transform-origin: 0%;
 }
 
-/* --- Enhanced Portal Container --- */
+/* --- Enhanced Portal (Home Page) Scoped Container --- */
+/* By using .portal-container here, these styles only trigger on your home page */
 .portal-container {
   position: relative;
   display: flex;
@@ -70,7 +75,6 @@ main {
   width: 100%;
 }
 
-/* --- Modern Card Grid --- */
 .portal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -81,7 +85,7 @@ main {
   z-index: 10;
 }
 
-/* --- Portal Cards: Glassmorphism Evolution --- */
+/* --- Portal Cards --- */
 .portal-card {
   position: relative;
   padding: 3rem 2rem;
@@ -112,10 +116,9 @@ main {
 .portal-card:hover {
   transform: translateY(-15px) scale(1.02);
   border-color: var(--role-color);
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
 }
 
-/* Neural Glow Effect behind card on hover */
+/* Neural Glow Effect */
 .portal-card::after {
   content: "";
   position: absolute;
@@ -133,9 +136,7 @@ main {
   opacity: 0.1;
 }
 
-/* --- Component Utilities --- */
-
-/* For the Marquee Log Ticker in Header */
+/* --- Animations & Utilities --- */
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -147,12 +148,12 @@ main {
   animation: marquee 30s linear infinite;
 }
 
-/* For the scan-overlay fingerprint pulse */
 @keyframes scan-line {
   0% { top: 0%; }
   100% { top: 100%; }
 }
 
+/* Scoped specifically to the scan overlay */
 .scan-overlay::before {
   content: "";
   position: absolute;
@@ -164,12 +165,12 @@ main {
   z-index: 201;
 }
 
-/* --- Buttons: High-Tech Styling --- */
+/* --- Buttons --- */
 .portal-btn {
   margin-top: 2rem;
   padding: 1rem 2.5rem;
   border-radius: 14px;
-  font-family: 'JetBrains Mono', monospace; /* Technical font */
+  font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -177,35 +178,21 @@ main {
   cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid rgba(255,255,255,0.1);
-  position: relative;
-  overflow: hidden;
 }
 
-.dark-theme .portal-btn {
-  background: rgba(255, 255, 255, 0.03);
-  color: #fff;
-}
-
-.light-theme .portal-btn {
-  background: #0f172a;
-  color: #fff;
-}
+.dark-theme .portal-btn { background: rgba(255, 255, 255, 0.03); color: #fff; }
+.light-theme .portal-btn { background: #0f172a; color: #fff; }
 
 .portal-btn:hover {
   background: var(--role-color) !important;
   color: white;
   box-shadow: 0 0 20px var(--role-color);
-  transform: scale(1.05);
 }
 
-/* --- Responsive Adjustments --- */
+/* --- Responsive --- */
 @media (max-width: 768px) {
   .portal-grid {
     grid-template-columns: 1fr;
     padding: 0 1rem;
-  }
-  
-  h1.text-7xl {
-    font-size: 3.5rem;
   }
 }

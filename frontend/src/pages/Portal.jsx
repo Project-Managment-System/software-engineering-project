@@ -198,36 +198,6 @@ export default function Portal() {
             </motion.div>
           </header>
 
-          <section className="mb-24 px-6">
-            <div className="max-w-4xl mx-auto flex flex-col items-center space-y-8">
-              <div className="flex items-center gap-4 w-full">
-                <div className={`h-[1px] flex-grow ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
-                <div className="flex items-center gap-3 px-6 py-3 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 backdrop-blur-sm shadow-xl">
-                  <HardHat size={24} className="text-cyan-500" />
-                  <h2 className={`text-xl font-bold tracking-[0.2em] uppercase ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                    Civil Management System
-                  </h2>
-                </div>
-                <div className={`h-[1px] flex-grow ${isDark ? 'bg-white/10' : 'bg-slate-200'}`} />
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl">
-                {[
-                  { icon: Activity, label: "Live Telemetry", value: "Active" },
-                  { icon: BarChart3, label: "Resource Sync", value: "94%" },
-                  { icon: Globe, label: "Network", value: "Stable" },
-                  { icon: Lock, label: "Shield Level", value: "MAX" }
-                ].map((stat, i) => (
-                  <div key={i} className={`p-4 rounded-xl border flex flex-col items-center gap-2 ${isDark ? 'bg-slate-900/40 border-white/5' : 'bg-white border-slate-100 shadow-sm'}`}>
-                    <stat.icon size={16} className="text-cyan-500 opacity-70" />
-                    <span className="text-[9px] uppercase tracking-widest opacity-50">{stat.label}</span>
-                    <span className="text-xs font-mono font-bold">{stat.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
           <main className="max-w-[1400px] mx-auto px-10 pb-40 grid grid-cols-1 md:grid-cols-3 gap-10">
             <PortalCard 
               isDark={isDark} icon={ShieldCheck} title="Executive Node" level="Level 000" desc="Absolute fiscal control and audit logs."
