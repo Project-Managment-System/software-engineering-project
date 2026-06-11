@@ -1,18 +1,31 @@
-import React, { useState, useRef } from 'react'; // Added useRef
+import React, { useState, useRef } from 'react';
 import './Dashboard.css';
-import { User, Briefcase, RefreshCw, Settings, ArrowLeft, Send, Calendar } from 'lucide-react'; // Added Calendar icon
+import { User, Briefcase, RefreshCw, Settings, ArrowLeft, Send, Calendar, Save, Edit3, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const UserDashboard = ({ isDark }) => {
   const navigate = useNavigate();
-  const dateInputRef = useRef(null); // Ref to trigger the hidden date picker
+  const dateInputRef = useRef(null);
+  const fileInputRef = useRef(null); // Added for photo upload
   const [activeTab, setActiveTab] = useState('my-jobs');
   
   const [selectedJobId, setSelectedJobId] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [estimateAmount, setEstimateAmount] = useState('');
 
-  const jobData = [
+  // Profile specific states
+  const [profileName, setProfileName] = useState('John Doe');
+  const [regNo, setRegNo] = useState('REG/2021/CS/088');
+  const [email, setEmail] = useState('john.doe@example.com');
+  const [profilePic, setProfilePic] = useState(null); // Added for image data
+
+  // Added new state variables to manage the editable job details
+  const [editableJobName, setEditableJobName] = useState('');
+  const [editableAllocation, setEditableAllocation] = useState('');
+  const [editableAssignDate, setEditableAssignDate] = useState('');
+  const [editableDeadline, setEditableDeadline] = useState('');
+
+  const [jobData, setJobData] = useState([
     { 
       sNo: 1, 
       jobNo: "JB-7701", 
@@ -29,32 +42,63 @@ const UserDashboard = ({ isDark }) => {
       assignDate: "2024-03-10", 
       deadline: "2024-05-20" 
     },
-  ];
+  ]);
 
   const selectedJob = jobData.find(job => job.jobNo === selectedJobId);
 
-  // Helper to open the calendar picker when the icon is clicked
+  // Updated handler to populate editable fields when a job is selected
+  const handleSelectionChange = (id) => {
+    setSelectedJobId(id);
+    const foundJob = jobData.find(j => j.jobNo === id);
+    if (foundJob) {
+      setEditableJobName(foundJob.jobName);
+      setEditableAllocation(foundJob.allocation);
+      setEditableAssignDate(foundJob.assignDate);
+      setEditableDeadline(foundJob.deadline);
+    }
+  };
+
+  // Added function to save the updated job details back to the main state
+  const handleSaveJob = () => {
+    setJobData(jobData.map(job => job.jobNo === selectedJobId ? {
+      ...job,
+      jobName: editableJobName,
+      allocation: editableAllocation,
+      assignDate: editableAssignDate,
+      deadline: editableDeadline
+    } : job));
+    alert("Job details saved successfully!");
+  };
+
   const handleCalendarClick = () => {
     if (dateInputRef.current) {
-      dateInputRef.current.showPicker(); // Modern browser standard
+      dateInputRef.current.showPicker ? dateInputRef.current.showPicker() : dateInputRef.current.focus();
+    }
+  };
+
+  // Function to handle image upload
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setProfilePic(reader.result);
+      reader.readAsDataURL(file);
     }
   };
 
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
       <div className="dashboard-container">
-        
         <aside className="sidebar">
           <div className="profile-box">
-            <div className="profile-photo">
-              <User size={48} />
+            <div className="profile-photo" style={{ overflow: 'hidden' }}>
+              {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={48} />}
             </div>
             <div className="profile-info">
-              <h3>John Doe</h3>
-              <p className="reg-number">REG/2021/CS/088</p>
+              <h3>{profileName}</h3>
+              <p className="reg-number">{regNo}</p>
             </div>
           </div>
-
           <nav className="sidebar-nav">
             <button 
               className={`nav-item ${activeTab === 'my-jobs' ? 'active' : ''}`}
@@ -66,7 +110,13 @@ const UserDashboard = ({ isDark }) => {
               className={`nav-item ${activeTab === 'update-progress' ? 'active' : ''}`}
               onClick={() => setActiveTab('update-progress')}
             >
-              <RefreshCw size={18} /> Update Progress
+              <RefreshCw size={18} /> <strong>Update Progress</strong>
+            </button>
+            <button 
+              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => setActiveTab('profile')}
+            >
+              <Edit3 size={18} /> Profile
             </button>
             <button 
               className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
@@ -87,7 +137,7 @@ const UserDashboard = ({ isDark }) => {
               >
                 <ArrowLeft size={24} />
               </button>
-              <h1>{activeTab === 'my-jobs' ? 'My Job Assignments' : activeTab.replace('-', ' ')}</h1>
+              <h1>{activeTab.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</h1>
             </div>
           </header>
 
@@ -124,12 +174,12 @@ const UserDashboard = ({ isDark }) => {
 
           {activeTab === 'update-progress' && (
             <section className="update-progress-view">
-              <div className="selection-area">
-                <label>Select Job </label>
+              <div className="selection-area" style={{ marginBottom: '30px' }}>
+                <label>Select Job</label>
                 <select 
                   className="job-select-dropdown" 
                   value={selectedJobId} 
-                  onChange={(e) => setSelectedJobId(e.target.value)}
+                  onChange={(e) => handleSelectionChange(e.target.value)}
                 >
                   <option value="">-- Choose Job ID --</option>
                   {jobData.map(job => (
@@ -139,67 +189,85 @@ const UserDashboard = ({ isDark }) => {
               </div>
 
               {selectedJob && (
-                <div className="form-rectangles">
-                  <div className="info-rectangle">
-                    <div className="info-grid">
-                      <p><strong>Job No:</strong> {selectedJob.jobNo}</p>
-                      <p><strong>Job Name:</strong> {selectedJob.jobName}</p>
-                      <p><strong>Allocation:</strong> {selectedJob.allocation}</p>
+                <div className="form-container" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                  <div className="field-card">
+                    <p className="instruction-text" style={{ marginTop: '0px', marginBottom: '20px' }}>You can update the job details below:</p>
+                    <div className="input-row-group">
+                      <label>Job No:</label>
+                      <input type="text" disabled value={selectedJob.jobNo} className="input-field disabled" />
                     </div>
-                    <div className="info-parallel">
-                      <p><strong>Ass. Date:</strong> {selectedJob.assignDate}</p>
-                      <p><strong>Target Complete Date:</strong> {selectedJob.deadline}</p>
+                    <div className="input-row-group">
+                      <label>Job Name</label>
+                      <input type="text" value={editableJobName} onChange={(e) => setEditableJobName(e.target.value)} className="input-field" />
                     </div>
+                    <div className="input-row-group">
+                      <label>Allocation</label>
+                      <input type="text" value={editableAllocation} onChange={(e) => setEditableAllocation(e.target.value)} className="input-field" />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Assign Date</label>
+                      <input type="date" value={editableAssignDate} onChange={(e) => setEditableAssignDate(e.target.value)} className="input-field" />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Target Complete Date</label>
+                      <input type="date" value={editableDeadline} onChange={(e) => setEditableDeadline(e.target.value)} className="input-field" />
+                    </div>
+                    <button className="save-btn" onClick={handleSaveJob}>
+                      <Save size={16} /> Save Changes
+                    </button>
                   </div>
 
-                  <div className="input-rectangle">
-                    <div className="input-row">
-                      <div className="input-group">
-                        <label>Field Visit Date</label>
-                        <div className="hybrid-date-input">
-                          <input 
-                            type="text" 
-                            placeholder="YYYY-MM-DD"
-                            value={visitDate}
-                            onChange={(e) => setVisitDate(e.target.value)}
-                          />
-                          <button 
-                            type="button" 
-                            className="calendar-trigger" 
-                            onClick={handleCalendarClick}
-                            title="Select from calendar"
-                          >
-                            <Calendar size={18} />
-                          </button>
-                          {/* Hidden actual date input for the picker */}
-                          <input 
-                            type="date"
-                            ref={dateInputRef}
-                            style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-                            onChange={(e) => setVisitDate(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="input-group">
-                        <label>Estimate Amount (LKR)</label>
-                        <input 
-                          type="number" 
-                          placeholder="0.00"
-                          value={estimateAmount}
-                          onChange={(e) => setEstimateAmount(e.target.value)}
-                        />
+                  <div className="field-card">
+                    <div className="input-row-group">
+                      <label>Field Visit Date</label>
+                      <div className="hybrid-date-wrapper">
+                        <input type="text" className="input-field" placeholder="YYYY-MM-DD" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
+                        <button type="button" className="cal-btn" onClick={handleCalendarClick}><Calendar size={18} /></button>
+                        <input type="date" ref={dateInputRef} className="hidden-date" onChange={(e) => setVisitDate(e.target.value)} style={{ opacity: 0, position: 'absolute' }} />
                       </div>
                     </div>
-                    
-                    <div className="submission-row">
-                      <p>Estimate submitted to OA</p>
-                      <button className="btn-send" onClick={() => alert("Submitted to OA")}>
-                        <Send size={16} /> Sent
-                      </button>
+                    <div className="input-row-group">
+                      <label>Estimate Amount (LKR)</label>
+                      <input type="number" className="input-field" placeholder="0.00" value={estimateAmount} onChange={(e) => setEstimateAmount(e.target.value)} />
                     </div>
+                    <button className="send-btn" onClick={() => alert("Submitted to OA")}>
+                      <Send size={16} /> Submit Estimate
+                    </button>
                   </div>
                 </div>
               )}
+            </section>
+          )}
+
+          {activeTab === 'profile' && (
+            <section className="profile-view">
+              <div className="form-container" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                <div className="field-card">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                      {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={40} />}
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
+                      <button onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', bottom: '0', right: '0', borderRadius: '50%', padding: '6px', border: 'none', cursor: 'pointer' }}><Camera size={16}/></button>
+                    </div>
+                    <h3>Personal Details</h3>
+                  </div>
+                  <div className="input-row-group">
+                    <label>Full Name</label>
+                    <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="input-field" />
+                  </div>
+                  <div className="input-row-group">
+                    <label>Registration Number</label>
+                    <input type="text" value={regNo} onChange={(e) => setRegNo(e.target.value)} className="input-field" />
+                  </div>
+                  <div className="input-row-group">
+                    <label>Email Address</label>
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" />
+                  </div>
+                  <button className="save-btn" onClick={() => alert("Profile Saved!")}>
+                    <Save size={16} /> Save Profile
+                  </button>
+                </div>
+              </div>
             </section>
           )}
 

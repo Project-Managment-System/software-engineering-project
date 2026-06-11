@@ -1,306 +1,392 @@
-/* --- THE SCOPE BARRIER --- */
+/* Import Inter for professional typography */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap');
+
+:root {
+  --primary-purple: #9333ea;
+  --bg-slate: #f8fafc;
+  --text-main: #0f172a;
+  --light-purple-bg: #f5f3ff;
+  --purple-border: #ddd6fe;
+  /* Updated colors for refined professional look */
+  --input-bg: #ffffff;
+  --input-bg-tint: #fcfaff; /* Soft purple-tinted white for inputs */
+  --input-border: #e2e8f0;
+  --text-muted: #64748b;
+}
+
 #cems-user-dashboard {
-  min-height: 100vh;
-  width: 100%;
-  display: block;
   font-family: 'Inter', sans-serif;
-}
-
-#cems-user-dashboard .dashboard-container {
-  display: flex;
+  background-color: var(--bg-slate);
   min-height: 100vh;
 }
 
-/* --- SIDEBAR & PROFILE SQUARE --- */
-#cems-user-dashboard .sidebar {
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+}
+
+/* --- Sidebar Styling --- */
+.sidebar {
   width: 280px;
-  background: #161b22;
-  color: white;
+  background: white;
+  border-right: 1px solid var(--input-border);
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #30363d;
 }
 
-#cems-user-dashboard .profile-box {
-  padding: 2.5rem 1.5rem;
+.profile-box {
   text-align: center;
-  border-bottom: 1px solid #30363d;
-  background: rgba(0, 0, 0, 0.2);
+  margin-bottom: 3rem;
 }
 
-#cems-user-dashboard .profile-photo {
-  width: 90px;
-  height: 90px;
-  background: #0d1117;
-  margin: 0 auto 1rem;
-  border-radius: 12px; 
+.profile-photo {
+  width: 80px;
+  height: 80px;
+  background: var(--light-purple-bg);
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #58a6ff;
-  color: #58a6ff;
-  overflow: hidden;
+  margin: 0 auto 1rem;
+  color: var(--primary-purple);
 }
 
-#cems-user-dashboard .profile-info h3 {
-  font-size: 1.2rem;
-  margin: 0;
-  color: #f0f6fc;
-}
-
-#cems-user-dashboard .reg-number {
-  font-size: 0.8rem;
-  color: #8b949e;
-  font-family: monospace;
-  margin-top: 0.4rem;
-}
-
-/* --- NAVIGATION BUTTONS --- */
-#cems-user-dashboard .sidebar-nav {
-  padding: 1.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-#cems-user-dashboard .nav-item {
-  background: transparent;
-  border: none;
-  color: #8b949e;
-  text-align: left;
-  padding: 0.85rem 1.2rem;
-  border-radius: 8px;
-  cursor: pointer;
-  width: 100%;
-  transition: all 0.2s ease;
+.sidebar-nav .nav-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 0.95rem;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 16px;
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-#cems-user-dashboard .nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #f0f6fc;
+.sidebar-nav .nav-item.active {
+  background: var(--light-purple-bg);
+  color: var(--primary-purple);
 }
 
-#cems-user-dashboard .nav-item.active {
-  background: #1f6feb; 
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(31, 111, 235, 0.2);
+/* --- Main Content Area --- */
+.dashboard-content {
+  flex: 1;
+  padding: 2rem 3rem;
+  overflow-y: auto;
 }
 
-/* --- MAIN CONTENT AREA & HEADER NAVIGATION --- */
-#cems-user-dashboard .dashboard-content {
-  flex-grow: 1;
-  padding: 2.5rem;
-  background: #0d1117;
-}
-
-#cems-user-dashboard .header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.content-header {
   margin-bottom: 2rem;
 }
 
-#cems-user-dashboard .header-left h1 {
-  font-size: 1.75rem;
-  color: #ffffff;
-  margin: 0;
-  text-transform: capitalize;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-#cems-user-dashboard .back-arrow-icon {
-  background: transparent;
+.back-arrow-icon {
+  background: white;
+  border: 1px solid var(--input-border);
+  padding: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+/* --- Table Card Design --- */
+.project-table {
+  width: 100%;
+  background: white;
+  border-radius: 2rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.project-table th {
+  background: var(--bg-slate);
+  padding: 1.5rem;
+  text-align: left;
+  font-weight: 900;
+  color: var(--text-main);
+}
+
+.project-table td {
+  padding: 1.5rem;
+  border-top: 1px solid var(--input-border);
+}
+
+/* --- Update Progress Cards & Inputs --- */
+.form-rectangles {
+  display: grid;
+  gap: 2rem;
+  max-width: 600px;
+}
+
+.info-rectangle, .input-rectangle {
+  background: white;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--input-border);
+}
+
+/* Updated Select Dropdown */
+.job-select-dropdown {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--purple-border);
+  background-color: #ffffff !important;
+  color: var(--text-main) !important;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Updated Input Fields with Forced Visibility */
+.hybrid-date-input, 
+.input-group input[type="number"],
+.input-group input[type="text"],
+.input-group input[type="date"],
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--purple-border) !important;
+  background-color: #ffffff !important;
+  color: var(--text-main) !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: block;
+}
+
+/* Neutralize Browser Autofill Black Background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+  -webkit-text-fill-color: var(--text-main) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+.hidden-date {
+  opacity: 0 !important;
+  position: absolute !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+/* Focused state: Stronger purple border */
+.hybrid-date-input:focus, 
+.input-group input:focus,
+.input-field:focus {
+  border-color: var(--primary-purple) !important;
+  background-color: #ffffff !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+}
+
+.input-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-send {
+  background: var(--primary-purple);
+  color: white;
+  padding: 0.8rem 2rem;
+  border-radius: 12px;
   border: none;
-  color: #8b949e;
-  padding: 8px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-send:hover {
+  opacity: 0.9;
+}
+
+/* --- Professional Colorful Button Styling --- */
+
+/* Style for Save Changes button */
+.save-btn {
+  background-color: var(--primary-purple) !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.save-btn:hover {
+  background-color: #7e22ce !important; /* Darker purple */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(147, 51, 234, 0.3);
+}
+
+/* Style for Submit Estimate button */
+.send-btn {
+  background-color: #10b981 !important; /* Emerald Green */
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.send-btn:hover {
+  background-color: #059669 !important; /* Darker green */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+/* --- Centering Instruction Text --- */
+.instruction-text {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: var(--text-main);
+}
+
+/* --- Layout for Two Boxes --- */
+.form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 600px;
+}
+
+.field-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--input-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* --- Colorful Buttons --- */
+.save-btn {
+  background-color: var(--primary-purple) !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.send-btn {
+  background-color: #10b981 !important;
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  width: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Bold all field labels */
+.input-group label {
+  font-weight: 900 !important;
+  color: var(--text-main) !important;
+}
+
+/* Targeted bolding for specific field labels */
+.field-card label {
+  font-weight: 900 !important;
+  color: #0f172a !important;
+}
+
+.selection-area {
+  margin-bottom: 30px; /* Add this line */
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Keeps the label and dropdown spaced nicely */
+}
+
+/* --- Profile Section Styling --- */
+.profile-view .form-container {
+  max-width: 500px;
+}
+
+.profile-photo-edit {
+  position: relative;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
+  background: var(--light-purple-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-purple);
+  margin-bottom: 20px;
+  border: 2px solid var(--purple-border);
+}
+
+.camera-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--primary-purple);
+  color: white;
+  border-radius: 50%;
+  padding: 8px;
+  border: 2px solid white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: transform 0.2s;
 }
 
-/* --- UPDATE PROGRESS SPECIFIC FEATURES --- */
-#cems-user-dashboard .update-progress-view {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.camera-btn:hover {
+  transform: scale(1.1);
 }
 
-#cems-user-dashboard .job-select-dropdown {
-  width: 100%;
-  max-width: 400px;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #30363d;
-  background-color: #f0f6fc; 
-  color: #000000 !important; /* Black text for dropdown items */
-  font-weight: 500;
-}
-
-/* Rectangle 1: Job Info */
-#cems-user-dashboard .info-rectangle {
-  background: #161b22;
-  border: 1px solid #30363d;
-  padding: 1.5rem;
-  border-radius: 12px;
-}
-
-#cems-user-dashboard .info-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-#cems-user-dashboard .info-parallel {
-  display: flex;
-  justify-content: space-between;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Rectangle 2: Inputs */
-#cems-user-dashboard .input-rectangle {
-  background: #161b22;
-  border: 1px solid #30363d;
-  padding: 2rem;
-  border-radius: 12px;
-}
-
-#cems-user-dashboard .input-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+.input-row-group {
   margin-bottom: 1.5rem;
 }
 
-/* Hybrid Manual + Calendar Date Input */
-#cems-user-dashboard .hybrid-date-input {
-  position: relative;
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-}
-
-#cems-user-dashboard .hybrid-date-input input[type="text"] {
-  width: 100%;
-  padding: 12px;
-  padding-right: 45px; /* Space for the calendar icon */
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  color: white;
-}
-
-#cems-user-dashboard .calendar-trigger {
-  position: absolute;
-  right: 8px;
-  background: transparent;
-  border: none;
-  color: #58a6ff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 5px;
-  transition: color 0.2s ease;
-}
-
-#cems-user-dashboard .calendar-trigger:hover {
-  color: #79c0ff;
-}
-
-#cems-user-dashboard .input-group label {
-  color: #8b949e;
-  font-size: 0.9rem;
-}
-
-#cems-user-dashboard .input-group input[type="number"] {
-  width: 100%;
-  padding: 12px;
-  background: #0d1117;
-  border: 1px solid #30363d;
-  border-radius: 6px;
-  color: white;
-  margin-top: 8px;
-}
-
-#cems-user-dashboard .submission-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #30363d;
-}
-
-#cems-user-dashboard .btn-send {
-  background: #238636;
-  color: white;
-  border: none;
-  padding: 10px 30px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-#cems-user-dashboard .btn-send:hover {
-  background: #2ea043;
-}
-
-/* --- THE JOB TABLE --- */
-#cems-user-dashboard .project-table-section {
-  background: #161b22;
-  border: 1px solid #30363d;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-#cems-user-dashboard .project-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-#cems-user-dashboard .project-table th {
-  text-align: left;
-  background: #21262d;
-  color: #8b949e;
-  padding: 1.2rem 1rem;
-  font-size: 0.85rem;
+.input-row-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--text-main);
   text-transform: uppercase;
-}
-
-#cems-user-dashboard .project-table td {
-  padding: 1.2rem 1rem;
-  color: #c9d1d9;
-  border-bottom: 1px solid #30363d;
-}
-
-/* --- MISC & LIGHT MODE --- */
-#cems-user-dashboard .font-mono { font-family: 'JetBrains Mono', monospace; color: #58a6ff; }
-#cems-user-dashboard .font-bold { font-weight: 600; color: #f0f6fc; }
-#cems-user-dashboard .deadline-tag { background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; border: 1px solid rgba(88, 166, 255, 0.2); }
-
-#cems-user-dashboard.light-mode .sidebar { background: #f1f5f9; border-color: #e2e8f0; color: #1e293b; }
-#cems-user-dashboard.light-mode .dashboard-content { background: #ffffff; }
-#cems-user-dashboard.light-mode .info-rectangle, 
-#cems-user-dashboard.light-mode .input-rectangle { background: #f8fafc; border-color: #e2e8f0; }
-#cems-user-dashboard.light-mode .info-rectangle p { color: #1e293b; }
-
-.placeholder-content {
-  padding: 4rem;
-  text-align: center;
-  color: #8b949e;
-  border: 2px dashed #30363d;
-  border-radius: 12px;
+  margin-bottom: 8px;
 }
