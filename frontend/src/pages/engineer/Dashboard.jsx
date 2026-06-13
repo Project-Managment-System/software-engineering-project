@@ -206,7 +206,7 @@ const EngineerDashboard = ({ isDark }) => {
 
         <main className="dashboard-content">
           <header className="content-header">
-            <div className="header-left">    
+            <div className="header-left">
             </div>
           </header>
         
