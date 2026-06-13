@@ -198,9 +198,8 @@ const UserDashboard = ({ isDark }) => {
             >
               <Settings size={18} /> Settings
             </button>
-            <button className="nav-item" onClick={handleLogout} style={{ marginTop: 'auto', color: 'red' }}>
-              <LogOut size={18} /> Logout
-            </button>
+            <button className="nav-item logout-nav-item" onClick={handleLogout}><LogOut size={18} /> Logout</button>
+            
           </nav>
         </aside>
 
