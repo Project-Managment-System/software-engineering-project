@@ -390,3 +390,13 @@ input:-webkit-autofill:active {
   text-transform: uppercase;
   margin-bottom: 8px;
 }
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Ensures the container takes full height */
+}
+
+.logout-nav-item:hover {
+  background-color: #fee2e2;
+}

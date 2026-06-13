@@ -1,25 +1,24 @@
 import React, { useState, useRef } from 'react';
 import './Dashboard.css';
-import { User, Briefcase, RefreshCw, Settings, ArrowLeft, Send, Calendar, Save, Edit3, Camera } from 'lucide-react';
+import { User, Briefcase, RefreshCw, Settings, ArrowLeft, Send, Calendar, Save, Edit3, Camera, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const UserDashboard = ({ isDark }) => {
   const navigate = useNavigate();
   const dateInputRef = useRef(null);
-  const fileInputRef = useRef(null); // Added for photo upload
+  const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState('my-jobs');
   
   const [selectedJobId, setSelectedJobId] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [estimateAmount, setEstimateAmount] = useState('');
 
-  // Profile specific states
   const [profileName, setProfileName] = useState('John Doe');
   const [regNo, setRegNo] = useState('REG/2021/CS/088');
   const [email, setEmail] = useState('john.doe@example.com');
-  const [profilePic, setProfilePic] = useState(null); // Added for image data
+  const [phoneNo, setPhoneNo] = useState('071-2345678');
+  const [profilePic, setProfilePic] = useState(null);
 
-  // Added new state variables to manage the editable job details
   const [editableJobName, setEditableJobName] = useState('');
   const [editableAllocation, setEditableAllocation] = useState('');
   const [editableAssignDate, setEditableAssignDate] = useState('');
@@ -46,7 +45,6 @@ const UserDashboard = ({ isDark }) => {
 
   const selectedJob = jobData.find(job => job.jobNo === selectedJobId);
 
-  // Updated handler to populate editable fields when a job is selected
   const handleSelectionChange = (id) => {
     setSelectedJobId(id);
     const foundJob = jobData.find(j => j.jobNo === id);
@@ -58,7 +56,6 @@ const UserDashboard = ({ isDark }) => {
     }
   };
 
-  // Added function to save the updated job details back to the main state
   const handleSaveJob = () => {
     setJobData(jobData.map(job => job.jobNo === selectedJobId ? {
       ...job,
@@ -70,13 +67,18 @@ const UserDashboard = ({ isDark }) => {
     alert("Job details saved successfully!");
   };
 
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      window.location.href = '/';
+    }
+  };
+
   const handleCalendarClick = () => {
     if (dateInputRef.current) {
       dateInputRef.current.showPicker ? dateInputRef.current.showPicker() : dateInputRef.current.focus();
     }
   };
 
-  // Function to handle image upload
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -123,6 +125,9 @@ const UserDashboard = ({ isDark }) => {
               onClick={() => setActiveTab('settings')}
             >
               <Settings size={18} /> Settings
+            </button>
+            <button className="nav-item" onClick={handleLogout} style={{ marginTop: 'auto', color: 'red' }}>
+              <LogOut size={18} /> Logout
             </button>
           </nav>
         </aside>
@@ -252,20 +257,30 @@ const UserDashboard = ({ isDark }) => {
                     <h3>Personal Details</h3>
                   </div>
                   <div className="input-row-group">
-                    <label>Full Name</label>
+                    <label>FULL NAME</label>
                     <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="input-field" />
                   </div>
                   <div className="input-row-group">
-                    <label>Registration Number</label>
+                    <label>REGISTRATION NUMBER</label>
                     <input type="text" value={regNo} onChange={(e) => setRegNo(e.target.value)} className="input-field" />
                   </div>
                   <div className="input-row-group">
-                    <label>Email Address</label>
+                    <label>EMAIL ADDRESS</label>
                     <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" />
                   </div>
-                  <button className="save-btn" onClick={() => alert("Profile Saved!")}>
-                    <Save size={16} /> Save Profile
-                  </button>
+                  <div className="input-row-group">
+                    <label>PHONE NUMBER</label>
+                    <input type="text" value={phoneNo} onChange={(e) => setPhoneNo(e.target.value)} className="input-field" />
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                    <button className="confirm-btn" onClick={() => alert("Profile Saved!")} style={{ padding: '10px 20px', background: 'purple', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                      Confirm
+                    </button>
+                    <button className="cancel-btn" onClick={() => setActiveTab('my-jobs')} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>

@@ -1,66 +1,200 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { 
-  LogOut, BarChart3, Users, ShieldCheck, Database, Briefcase, Zap 
-} from "lucide-react";
+import React, { useState } from 'react';
+import { Save, Briefcase, RefreshCw, User, Settings, ArrowLeft, X, Check, Edit, Trash2, LogOut } from 'lucide-react';
+import './Dashboard.css';
 
-// --- Reusable StatBox ---
-const StatBox = ({ label, value, color, isDark }) => (
-  <div className={`border p-6 rounded-3xl relative overflow-hidden ${isDark ? 'bg-slate-900/50 border-white/10' : 'bg-white border-slate-200 shadow-xl'}`}>
-    <p className={`text-[10px] uppercase font-mono mb-2 ${isDark ? 'text-slate-400' : 'text-slate-500 font-bold'}`}>{label}</p>
-    <h4 className={`text-3xl font-black font-mono ${color}`}>{value}</h4>
-    <div className={`absolute -right-2 -bottom-2 opacity-10`}>
-      <Zap size={60} />
-    </div>
-  </div>
-);
+const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('New Job');
+  const [jobs, setJobs] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({
+    jobName: '', ministry: '', department: '', allocation: '', dateReq: '', ref: '', assign: ''
+  });
+  
+  const [userProfile, setUserProfile] = useState({
+    name: 'John Doe',
+    regNo: 'REG/2021/CS/088',
+    email: 'john.doe@example.com',
+    phone: '071-2345678'
+  });
 
-export default function AdminDashboard({ isDark, goBack }) {
-  const [stats, setStats] = useState([
-    { label: "Total CAPEX", value: "$12.4B", color: "text-cyan-500" },
-    { label: "Active Projects", value: "842", color: "text-emerald-500" },
-    { label: "System Health", value: "98%", color: "text-amber-500" },
-    { label: "Pending Approvals", value: "14", color: "text-rose-500" },
-  ]);
+  const [tempProfile, setTempProfile] = useState(userProfile);
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleProfileChange = (e) => {
+    setTempProfile({ ...tempProfile, [e.target.name]: e.target.value });
+  };
+
+  const handleConfirmProfile = () => {
+    setUserProfile(tempProfile);
+    alert("Profile updated successfully!");
+  };
+
+  const handleCancelProfile = () => {
+    setTempProfile(userProfile);
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      // Redirects to the main portal URL
+      window.location.href = '/'; 
+    }
+  };
+
+  const handleAddJob = () => {
+    if (editingId) {
+      setJobs(jobs.map(job => job.id === editingId ? { ...formData, id: editingId, jobNo: job.jobNo } : job));
+      setEditingId(null);
+    } else {
+      const newJob = { 
+        ...formData, 
+        id: Date.now(),
+        jobNo: `JB-${Math.floor(1000 + Math.random() * 9000)}`,
+      };
+      setJobs([...jobs, newJob]);
+    }
+    handleCancel();
+  };
+
+  const handleDeleteJob = (id) => {
+    setJobs(jobs.filter(job => job.id !== id));
+  };
+
+  const handleEditJob = (job) => {
+    setEditingId(job.id);
+    setFormData(job);
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setFormData({ jobName: '', ministry: '', department: '', allocation: '', dateReq: '', ref: '', assign: '' });
+  };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="relative z-10 p-10 max-w-7xl mx-auto"
-    >
-      {/* Header */}
-      <div className="flex justify-between items-end mb-12">
-        <div>
-          <h1 className="text-5xl font-black tracking-tighter italic">
-            EXECUTIVE <span className="text-cyan-600">COMMAND</span>
-          </h1>
-          <p className="font-mono text-[10px] opacity-50 tracking-[5px] mt-2 uppercase">
-            Status: Governing All Nodes
-          </p>
+    <div className="admin-dashboard-layout">
+      <aside className="sidebar">
+        <div className="user-profile">
+          <div className="avatar-box"><User size={40} /></div>
+          <h3>{userProfile.name}</h3>
+          <p className="reg-text">{userProfile.regNo}</p>
         </div>
-        <button 
-          onClick={goBack} 
-          className="p-4 bg-red-500/10 text-red-500 rounded-2xl flex items-center gap-2 font-bold text-[10px] uppercase tracking-widest border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
-        >
-          <LogOut size={16}/> Terminate Session
-        </button>
-      </div>
+        <nav className="nav-links">
+          <button className={activeTab === 'New Job' ? 'active' : ''} onClick={() => setActiveTab('New Job')}><Briefcase size={18} /> New Job</button>
+          <button className={activeTab === 'Update Progress' ? 'active' : ''} onClick={() => setActiveTab('Update Progress')}><RefreshCw size={18} /> Update Progress</button>
+          <button className={activeTab === 'Profile' ? 'active' : ''} onClick={() => setActiveTab('Profile')}><User size={18} /> Profile</button>
+          <button className={activeTab === 'Settings' ? 'active' : ''} onClick={() => setActiveTab('Settings')}><Settings size={18} /> Settings</button>
+          <button className="logout-btn" onClick={handleLogout}><LogOut size={18} /> Logout</button>
+        </nav>
+      </aside>
 
-      {/* Stats Boxes */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        {stats.map((s, idx) => (
-          <StatBox key={idx} label={s.label} value={s.value} color={s.color} isDark={isDark} />
-        ))}
-      </div>
+      <main className="main-content">
+        <header className="content-header">
+          <button className="back-btn"><ArrowLeft size={20} /></button>
+          <h1>{activeTab}</h1>
+        </header>
 
-      {/* Main Dashboard Area */}
-      <div className={`border ${isDark ? 'border-white/5 bg-slate-900/30' : 'border-slate-200 bg-white'} rounded-[40px] p-10 h-96 flex items-center justify-center`}>
-        <div className="text-center opacity-20">
-          <BarChart3 size={80} className="mx-auto mb-4" />
-          <p className="font-mono uppercase tracking-[10px]">Global Fiscal Overview - Loading...</p>
-        </div>
-      </div>
-    </motion.div>
+        {activeTab === 'New Job' && (
+          <section className="field-card">
+            <div className="vertical-form">
+              <div className="input-group">
+                <label>Job Name</label>
+                <input name="jobName" value={formData.jobName} onChange={handleInputChange} className="input-field" />
+              </div>
+              <div className="input-group">
+                <label>Ministry</label>
+                <select name="ministry" value={formData.ministry} onChange={handleInputChange} className="input-field">
+                  <option value="">Select Ministry</option>
+                  <option value="Finance">Finance</option>
+                  <option value="Education">Education</option>
+                  <option value="Health">Health</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Department</label>
+                <select name="department" value={formData.department} onChange={handleInputChange} className="input-field">
+                  <option value="">Select Department</option>
+                  <option value="Procurement">Procurement</option>
+                  <option value="Engineering">Engineering</option>
+                </select>
+              </div>
+              <div className="input-group">
+                <label>Allocation (Rs.)</label>
+                <input name="allocation" type="number" value={formData.allocation} onChange={handleInputChange} className="input-field" />
+              </div>
+              <div className="input-group">
+                <label>Date of Request</label>
+                <input name="dateReq" type="date" value={formData.dateReq} onChange={handleInputChange} className="input-field" />
+              </div>
+              <div className="input-group">
+                <label>Request Letter Reference</label>
+                <input name="ref" value={formData.ref} onChange={handleInputChange} className="input-field" />
+              </div>
+              <div className="input-group">
+                <label>Job Assign (Name of Tech. Officer)</label>
+                <input name="assign" value={formData.assign} onChange={handleInputChange} className="input-field" />
+              </div>
+            </div>
+            <div className="button-group">
+              <button className="save-btn blue-action-btn" onClick={handleAddJob}><Save size={18} /> {editingId ? 'Update' : 'OK'}</button>
+              <button className="cancel-btn" onClick={handleCancel}><X size={18} /> Cancel</button>
+            </div>
+
+            <div style={{ marginTop: '40px' }}>
+              <h3>Recent Jobs</h3>
+              <table className="job-table">
+                <thead>
+                  <tr>
+                    <th>Job No</th><th>Job Name</th><th>Ministry</th><th>Dept</th><th>Date</th><th>Allocation</th><th>Assignee</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jobs.map((j) => (
+                    <tr key={j.id}>
+                      <td>{j.jobNo}</td><td>{j.jobName}</td><td>{j.ministry}</td><td>{j.department}</td>
+                      <td>{j.dateReq}</td><td>{j.allocation}</td><td>{j.assign}</td>
+                      <td className="action-btns">
+                        <button onClick={() => handleEditJob(j)} className="edit-btn"><Edit size={16} /></button>
+                        <button onClick={() => handleDeleteJob(j.id)} className="delete-btn"><Trash2 size={16} /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'Profile' && (
+          <section className="field-card">
+            <div className="profile-form">
+              <div className="input-group">
+                <label>Full Name</label>
+                <input name="name" value={tempProfile.name} onChange={handleProfileChange} className="input-field" />
+              </div>
+              <div className="input-group">
+                <label>Registration Number</label>
+                <input name="regNo" value={tempProfile.regNo} onChange={handleProfileChange} className="input-field" />
+              </div>
+              <div className="input-group">
+                <label>Email Address</label>
+                <input name="email" value={tempProfile.email} onChange={handleProfileChange} className="input-field" />
+              </div>
+              <div className="input-group">
+                <label>Phone Number</label>
+                <input name="phone" value={tempProfile.phone} onChange={handleProfileChange} className="input-field" />
+              </div>
+              <div className="button-group">
+                <button className="save-btn blue-action-btn" onClick={handleConfirmProfile}><Check size={18} /> Confirm</button>
+                <button className="cancel-btn" onClick={handleCancelProfile}><X size={18} /> Cancel</button>
+              </div>
+            </div>
+          </section>
+        )}
+      </main>
+    </div>
   );
-}
+};
+
+export default AdminDashboard;

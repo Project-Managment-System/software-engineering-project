@@ -1,143 +1,98 @@
-/* ENGINEER DASHBOARD THEME (AMBER/GOLD) */
-#cems-engineer-dashboard {
-  background-color: #0d0d08;
-  color: #ffffff;
-  min-height: 100vh;
-}
+/* --- Admin-Specific Dashboard Adjustments --- */
 
-.dashboard-container {
-  display: flex;
-  min-height: 100vh;
-}
-
-/* Sidebar Styling */
-#cems-engineer-dashboard .sidebar {
-  width: 280px;
-  background-color: #16140c;
-  padding: 2rem;
-  border-right: 1px solid rgba(245, 158, 11, 0.1);
+/* Ensures the sidebar navigation keeps the logout button at the bottom */
+.sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  height: 100%;
 }
 
-.profile-box {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+.sidebar-nav .logout-nav-item {
+  margin-top: auto; /* Pushes the logout button to the bottom of the sidebar */
+  color: #ef4444; /* Standard alert red for logout */
 }
 
-.profile-photo {
-  width: 80px;
-  height: 80px;
-  border-radius: 24px;
-  border: 2px solid #f59e0b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #f59e0b;
-  background: #1c1a10;
-  margin-bottom: 1rem;
+.sidebar-nav .logout-nav-item:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
-/* Navigation Items */
-.nav-item {
+/* Header Adjustments */
+.content-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: #9ca3af;
-  font-weight: 600;
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
+  justify-content: space-between;
+  margin-bottom: 2rem;
 }
 
-.nav-item.active {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), transparent);
-  color: #f59e0b;
-  border-left: 4px solid #f59e0b;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
-/* Table Styling */
-.project-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0 10px;
-}
-
-.project-table th {
-  padding: 1rem;
-  text-align: left;
-  background-color: #1c1a10;
-  color: #f59e0b;
-  text-transform: uppercase;
-  font-size: 11px;
-}
-
-.project-table td {
-  padding: 1.2rem 1rem;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.job-id-cell {
-  color: #f59e0b;
-  font-family: monospace;
-}
-
-/* Form Sections */
-.info-rectangle {
-  background: #1c1a10;
-  border-left: 4px solid #f59e0b;
-  padding: 1.5rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-}
-
-.input-rectangle {
-  background: #16140c;
-  padding: 1.5rem;
-  border-radius: 12px;
-}
-
-input, select {
-  background-color: #0d0d08;
-  border: 1px solid #333;
-  color: #f59e0b;
-  padding: 10px;
-  border-radius: 8px;
-}
-
-/* Buttons */
-.btn-send {
-  background: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
-  color: #000;
-  padding: 12px 24px;
-  border-radius: 12px;
-  border: none;
-  font-weight: 800;
-  cursor: pointer;
+/* Button variants for Admin Actions */
+.confirm-btn {
+  background-color: #10b981 !important; /* Success Green */
+  color: white !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.deadline-tag {
-  background: rgba(245, 158, 11, 0.1);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  padding: 4px 10px;
-  border-radius: 6px;
+.cancel-btn {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  padding: 12px 24px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.back-arrow-icon {
-  color: #f59e0b;
-  background: transparent;
-  border: none;
-  cursor: pointer;
+/* Layout for Profile and Forms */
+.profile-section {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Table refinements for Admin view */
+.project-table {
+  width: 100%;
+  background: white;
+  border-radius: 1.5rem;
+  border-collapse: collapse;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.project-table th {
+  background: #f8fafc;
+  padding: 1.5rem;
+  text-align: left;
+  font-weight: 900;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.project-table td {
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: #0f172a;
 }

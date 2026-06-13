@@ -1,187 +1,58 @@
 import React, { useState, useRef } from 'react';
-import './Dashboard.css'; // Corrected path for files in the same folder
-import { HardHat, ClipboardCheck, Settings, ArrowLeft, ShieldCheck, Calendar, Zap } from 'lucide-react';
+import './Dashboard.css';
+import { User, Briefcase, RefreshCw, Settings, ArrowLeft, Send, Calendar, Save, Edit3, Camera, LogOut, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const EngineerDashboard = ({ isDark }) => {
+const Dashboard = ({ isDark }) => {
   const navigate = useNavigate();
-  const dateInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('active-projects');
-  
-  const [selectedProjectId, setSelectedProjectId] = useState('');
-  const [inspectionDate, setInspectionDate] = useState('');
-  const [technicalStatus, setTechnicalStatus] = useState('');
+  const [activeTab, setActiveTab] = useState('my-jobs');
+  const [profileName, setProfileName] = useState('Engineer Doe');
+  const [regNo, setRegNo] = useState('ENG/2026/001');
+  const [email, setEmail] = useState('eng.doe@company.com');
+  const [phoneNo, setPhoneNo] = useState('071-2345678');
 
-  const projectData = [
-    { 
-      sNo: 1, 
-      projNo: "ENG-2024-001", 
-      projName: "Foundation Piling Audit", 
-      siteLocation: "Site Alpha", 
-      startDate: "2024-03-01", 
-      status: "Verified" 
-    },
-    { 
-      sNo: 2, 
-      projNo: "ENG-2024-042", 
-      projName: "Structural Load Test", 
-      siteLocation: "Site Beta", 
-      startDate: "2024-03-12", 
-      status: "Pending" 
-    },
-  ];
-
-  const selectedProject = projectData.find(proj => proj.projNo === selectedProjectId);
-
-  const handleCalendarClick = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker();
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      window.location.href = '/';
     }
   };
 
   return (
-    <div id="cems-engineer-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
+    <div className={`dashboard-wrapper ${isDark ? 'dark-mode' : 'light-mode'}`}>
       <div className="dashboard-container">
-        
         <aside className="sidebar">
           <div className="profile-box">
-            <div className="profile-photo">
-              <HardHat size={48} />
-            </div>
-            <div className="profile-info">
-              <h3>Eng. Baba</h3>
-              <p className="reg-number">ID: 2026-ENG-088</p>
-            </div>
+            <div className="profile-photo"><User size={48} /></div>
+            <h3>{profileName}</h3>
+            <p>{regNo}</p>
           </div>
-
           <nav className="sidebar-nav">
-            <button 
-              className={`nav-item ${activeTab === 'active-projects' ? 'active' : ''}`}
-              onClick={() => setActiveTab('active-projects')}
-            >
-              <Zap size={18} /> Active Projects
-            </button>
-            <button 
-              className={`nav-item ${activeTab === 'technical-audit' ? 'active' : ''}`}
-              onClick={() => setActiveTab('technical-audit')}
-            >
-              <ClipboardCheck size={18} /> Technical Audit
-            </button>
-            <button 
-              className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <Settings size={18} /> Settings
-            </button>
+            <button className={activeTab === 'my-jobs' ? 'active' : ''} onClick={() => setActiveTab('my-jobs')}><Briefcase size={18} /> Projects</button>
+            <button className={activeTab === 'update-progress' ? 'active' : ''} onClick={() => setActiveTab('update-progress')}><RefreshCw size={18} /> Site Progress</button>
+            <button className={activeTab === 'profile' ? 'active' : ''} onClick={() => setActiveTab('profile')}><Edit3 size={18} /> Profile</button>
+            <button className="logout-btn" onClick={handleLogout}><LogOut size={18} /> Logout</button>
           </nav>
         </aside>
 
         <main className="dashboard-content">
           <header className="content-header">
-            <div className="header-left">
-              <button className="back-arrow-icon" onClick={() => navigate('/')}>
-                <ArrowLeft size={24} />
-              </button>
-              <h1>{activeTab === 'active-projects' ? 'Engineering Command' : activeTab.replace('-', ' ')}</h1>
-            </div>
+            <button className="back-btn" onClick={() => navigate('/')}><ArrowLeft size={24} /></button>
+            <h1>{activeTab.replace('-', ' ').toUpperCase()}</h1>
           </header>
 
-          {activeTab === 'active-projects' && (
-            <section className="project-table-section">
-              <table className="project-table">
-                <thead>
-                  <tr>
-                    <th>S.No</th>
-                    <th>Project ID</th>
-                    <th>Project Name</th>
-                    <th>Location</th>
-                    <th>Assigned</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {projectData.map((proj) => (
-                    <tr key={proj.projNo}>
-                      <td>{proj.sNo}</td>
-                      <td className="job-id-cell">{proj.projNo}</td>
-                      <td className="font-bold">{proj.projName}</td>
-                      <td>{proj.siteLocation}</td>
-                      <td>{proj.startDate}</td>
-                      <td><span className="deadline-tag">{proj.status}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          )}
-
-          {activeTab === 'technical-audit' && (
-            <section className="update-progress-view">
-              <div className="selection-area">
-                <label>Select Project Log </label>
-                <select 
-                  className="job-select-dropdown" 
-                  value={selectedProjectId} 
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                >
-                  <option value="">-- Choose Project ID --</option>
-                  {projectData.map(proj => (
-                    <option key={proj.projNo} value={proj.projNo}>{proj.projNo} - {proj.projName}</option>
-                  ))}
-                </select>
-              </div>
-
-              {selectedProject && (
-                <div className="form-rectangles">
-                  <div className="info-rectangle">
-                    <div className="info-grid">
-                      <p><strong>ID:</strong> {selectedProject.projNo}</p>
-                      <p><strong>Site:</strong> {selectedProject.siteLocation}</p>
-                      <p><strong>Safety:</strong> Class-A Verified</p>
-                    </div>
-                  </div>
-
-                  <div className="input-rectangle">
-                    <div className="input-row">
-                      <div className="input-group">
-                        <label>Inspection Date</label>
-                        <div className="hybrid-date-input">
-                          <input 
-                            type="text" 
-                            placeholder="YYYY-MM-DD"
-                            value={inspectionDate}
-                            onChange={(e) => setInspectionDate(e.target.value)}
-                          />
-                          <button type="button" className="calendar-trigger" onClick={handleCalendarClick}>
-                            <Calendar size={18} />
-                          </button>
-                          <input 
-                            type="date"
-                            ref={dateInputRef}
-                            style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-                            onChange={(e) => setInspectionDate(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div className="input-group">
-                        <label>Status Code</label>
-                        <input 
-                          type="text" 
-                          placeholder="e.g. SEC-01"
-                          value={technicalStatus}
-                          onChange={(e) => setTechnicalStatus(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div className="submission-row">
-                      <p>Push updates to central mainframe</p>
-                      <button className="btn-send" onClick={() => alert("Audit Log Synchronized")}>
-                        <ShieldCheck size={16} /> Sync Audit
-                      </button>
-                    </div>
-                  </div>
+          {activeTab === 'profile' && (
+            <section className="profile-section">
+              <div className="field-card">
+                <div className="input-group"><label>FULL NAME</label><input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} /></div>
+                <div className="input-group"><label>REGISTRATION NUMBER</label><input type="text" value={regNo} onChange={(e) => setRegNo(e.target.value)} /></div>
+                <div className="input-group"><label>EMAIL ADDRESS</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                <div className="input-group"><label>PHONE NUMBER</label><input type="text" value={phoneNo} onChange={(e) => setPhoneNo(e.target.value)} /></div>
+                
+                <div className="action-buttons">
+                  <button className="confirm-btn" onClick={() => alert("Profile Updated!")}><CheckCircle size={18} /> Confirm</button>
+                  <button className="cancel-btn" onClick={() => setActiveTab('my-jobs')}><XCircle size={18} /> Cancel</button>
                 </div>
-              )}
+              </div>
             </section>
           )}
         </main>
@@ -190,4 +61,4 @@ const EngineerDashboard = ({ isDark }) => {
   );
 };
 
-export default EngineerDashboard;
+export default Dashboard;
