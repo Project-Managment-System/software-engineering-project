@@ -23,6 +23,12 @@ export default function UserRegister() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       alert('Passwords do not match!');
       return;
@@ -41,7 +47,13 @@ export default function UserRegister() {
       alert('User registered successfully. Please login.');
       navigate('/user/login');
     } catch (error) {
-      alert(error.response?.data?.message || error.response?.data?.error || 'Registration failed.');
+      //alert(error.response?.data?.message || error.response?.data?.error || 'Registration failed.');
+      const serverError = error.response?.data?.error;
+      if (serverError === "USER_EXISTS") {
+        alert('Registration Failed: This email address is already registered.');
+      } else {
+        alert(error.response?.data?.message || 'Registration failed.');
+      }
     }
   };
 

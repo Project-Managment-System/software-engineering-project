@@ -23,6 +23,11 @@ export default function AdminRegister() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      alert('Please enter a valid institutional email address (e.g., name@domain.com).');
+      return;
+    }
     if (password !== confirmPassword) {
       alert('Passwords do not match!');
       return;
@@ -41,7 +46,15 @@ export default function AdminRegister() {
       alert('Admin registered successfully. Please login.');
       navigate('/admin/login');
     } catch (error) {
-      alert(error.response?.data?.message || error.response?.data?.error || 'Registration failed.');
+      //alert(error.response?.data?.message || error.response?.data?.error || 'Registration failed.');
+      const serverError = error.response?.data?.error;
+      if (serverError === "USER_EXISTS") {
+        alert('Registration Failed: This email address is already registered.');
+      } else if (serverError === "INVALID_EMAIL_FORMAT") {
+        alert('Registration Failed: Server rejected email structure formatting.');
+      } else {
+        alert(error.response?.data?.message || 'Registration failed.');
+      }
     }
   };
 
