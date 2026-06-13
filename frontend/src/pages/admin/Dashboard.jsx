@@ -91,8 +91,6 @@ const AdminDashboard = () => {
 
       <main className="main-content">
         <header className="content-header">
-          <button className="back-btn"><ArrowLeft size={20} /></button>
-          <h1>{activeTab}</h1>
         </header>
 
         {activeTab === 'New Job' && (
