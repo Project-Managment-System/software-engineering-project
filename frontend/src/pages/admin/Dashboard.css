@@ -6,6 +6,19 @@
   font-family: 'Segoe UI', sans-serif;
 }
 
+.admin-dashboard-layout,
+.sidebar {
+  height: 100vh;
+}
+
+.nav-links {
+  flex-grow: 1;
+}
+
+.logout-btn {
+  margin-top: auto !important;
+}
+
 /* Sidebar Styles */
 .sidebar {
   width: 280px;
