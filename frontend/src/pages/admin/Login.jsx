@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Lock, User, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import { loginUser } from '../../api/api';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Admin authentication logic goes here
-    navigate('/admin/dashboard');
+    try {
+      const response = await loginUser({ email, password });
+      if (response.data.status === 'LOGIN_SUCCESS') {
+        localStorage.setItem('userId', response.data.userId);
+        navigate('/admin/dashboard');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');
+    }
   };
 
   return (
@@ -34,16 +44,18 @@ export default function AdminLogin() {
       </div>
 
       <form className="space-y-6" onSubmit={handleLogin}>
-        {/* Admin ID Field */}
+        {/* Email Field */}
         <div>
-          <label className="block text-base font-bold text-slate-700 mb-2">ADMIN ID</label>
+          <label className="block text-base font-bold text-slate-700 mb-2">EMAIL</label>
           <div className="relative">
             <User className="absolute left-4 top-4 text-slate-400" size={20} />
-            <input 
-              type="text" 
-              required 
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 bg-slate-50 focus:border-blue-500 outline-none text-base"
-              placeholder="Enter Admin ID"
+              placeholder="Enter admin email"
             />
           </div>
         </div>
@@ -55,6 +67,8 @@ export default function AdminLogin() {
             <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
             <input 
               type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required 
               className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 bg-slate-50 focus:border-blue-500 outline-none text-base"
               placeholder="••••••••"
