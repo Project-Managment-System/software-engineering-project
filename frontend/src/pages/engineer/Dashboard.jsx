@@ -49,8 +49,6 @@ const UserDashboard = ({ isDark }) => {
         <main className="dashboard-content">
           <header className="content-header">
             <div className="header-left">
-              <button className="back-arrow-icon" onClick={() => navigate('/')}><ArrowLeft size={24} /></button>
-              <h1>{activeTab.replace('-', ' ').toUpperCase()}</h1>
             </div>
           </header>
 
