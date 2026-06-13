@@ -11,6 +11,30 @@ const Dashboard = ({ isDark }) => {
   const [email, setEmail] = useState('eng.doe@company.com');
   const [phoneNo, setPhoneNo] = useState('071-2345678');
 
+  const [editProfileName, setEditProfileName] = useState('');
+  const [editRegNo, setEditRegNo] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhoneNo, setEditPhoneNo] = useState('');
+
+  const handleProfileTabOpen = () => {
+    setEditProfileName(profileName);
+    setEditRegNo(regNo);
+    setEditEmail(email);
+    setEditPhoneNo(phoneNo);
+  };
+
+  const handleConfirmProfile = () => {
+    setProfileName(editProfileName);
+    setRegNo(editRegNo);
+    setEmail(editEmail);
+    setPhoneNo(editPhoneNo);
+    alert("Profile Updated!");
+  };
+
+  const handleCancelProfile = () => {
+    setActiveTab('my-jobs');
+  };
+
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
       window.location.href = '/';
@@ -29,7 +53,10 @@ const Dashboard = ({ isDark }) => {
           <nav className="sidebar-nav">
             <button className={activeTab === 'my-jobs' ? 'active' : ''} onClick={() => setActiveTab('my-jobs')}><Briefcase size={18} /> Projects</button>
             <button className={activeTab === 'update-progress' ? 'active' : ''} onClick={() => setActiveTab('update-progress')}><RefreshCw size={18} /> Site Progress</button>
-            <button className={activeTab === 'profile' ? 'active' : ''} onClick={() => setActiveTab('profile')}><Edit3 size={18} /> Profile</button>
+            <button className={activeTab === 'profile' ? 'active' : ''} onClick={() => {
+              setActiveTab('profile');
+              handleProfileTabOpen();
+            }}><Edit3 size={18} /> Profile</button>
             <button className="logout-btn" onClick={handleLogout}><LogOut size={18} /> Logout</button>
           </nav>
         </aside>
@@ -43,14 +70,14 @@ const Dashboard = ({ isDark }) => {
           {activeTab === 'profile' && (
             <section className="profile-section">
               <div className="field-card">
-                <div className="input-group"><label>FULL NAME</label><input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} /></div>
-                <div className="input-group"><label>REGISTRATION NUMBER</label><input type="text" value={regNo} onChange={(e) => setRegNo(e.target.value)} /></div>
-                <div className="input-group"><label>EMAIL ADDRESS</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-                <div className="input-group"><label>PHONE NUMBER</label><input type="text" value={phoneNo} onChange={(e) => setPhoneNo(e.target.value)} /></div>
+                <div className="input-group"><label>FULL NAME</label><input type="text" value={editProfileName} onChange={(e) => setEditProfileName(e.target.value)} /></div>
+                <div className="input-group"><label>REGISTRATION NUMBER</label><input type="text" value={editRegNo} onChange={(e) => setEditRegNo(e.target.value)} /></div>
+                <div className="input-group"><label>EMAIL ADDRESS</label><input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} /></div>
+                <div className="input-group"><label>PHONE NUMBER</label><input type="text" value={editPhoneNo} onChange={(e) => setEditPhoneNo(e.target.value)} /></div>
                 
                 <div className="action-buttons">
-                  <button className="confirm-btn" onClick={() => alert("Profile Updated!")}><CheckCircle size={18} /> Confirm</button>
-                  <button className="cancel-btn" onClick={() => setActiveTab('my-jobs')}><XCircle size={18} /> Cancel</button>
+                  <button className="confirm-btn" onClick={handleConfirmProfile}><CheckCircle size={18} /> Confirm</button>
+                  <button className="cancel-btn" onClick={handleCancelProfile}><XCircle size={18} /> Cancel</button>
                 </div>
               </div>
             </section>
