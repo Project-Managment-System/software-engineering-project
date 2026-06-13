@@ -206,18 +206,10 @@ const UserDashboard = ({ isDark }) => {
 
         <main className="dashboard-content">
           <header className="content-header">
-            <div className="header-left">
-              <button 
-                className="back-arrow-icon" 
-                onClick={() => navigate('/')}
-                title="Back to portal"
-              >
-                <ArrowLeft size={24} />
-              </button>
-              <h1>{activeTab.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}</h1>
+            <div className="header-left">    
             </div>
           </header>
-
+        
           {activeTab === 'my-jobs' && (
             <section className="project-table-section">
               <table className="project-table">
