@@ -13,7 +13,13 @@ export default function AdminLogin() {
     e.preventDefault();
     try {
       const response = await loginUser({ email, password });
+      
       if (response.data.status === 'LOGIN_SUCCESS') {
+        if (response.data.role !== 'admin') {
+          alert('Access Denied: This portal is strictly restricted to Administrators.');
+          return; 
+        }
+// Only save session and navigate if they are verified admins
         localStorage.setItem('userId', response.data.userId);
         navigate('/admin/dashboard');
       }

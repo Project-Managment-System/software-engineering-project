@@ -14,6 +14,10 @@ export default function UserLogin() {
     try {
       const response = await loginUser({ email, password });
       if (response.data.status === 'LOGIN_SUCCESS') {
+        if (response.data.role !== 'ops') {
+          alert('Access Denied: Please use your dedicated portal to authenticate.');
+          return;
+        }
         localStorage.setItem('userId', response.data.userId);
         navigate('/user/dashboard');
       }
