@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Lock, User, Wrench, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import { loginUser } from '../../api/api';
 
 export default function EngineerLogin() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Engineer authentication logic goes here
-    navigate('/engineer/dashboard');
+    try {
+      const response = await loginUser({ email, password });
+      if (response.data.status === 'LOGIN_SUCCESS') {
+        localStorage.setItem('userId', response.data.userId);
+        navigate('/engineer/dashboard');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');
+    }
   };
 
   return (
@@ -34,16 +44,18 @@ export default function EngineerLogin() {
       </div>
 
       <form className="space-y-6" onSubmit={handleLogin}>
-        {/* Username Field */}
+        {/* Email Field */}
         <div>
-          <label className="block text-base font-bold text-slate-700 mb-2">ENGINEER ID</label>
+          <label className="block text-base font-bold text-slate-700 mb-2">EMAIL</label>
           <div className="relative">
             <User className="absolute left-4 top-4 text-slate-400" size={20} />
-            <input 
-              type="text" 
-              required 
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
               className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 bg-slate-50 focus:border-emerald-500 outline-none text-base"
-              placeholder="Enter Engineer ID"
+              placeholder="Enter engineer email"
             />
           </div>
         </div>
@@ -55,6 +67,8 @@ export default function EngineerLogin() {
             <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
             <input 
               type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required 
               className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 bg-slate-50 focus:border-emerald-500 outline-none text-base"
               placeholder="••••••••"
