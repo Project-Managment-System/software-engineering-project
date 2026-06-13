@@ -19,10 +19,42 @@ const UserDashboard = ({ isDark }) => {
   const [phoneNo, setPhoneNo] = useState('071-2345678');
   const [profilePic, setProfilePic] = useState(null);
 
+  const [editProfileName, setEditProfileName] = useState('');
+  const [editRegNo, setEditRegNo] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhoneNo, setEditPhoneNo] = useState('');
+
   const [editableJobName, setEditableJobName] = useState('');
   const [editableAllocation, setEditableAllocation] = useState('');
   const [editableAssignDate, setEditableAssignDate] = useState('');
   const [editableDeadline, setEditableDeadline] = useState('');
+
+  const [submittedEstimates, setSubmittedEstimates] = useState([]);
+
+  const handleCheckEstimate = (estimateNo) => {
+    setSubmittedEstimates(submittedEstimates.map(est => 
+      est.no === estimateNo ? { ...est, isChecked: !est.isChecked } : est
+    ));
+  };
+
+  const handleProfileTabOpen = () => {
+    setEditProfileName(profileName);
+    setEditRegNo(regNo);
+    setEditEmail(email);
+    setEditPhoneNo(phoneNo);
+  };
+
+  const handleConfirmProfile = () => {
+    setProfileName(editProfileName);
+    setRegNo(editRegNo);
+    setEmail(editEmail);
+    setPhoneNo(editPhoneNo);
+    alert("Profile Saved!");
+  };
+
+  const handleCancelProfile = () => {
+    setActiveTab('my-jobs');
+  };
 
   const [jobData, setJobData] = useState([
     { 
@@ -67,6 +99,28 @@ const UserDashboard = ({ isDark }) => {
     alert("Job details saved successfully!");
   };
 
+  const handleSubmitEstimate = () => {
+    if (!selectedJobId || !visitDate || !estimateAmount) {
+      alert("Please fill in all fields");
+      return;
+    }
+    const newEstimate = {
+      no: submittedEstimates.length + 1,
+      jobNo: selectedJob.jobNo,
+      jobName: selectedJob.jobName,
+      toName: profileName,
+      allocation: selectedJob.allocation,
+      estimatedAmount: estimateAmount,
+      checkedOn: visitDate,
+      sendApproval: "Pending",
+      isChecked: false
+    };
+    setSubmittedEstimates([...submittedEstimates, newEstimate]);
+    setVisitDate('');
+    setEstimateAmount('');
+    alert("Estimate submitted to OA");
+  };
+
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
       window.location.href = '/';
@@ -85,6 +139,21 @@ const UserDashboard = ({ isDark }) => {
       const reader = new FileReader();
       reader.onloadend = () => setProfilePic(reader.result);
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEstimateAmountChange = (e) => {
+    const value = e.target.value;
+    // Allow only digits and decimal point
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setEstimateAmount(value);
+    }
+  };
+
+  const handleEstimateAmountKeyDown = (e) => {
+    // Prevent e, E, +, - from being typed
+    if (['e', 'E', '+', '-'].includes(e.key)) {
+      e.preventDefault();
     }
   };
 
@@ -116,7 +185,10 @@ const UserDashboard = ({ isDark }) => {
             </button>
             <button 
               className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
+              onClick={() => {
+                setActiveTab('profile');
+                handleProfileTabOpen();
+              }}
             >
               <Edit3 size={18} /> Profile
             </button>
@@ -233,12 +305,76 @@ const UserDashboard = ({ isDark }) => {
                     </div>
                     <div className="input-row-group">
                       <label>Estimate Amount (LKR)</label>
-                      <input type="number" className="input-field" placeholder="0.00" value={estimateAmount} onChange={(e) => setEstimateAmount(e.target.value)} />
+                      <input 
+                        type="number" 
+                        className="input-field" 
+                        placeholder="0.00" 
+                        value={estimateAmount} 
+                        onChange={handleEstimateAmountChange}
+                        onKeyDown={handleEstimateAmountKeyDown}
+                      />
                     </div>
-                    <button className="send-btn" onClick={() => alert("Submitted to OA")}>
+                    <button className="send-btn" onClick={handleSubmitEstimate}>
                       <Send size={16} /> Submit Estimate
                     </button>
                   </div>
+                </div>
+              )}
+
+              {submittedEstimates.length > 0 && (
+                <div style={{ marginTop: '3rem' }}>
+                  <h3 style={{ marginBottom: '1.5rem', color: 'var(--text-main)', fontWeight: 900 }}>Submitted Estimates</h3>
+                  <table className="project-table">
+                    <thead>
+                      <tr>
+                        <th>NO</th>
+                        <th>Job No</th>
+                        <th>Job Name</th>
+                        <th>To Name</th>
+                        <th>Allocation</th>
+                        <th>Estimated Amount (LKR)</th>
+                        <th>Checked On</th>
+                        <th>Send Approval</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {submittedEstimates.map((estimate) => (
+                        <tr key={estimate.no}>
+                          <td>{estimate.no}</td>
+                          <td className="font-mono text-cyan-500">{estimate.jobNo}</td>
+                          <td className="font-bold">{estimate.jobName}</td>
+                          <td>{estimate.toName}</td>
+                          <td>{estimate.allocation}</td>
+                          <td className="font-bold">{estimate.estimatedAmount}</td>
+                          <td>
+                            <button 
+                              onClick={() => handleCheckEstimate(estimate.no)}
+                              style={{
+                                background: estimate.isChecked ? '#10b981' : '#f0f0f0',
+                                color: estimate.isChecked ? 'white' : '#666',
+                                border: 'none',
+                                padding: '8px 16px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              {estimate.isChecked ? '✓ Checked' : '☐ Not Checked'}
+                            </button>
+                          </td>
+                          <td>
+                            <span style={{ background: '#fef3c7', color: '#92400e', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600 }}>
+                              {estimate.sendApproval}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </section>
@@ -258,26 +394,26 @@ const UserDashboard = ({ isDark }) => {
                   </div>
                   <div className="input-row-group">
                     <label>FULL NAME</label>
-                    <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)} className="input-field" />
+                    <input type="text" value={editProfileName} onChange={(e) => setEditProfileName(e.target.value)} className="input-field" />
                   </div>
                   <div className="input-row-group">
                     <label>REGISTRATION NUMBER</label>
-                    <input type="text" value={regNo} onChange={(e) => setRegNo(e.target.value)} className="input-field" />
+                    <input type="text" value={editRegNo} onChange={(e) => setEditRegNo(e.target.value)} className="input-field" />
                   </div>
                   <div className="input-row-group">
                     <label>EMAIL ADDRESS</label>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" />
+                    <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="input-field" />
                   </div>
                   <div className="input-row-group">
                     <label>PHONE NUMBER</label>
-                    <input type="text" value={phoneNo} onChange={(e) => setPhoneNo(e.target.value)} className="input-field" />
+                    <input type="text" value={editPhoneNo} onChange={(e) => setEditPhoneNo(e.target.value)} className="input-field" />
                   </div>
                   
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                    <button className="confirm-btn" onClick={() => alert("Profile Saved!")} style={{ padding: '10px 20px', background: 'purple', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    <button className="confirm-btn" onClick={handleConfirmProfile} style={{ padding: '10px 20px', background: 'purple', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                       Confirm
                     </button>
-                    <button className="cancel-btn" onClick={() => setActiveTab('my-jobs')} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                    <button className="cancel-btn" onClick={handleCancelProfile} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                       Cancel
                     </button>
                   </div>

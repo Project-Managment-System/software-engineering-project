@@ -400,3 +400,37 @@ input:-webkit-autofill:active {
 .logout-nav-item:hover {
   background-color: #fee2e2;
 }
+
+/* --- Hybrid Date Wrapper with Calendar Button --- */
+.hybrid-date-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.hybrid-date-wrapper .input-field {
+  flex: 1;
+  border-radius: 12px 0 0 12px;
+  margin: 0;
+}
+
+.cal-btn {
+  padding: 12px 16px;
+  background-color: white;
+  border: 1px solid var(--purple-border);
+  border-left: none;
+  border-radius: 0 12px 12px 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 600;
+}
+
+.cal-btn:hover {
+  background-color: var(--light-purple-bg);
+  color: var(--primary-purple);
+}
