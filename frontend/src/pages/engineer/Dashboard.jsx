@@ -63,8 +63,6 @@ const Dashboard = ({ isDark }) => {
 
         <main className="dashboard-content">
           <header className="content-header">
-            <button className="back-btn" onClick={() => navigate('/')}><ArrowLeft size={24} /></button>
-            <h1>{activeTab.replace('-', ' ').toUpperCase()}</h1>
           </header>
 
           {activeTab === 'profile' && (
