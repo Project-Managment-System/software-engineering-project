@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './Dashboard.css';
-import { User, Briefcase, RefreshCw, Settings, Edit3, LogOut, Save, Check, X } from 'lucide-react';
+import { User, Briefcase, RefreshCw, Settings, Edit3, LogOut, Save, Check, X, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const UserDashboard = ({ isDark }) => {
@@ -8,7 +8,10 @@ const UserDashboard = ({ isDark }) => {
   const [activeTab, setActiveTab] = useState('my-jobs');
   const [jobSubTab, setJobSubTab] = useState('tracking'); // New state for sub-tabs
   const [profilePic, setProfilePic] = useState(null);
-  
+
+  // Collapsible Sidebar visibility control state variable
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   // Profile State
   const [profileData, setProfileData] = useState({ name: 'John Doe', reg: 'REG/2021/CS/088', email: 'john.doe@example.com', phone: '071-2345678' });
   const [profileForm, setProfileForm] = useState(profileData);
@@ -31,8 +34,18 @@ const UserDashboard = ({ isDark }) => {
 
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
-      <div className="dashboard-container">
-        <aside className="sidebar">
+
+      {/* Floating Hamburger Button */}
+      <button
+        className="sidebar-toggle-menu-btn"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        title={isSidebarOpen ? "Collapse Menu" : "Expand Menu"}
+      >
+        <Menu size={20} />
+      </button>
+
+      <div className="user-dashboard-layout">
+        <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
             <div className="profile-photo">{profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}</div>
             <h3>{profileData.name}</h3>
@@ -47,7 +60,7 @@ const UserDashboard = ({ isDark }) => {
           </nav>
         </aside>
 
-        <main className="dashboard-content">
+        <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
           {activeTab === 'my-jobs' && (
             <>
               <h3>My Jobs</h3>
@@ -70,29 +83,6 @@ const UserDashboard = ({ isDark }) => {
                   </tbody>
                 </table>
               )}
-            </>
-          )}
-
-          {activeTab === 'profile' && (
-            <div className="profile-section" style={{ padding: '30px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'left', width: '500px' }}>
-              <h3>Personal Details</h3>
-              <div className="profile-form">
-                <label>FULL NAME</label>
-                <input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
-                <label>REGISTRATION NUMBER</label>
-                <input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
-                <label>EMAIL ADDRESS</label>
-                <input value={profileForm.email} onChange={(e) => setProfileForm({...profileForm, email: e.target.value})} />
-                <label>PHONE NUMBER</label>
-                <input value={profileForm.phone} onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})} />
-                <div className="action-buttons">
-                  <button className="confirm-btn" onClick={handleSaveProfile}>Confirm</button>
-                  <button className="cancel-btn" onClick={() => setProfileForm(profileData)}>Cancel</button>
-                </div>
-              </div>
-            </div>
-          )}
-
 
               {jobSubTab === 'tracking' && (
                 <>
@@ -121,8 +111,35 @@ const UserDashboard = ({ isDark }) => {
                   )}
                 </>
               )}
+            </>
+          )}
 
-              
+          {activeTab === 'profile' && (
+            <div className="profile-section" style={{ padding: '30px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'left', width: '500px' }}>
+              <h3>Personal Details</h3>
+              <div className="profile-form">
+                <label>FULL NAME</label>
+                <input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
+                <label>REGISTRATION NUMBER</label>
+                <input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
+                <label>EMAIL ADDRESS</label>
+                <input value={profileForm.email} onChange={(e) => setProfileForm({...profileForm, email: e.target.value})} />
+                <label>PHONE NUMBER</label>
+                <input value={profileForm.phone} onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})} />
+                <div className="action-buttons">
+                  <button className="confirm-btn" onClick={handleSaveProfile}>Confirm</button>
+                  <button className="cancel-btn" onClick={() => setProfileForm(profileData)}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'update-progress' && (
+            <div className="placeholder-content">
+              <p>Content for Update Progress coming soon...</p>
+            </div>
+          )}
+
           {activeTab === 'settings' && (
             <div className="settings-section" style={{ padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <h3>System Settings</h3>
