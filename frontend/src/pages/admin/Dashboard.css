@@ -1,4 +1,22 @@
 /* Layout Container */
+
+/*sanda*/
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-row .input-row-group {
+  flex: 1;
+}
+
+/* save button size */
+.save-btn {
+  width: auto;
+  flex: 0;
+}
+
+
 .admin-dashboard-layout {
   display: flex;
   min-height: 100vh;

@@ -12,8 +12,9 @@ const AdminDashboard = ({ isDark }) => {
   const [jobs, setJobs] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    jobName: '', ministry: '', department: '', allocation: '', dateReq: '', ref: '', assign: ''
-  });
+  jobName: '', ministry: 'Finance', department: 'Procurement', division: 'Administration',
+  allocation: '', dateReq: '', ref: '', institute: ''
+});
   
   // Refactored State Strings to match User Code logic exactly
   const [profileName, setProfileName] = useState('John Doe');
@@ -58,20 +59,31 @@ const AdminDashboard = ({ isDark }) => {
     }
   };
 
+  /*added*/
+  const isFormValid = () => {
+  const { division, jobName, ministry, department, allocation, dateReq, ref } = formData;
+  return !!(division && jobName && ministry && department && allocation && dateReq && ref);
+};
+
   const handleAddJob = () => {
-    if (editingId) {
-      setJobs(jobs.map(job => job.id === editingId ? { ...formData, id: editingId, jobNo: job.jobNo } : job));
-      setEditingId(null);
-    } else {
-      const newJob = { 
-        ...formData, 
-        id: Date.now(),
-        jobNo: `JB-${Math.floor(1000 + Math.random() * 9000)}`,
-      };
-      setJobs([...jobs, newJob]);
-    }
-    handleCancel();
-  };
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  if (editingId) {
+    setJobs(jobs.map(job => job.id === editingId
+      ? { ...formData, id: editingId, jobNo: job.jobNo, submitDate: job.submitDate }
+      : job
+    ));
+    setEditingId(null);
+  } else {
+    const newJob = {
+      ...formData,
+      id: Date.now(),
+      jobNo: `JB-${Math.floor(1000 + Math.random() * 9000)}`,
+      submitDate: today, // ✅ captured at click time
+    };
+    setJobs([...jobs, newJob]);
+  }
+  handleCancel();
+};
 
   const handleDeleteJob = (id) => {
     setJobs(jobs.filter(job => job.id !== id));
@@ -83,9 +95,12 @@ const AdminDashboard = ({ isDark }) => {
   };
 
   const handleCancel = () => {
-    setEditingId(null);
-    setFormData({ jobName: '', ministry: '', department: '', allocation: '', dateReq: '', ref: '', assign: '' });
-  };
+  setEditingId(null);
+  setFormData({
+    jobName: '', ministry: 'Finance', department: 'Procurement', division: 'Administration',
+    allocation: '', dateReq: '', ref: '', institute: ''
+  });
+};
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -161,49 +176,144 @@ const AdminDashboard = ({ isDark }) => {
               <div className="field-card">
                 <div className="vertical-form" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                   <div className="input-row-group">
-                    <label>Job Name</label>
-                    <input name="jobName" value={formData.jobName} onChange={handleInputChange} className="input-field" />
-                  </div>
+  
+  <label>Division <span style={{ color: "red" }}>*</span></label>
+  <select
+    name="division"
+    value={formData.division}
+    onChange={handleInputChange}
+    className="job-select-dropdown" required 
+  >
+    
+    <option value="Administration">Administration</option>
+    <option value="Finance">Finance</option>
+    <option value="Engineering">Engineering</option>
+    <option value="Procurement">Procurement</option>
+    <option value="Human Resources">Human Resources</option>
+    <option value="Information Technology">Information Technology</option>
+    <option value="Planning & Development">Planning & Development</option>
+    <option value="Operations">Operations</option>
+  </select>
+</div>
+
+<div className="form-row">
+  <div className="input-row-group">
+    <label>Job Name<span style={{ color: "red" }}>*</span></label>
+    <input
+      name="jobName"
+      value={formData.jobName}
+      onChange={handleInputChange}
+      className="input-field" required 
+    />
+  </div>
+
+  <div className="input-row-group">
+    <label>Ministry <span style={{ color: "red" }}>*</span></label>
+    <select
+      name="ministry"
+      value={formData.ministry}
+      onChange={handleInputChange}
+      className="job-select-dropdown"
+      required
+    >
+      <option value="">Select Ministry</option>
+      <option value="Finance">Finance</option>
+      <option value="Education">Education</option>
+      <option value="Health">Health</option>
+    </select>
+  </div>
+</div>
+
+                <div className="form-row">
                   <div className="input-row-group">
-                    <label>Ministry</label>
-                    <select name="ministry" value={formData.ministry} onChange={handleInputChange} className="job-select-dropdown">
-                      <option value="">Select Ministry</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Education">Education</option>
-                      <option value="Health">Health</option>
-                    </select>
-                  </div>
-                  <div className="input-row-group">
-                    <label>Department</label>
-                    <select name="department" value={formData.department} onChange={handleInputChange} className="job-select-dropdown">
+                    <label>Department <span style={{ color: "red" }}>*</span></label>
+                    <select name="department" value={formData.department} onChange={handleInputChange} className="job-select-dropdown" required>
                       <option value="">Select Department</option>
                       <option value="Procurement">Procurement</option>
                       <option value="Engineering">Engineering</option>
                     </select>
                   </div>
                   <div className="input-row-group">
-                    <label>Allocation (Rs.)</label>
-                    <input name="allocation" type="number" value={formData.allocation} onChange={handleInputChange} className="input-field" />
+                    <label>Institute </label>
+                    <input
+                      name="institute"
+                      value={formData.institute}
+                      onChange={handleInputChange}
+                      className="input-field" 
+                    />
                   </div>
+                  </div>
+                  <div className="form-row">
                   <div className="input-row-group">
-                    <label>Date of Request</label>
-                    <input name="dateReq" type="date" value={formData.dateReq} onChange={handleInputChange} className="input-field" />
-                  </div>
+  <label>
+    Allocation (Rs.) <span style={{ color: "red" }}>*</span>
+  </label>
+
+  <input
+    name="allocation"
+    value={formData.allocation}
+    onChange={(e) => {
+      let value = e.target.value;
+
+      // remove commas first
+      value = value.replace(/,/g, "");
+
+      // allow only numbers + decimal
+      if (!/^\d*\.?\d*$/.test(value)) return;
+
+      handleInputChange({
+        target: {
+          name: "allocation",
+          value,
+        },
+      });
+    }}
+    onBlur={(e) => {
+      let value = parseFloat(e.target.value);
+      if (!isNaN(value)) {
+        handleInputChange({
+          target: {
+            name: "allocation",
+            value: value.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }),
+          },
+        });
+      }
+    }}
+    className="input-field"
+  />
+</div>
                   <div className="input-row-group">
-                    <label>Request Letter Reference</label>
-                    <input name="ref" value={formData.ref} onChange={handleInputChange} className="input-field" />
+                    <label>Date of Request <span style={{ color: "red" }}>*</span></label>
+                    <input name="dateReq" type="date" value={formData.dateReq} onChange={handleInputChange} className="input-field" required/>
                   </div>
+                  </div>
+
+                  <div className="form-row">
                   <div className="input-row-group">
-                    <label>Job Assign (Name of Tech. Officer)</label>
-                    <input name="assign" value={formData.assign} onChange={handleInputChange} className="input-field" />
+                    <label>Request Letter Reference<span style={{ color: "red" }}>*</span></label>
+                    <input name="ref" value={formData.ref} onChange={handleInputChange} className="input-field" required />
                   </div>
+                  
+                </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                  <button className="save-btn" onClick={handleAddJob} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button
+                    className="save-btn"
+                    onClick={handleAddJob}
+                    disabled={!isFormValid()}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                      opacity: isFormValid() ? 1 : 0.4,
+                      cursor: isFormValid() ? 'pointer' : 'not-allowed',
+                    }}
+                  >
                     <Save size={16} /> {editingId ? 'Update' : 'OK'}
                   </button>
                   <button className="cancel-btn" onClick={handleCancel} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <X size={16} /> Cancel
+                    <X size={16} /> Canceln
                   </button>
                 </div>
 
@@ -212,25 +322,30 @@ const AdminDashboard = ({ isDark }) => {
                   <table className="project-table">
                     <thead>
                       <tr>
-                        <th>Job No</th><th>Job Name</th><th>Ministry</th><th>Dept</th><th>Date</th><th>Allocation</th><th>Assignee</th><th>Actions</th>
+                        <th>Job No</th><th>Division</th><th>Job Name</th><th>Ministry</th><th>Department</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {jobs.map((j) => (
                         <tr key={j.id}>
                           <td className="font-mono text-cyan-500">{j.jobNo}</td>
+                          <td>{j.division}</td>
                           <td className="font-bold">{j.jobName}</td>
                           <td>{j.ministry}</td>
                           <td>{j.department}</td>
                           <td>{j.dateReq}</td>
                           <td className="font-bold">{j.allocation}</td>
-                          <td>{j.assign}</td>
-                          <td>
+                          <td>{j.remark}</td>
+                          <td>{j.submitDate}</td>
+                          
+                          <td>{j.action}
+                          
                             <div style={{ display: 'flex', gap: '8px' }}>
                               <button onClick={() => handleEditJob(j)} style={{ background: '#f0f0f0', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}><Edit size={16} /></button>
                               <button onClick={() => handleDeleteJob(j.id)} style={{ background: '#fee2e2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}><Trash2 size={16} /></button>
                             </div>
                           </td>
+                          <td>{j.status}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -272,8 +387,17 @@ const AdminDashboard = ({ isDark }) => {
                   </div>
                   
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                    <button className="confirm-btn" onClick={handleConfirmProfile} style={{ padding: '10px 20px', background: 'purple', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                      Confirm
+                    <button
+                      className="save-btn"
+                      onClick={handleAddJob}
+                      disabled={!isFormValid()}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        opacity: isFormValid() ? 1 : 0.4,
+                        cursor: isFormValid() ? 'pointer' : 'not-allowed',
+                      }}
+>
+                      <Save size={16} /> {editingId ? 'Update' : 'OK'}
                     </button>
                     <button className="cancel-btn" onClick={handleCancelProfile} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                       Cancel
