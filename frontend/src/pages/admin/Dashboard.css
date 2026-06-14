@@ -4,19 +4,12 @@
   min-height: 100vh;
   background-color: #fafbfc;
   font-family: 'Segoe UI', sans-serif;
+  position: relative;
+  overflow-x: hidden;
 }
 
-.admin-dashboard-layout,
-.sidebar {
+.admin-dashboard-layout {
   height: 100vh;
-}
-
-.nav-links {
-  flex-grow: 1;
-}
-
-.logout-btn {
-  margin-top: auto !important;
 }
 
 /* Sidebar Styles */
@@ -27,6 +20,21 @@
   padding: 40px 20px;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  position: fixed; /* Absolute alignment anchors */
+  top: 0;
+  left: 0;
+  z-index: 100;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar Collapse Control States */
+.sidebar.sidebar-open {
+  transform: translateX(0);
+}
+
+.sidebar.sidebar-closed {
+  transform: translateX(-100%);
 }
 
 .user-profile {
@@ -56,6 +64,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-grow: 1;
 }
 
 .nav-links button {
@@ -70,6 +79,8 @@
   font-weight: 600;
   color: #475569;
   transition: all 0.2s;
+  width: 100%;
+  text-align: left;
 }
 
 .nav-links button.active {
@@ -77,17 +88,79 @@
   color: #0284c7;
 }
 
-/* Main Content Styles */
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: none;
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  margin-top: auto !important; /* Forces logout button to stay anchored to the bottom */
+}
+.logout-btn:hover {
+  background: #fecaca !important;
+}
+
+
+
+/* ========================================================
+   Main Content Workspace Styles — ADAPTIVE LAYOUT FIX
+   ======================================================== */
 .main-content {
   flex: 1;
   padding: 40px;
+  margin-left: 0;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
+/* Content adjustment state when sidebar is open */
+.main-content.content-shifted-open {
+  margin-left: 280px;
+}
+
+/* Leaves clear space for the floating menu button when sidebar is closed */
+.main-content.content-shifted-closed {
+  padding-left: 80px;
+}
+
+/* Floating Responsive Menu Trigger Button */
+.sidebar-toggle-menu-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 110;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.sidebar-toggle-menu-btn:hover {
+  background: #f8fafc;
+  color: #0284c7;
+}
+
+/* Pushes Header Title slightly to the right to prevent overlapping with the fixed toggle button */
 .content-header {
   display: flex;
   align-items: center;
   gap: 15px;
   margin-bottom: 30px;
+  padding-left: 55px; 
 }
 
 .back-btn {
@@ -104,6 +177,10 @@
   padding: 30px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
+  max-width: 1200px; /* Prevents the content grids from looking overly stretched on widescreen viewports */
+  width: 100%;
+  box-sizing: border-box;
+  transition: max-width 0.3s ease;
 }
 
 /* New Job Tab Grid */
@@ -118,6 +195,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  max-width: 600px; /* Keeps form components neat and compact */
 }
 
 .input-group {
@@ -130,6 +208,8 @@
   padding: 10px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
 }
 
 /* Buttons */
@@ -171,7 +251,7 @@
   background-color: #dc2626;
 }
 
-/* Table Styles - Added Feature */
+/* Table Styles */
 .job-table {
   width: 100%;
   border-collapse: collapse;
@@ -199,25 +279,23 @@
 }
 
 .action-btns { display: flex; gap: 8px; }
-.edit-btn { background: #dbeafe; color: #2563eb; border: none; padding: 6px; border-radius: 6px; cursor: pointer; }
-.delete-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px; border-radius: 6px; cursor: pointer; }
+.edit-btn { background: #dbeafe; color: #2563eb; border: none; padding: 6px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; }
+.delete-btn { background: #fee2e2; color: #dc2626; border: none; padding: 6px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; }
 .edit-btn:hover { background: #bfdbfe; }
 .delete-btn:hover { background: #fecaca; }
 
-.logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: none;
-  background: #fee2e2 !important;
-  color: #dc2626 !important;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  width: 100%;
-  margin-top: 20px;
+/* Responsive Adjustments */
+@media (max-width: 900px) {
+  .vertical-form {
+    grid-template-columns: 1fr; /* Switch automatically to single column if viewport changes space */
+  }
 }
-.logout-btn:hover {
-  background: #fecaca !important;
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 85px 20px 40px 20px !important;
+  }
+  .main-content.content-shifted-open {
+    margin-left: 0 !important;
+  }
 }

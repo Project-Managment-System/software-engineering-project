@@ -53,37 +53,9 @@ const UserDashboard = ({ isDark }) => {
               <h3>My Jobs</h3>
               {/* Sub-tab Navigation */}
               <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
-                <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Tracking & Estimation</button>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
+                <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
               </div>
-
-              {jobSubTab === 'tracking' && (
-                <>
-                  <table className="project-table">
-                    <thead><tr><th>No</th><th>Job No</th><th>Job Name</th><th>TO</th><th>All Cot</th><th>Date of register</th><th>Date of Site visit</th><th>Date of Estimation</th><th>Action</th></tr></thead>
-                    <tbody>
-                      {jobTrackingData.map((job) => (
-                        <tr key={job.jobNo}>
-                          <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.jobName}</td><td>{job.to}</td><td>{job.allCot}</td><td>{job.regDate}</td><td>{job.visitDate}</td><td>{job.estDate}</td>
-                          <td><button className="edit-btn" onClick={() => startEdit(job)}><Edit3 size={16} /> Edit</button></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {editingJob && (
-                    <div className="edit-section" style={{ marginTop: '20px', padding: '20px', background: '#f8fafc', borderRadius: '12px' }}>
-                      <h3>Update Job: {editForm.jobNo}</h3>
-                      <input value={editForm.jobName} onChange={(e) => setEditForm({...editForm, jobName: e.target.value})} placeholder="Job Name" />
-                      <input value={editForm.to} onChange={(e) => setEditForm({...editForm, to: e.target.value})} placeholder="TO" />
-                      <input value={editForm.allCot} onChange={(e) => setEditForm({...editForm, allCot: e.target.value})} placeholder="All Cot" />
-                      <input value={editForm.regDate} onChange={(e) => setEditForm({...editForm, regDate: e.target.value})} type="date" />
-                      <input value={editForm.visitDate} onChange={(e) => setEditForm({...editForm, visitDate: e.target.value})} type="date" />
-                      <input value={editForm.estDate} onChange={(e) => setEditForm({...editForm, estDate: e.target.value})} type="date" />
-                      <button className="confirm-btn" onClick={handleUpdate}><Save size={16} /> Update Changes</button>
-                    </div>
-                  )}
-                </>
-              )}
 
               {jobSubTab === 'approvals' && (
                 <table className="project-table">
@@ -121,6 +93,36 @@ const UserDashboard = ({ isDark }) => {
             </div>
           )}
 
+
+              {jobSubTab === 'tracking' && (
+                <>
+                  <table className="project-table">
+                    <thead><tr><th>No</th><th>Job No</th><th>Job Name</th><th>TO</th><th>All Cot</th><th>Date of register</th><th>Date of Site visit</th><th>Date of Estimation</th><th>Action</th></tr></thead>
+                    <tbody>
+                      {jobTrackingData.map((job) => (
+                        <tr key={job.jobNo}>
+                          <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.jobName}</td><td>{job.to}</td><td>{job.allCot}</td><td>{job.regDate}</td><td>{job.visitDate}</td><td>{job.estDate}</td>
+                          <td><button className="edit-btn" onClick={() => startEdit(job)}><Edit3 size={16} /> Edit</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {editingJob && (
+                    <div className="edit-section" style={{ marginTop: '20px', padding: '20px', background: '#f8fafc', borderRadius: '12px' }}>
+                      <h3>Update Job: {editForm.jobNo}</h3>
+                      <input value={editForm.jobName} onChange={(e) => setEditForm({...editForm, jobName: e.target.value})} placeholder="Job Name" />
+                      <input value={editForm.to} onChange={(e) => setEditForm({...editForm, to: e.target.value})} placeholder="TO" />
+                      <input value={editForm.allCot} onChange={(e) => setEditForm({...editForm, allCot: e.target.value})} placeholder="All Cot" />
+                      <input value={editForm.regDate} onChange={(e) => setEditForm({...editForm, regDate: e.target.value})} type="date" />
+                      <input value={editForm.visitDate} onChange={(e) => setEditForm({...editForm, visitDate: e.target.value})} type="date" />
+                      <input value={editForm.estDate} onChange={(e) => setEditForm({...editForm, estDate: e.target.value})} type="date" />
+                      <button className="confirm-btn" onClick={handleUpdate}><Save size={16} /> Update Changes</button>
+                    </div>
+                  )}
+                </>
+              )}
+
+              
           {activeTab === 'settings' && (
             <div className="settings-section" style={{ padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
               <h3>System Settings</h3>
