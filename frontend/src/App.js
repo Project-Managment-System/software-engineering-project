@@ -1,64 +1,45 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import './App.css';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-// Components
-import Header from './components/Header/Header';
-import Footer from './components/Footer/Footer';
+// Landing Portal
 import Portal from './pages/Portal';
+import DivisionLogin from './pages/DivisionLogin';
+import HeadOfficeLogin from './pages/HeadOfficeLogin'; // Added Head Office Login
 
-// Auth & Dashboard Imports
-import AdminLogin from './pages/admin/Login';
-import AdminRegister from './pages/admin/Register';
+// Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
-import ForgotPassword from './pages/user/ForgotPassword'; // <--- Import your new page
-import AdminForgotPassword from './pages/admin/AdminForgotPassword'; 
-import { EngineerForgotPassword } from './pages/engineer/EngineerForgotPassword';
+import AdminLogin from './pages/admin/Login';
 
+// Engineer Pages
+import EngineerDashboard from './pages/engineer/Dashboard'; 
 import EngineerLogin from './pages/engineer/Login';
-import EngineerRegister from './pages/engineer/Register';
-import EngineerDashboard from './pages/engineer/Dashboard';
-import UserLogin from './pages/user/Login';
-import UserRegister from './pages/user/Register';
+
+// User Pages
 import UserDashboard from './pages/user/Dashboard';
-
-
-const MinimalLayout = () => <div className="min-h-screen bg-slate-50 flex items-center justify-center"><Outlet /></div>;
-const DashboardLayout = () => <div className="Dashboard-Root min-h-screen"><Outlet /></div>;
+import UserLogin from './pages/user/Login';
 
 function App() {
-  const [isDark, setIsDark] = useState(true);
-
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Portal isDark={isDark} setIsDark={setIsDark} />} />
-
-        {/* --- AUTH ROUTES (Minimal) --- */}
-        <Route element={<MinimalLayout />}>
-          <Route path="/user/login" element={<UserLogin />} />
-          <Route path="/user/register" element={<UserRegister />} />
-          <Route path="/user/forgot-password" element={<ForgotPassword />} /> {/* Added Route */}
-          
-          <Route path="/engineer/login" element={<EngineerLogin />} />
-          <Route path="/engineer/register" element={<EngineerRegister />} />
-          <Route path="/engineer/forgot-password" element={<EngineerForgotPassword />} />
-          <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/register" element={<AdminRegister />} />  
-        </Route>
-
-        {/* --- DASHBOARD ROUTES --- */}
-        <Route element={<DashboardLayout />}>
-          <Route path="/user/dashboard" element={<UserDashboard />} />
-          <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          
-        </Route>
-
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Main Entry Points */}
+        <Route path="/" element={<Portal />} />
+        <Route path="/division/login" element={<DivisionLogin />} />
+        <Route path="/headoffice/login" element={<HeadOfficeLogin />} /> {/* Added Route */}
+        
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        
+        {/* Engineer Routes */}
+        <Route path="/engineer/login" element={<EngineerLogin />} />
+        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
+        
+        {/* User Routes */}
+        <Route path="/user/login" element={<UserLogin />} />
+        <Route path="/user/dashboard" element={<UserDashboard />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 

@@ -2,14 +2,13 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-// 1. IMPORT DATABASE CONNECTION
-// This matches your path: backend/config/db.js
+// 1. DATABASE CONNECTION
 const connectDB = require('./config/db'); 
 
 const app = express();
 
 // 2. MIDDLEWARE
-// express.json() MUST be above your routes to parse the registration data
+// Ensure these are placed before your routes to parse incoming JSON correctly
 app.use(express.json());
 app.use(cors());
 
@@ -17,12 +16,14 @@ app.use(cors());
 connectDB();
 
 // 4. DEFINE ROUTES
-// This links to your backend/routes/authRoutes.js
-// Your registration URL will be: http://127.0.0.1:5000/api/auth/enroll
+// Auth Routes
 app.use('/api/auth', require('./routes/authRoutes')); 
 
+// Project Routes
+// All routes defined in projectRoutes.js are now prefixed with /api/projects
+app.use('/api/projects', require('./routes/projectRoutes')); 
+
 // 5. GLOBAL ERROR HANDLING
-// This catches any errors passed via 'next(err)' in your controllers
 app.use((err, req, res, next) => {
   console.error("[SYSTEM ERROR]:", err.stack);
   res.status(err.status || 500).json({
@@ -30,11 +31,17 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ... existing imports ...
+app.use('/api/projects', require('./routes/projectRoutes')); 
+
+// ADD THIS LINE:
+app.use('/api/users', require('./routes/userRoutes'));
+
 // 6. INITIALIZE SERVER
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log("------------------------------------------");
   console.log(`[CORE]: SERVER_ACTIVE_ON_PORT_${PORT}`);
-  console.log(`[DEBUG]: Local access: http://127.0.0.1:${PORT}`);
+  console.log(`[CORE]: API_PROJECTS_READY_AT /api/projects`);
   console.log("------------------------------------------");
 });

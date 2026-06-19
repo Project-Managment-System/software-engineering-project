@@ -14,10 +14,6 @@ export default function EngineerLogin() {
     try {
       const response = await loginUser({ email, password });
       if (response.data.status === 'LOGIN_SUCCESS') {
-        if (response.data.role !== 'engineer') {
-          alert('Access Denied: This portal is restricted to Field Engineers.');
-          return; // Blocks unauthorized access
-        }
         localStorage.setItem('userId', response.data.userId);
         navigate('/engineer/dashboard');
       }

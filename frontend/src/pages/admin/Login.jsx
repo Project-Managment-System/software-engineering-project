@@ -2,29 +2,22 @@ import React, { useState } from 'react';
 import { Lock, User, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { loginUser } from '../../api/api';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
-    try {
-      const response = await loginUser({ email, password });
-      
-      if (response.data.status === 'LOGIN_SUCCESS') {
-        if (response.data.role !== 'admin') {
-          alert('Access Denied: This portal is strictly restricted to Administrators.');
-          return; 
-        }
-// Only save session and navigate if they are verified admins
-        localStorage.setItem('userId', response.data.userId);
-        navigate('/admin/dashboard');
-      }
-    } catch (error) {
-      alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');
+
+    // Strict validation: Only these exact credentials allow access
+    if (email === 'cl0001' && password === 'cl1') {
+      localStorage.setItem('isAdmin', 'true');
+      navigate('/admin/dashboard');
+    } else {
+      // Reject any other combination
+      alert("Invalid credentials. Access Denied.");
     }
   };
 
@@ -34,7 +27,6 @@ export default function AdminLogin() {
       animate={{ opacity: 1, scale: 1 }}
       className="w-full max-w-md bg-white p-10 rounded-3xl shadow-xl border border-slate-200"
     >
-      {/* Back Button */}
       <button 
         onClick={() => navigate('/')}
         className="flex items-center gap-2 text-slate-500 hover:text-blue-600 transition-colors mb-8 font-bold text-base"
@@ -50,18 +42,18 @@ export default function AdminLogin() {
       </div>
 
       <form className="space-y-6" onSubmit={handleLogin}>
-        {/* Email Field */}
+        {/* Username/Email Field */}
         <div>
-          <label className="block text-base font-bold text-slate-700 mb-2">EMAIL</label>
+          <label className="block text-base font-bold text-slate-700 mb-2">USERNAME</label>
           <div className="relative">
             <User className="absolute left-4 top-4 text-slate-400" size={20} />
             <input
-              type="email"
+              type="text" // Changed from 'email' to 'text' to accept 'cl0001'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 bg-slate-50 focus:border-blue-500 outline-none text-base"
-              placeholder="Enter admin email"
+              placeholder="Enter username"
             />
           </div>
         </div>
@@ -80,12 +72,6 @@ export default function AdminLogin() {
               placeholder="••••••••"
             />
           </div>
-          {/* Forgot Password Link */}
-          <div className="text-right mt-3">
-            <Link to="/admin/forgot-password" className="text-sm font-bold text-blue-600 hover:underline">
-              Forgot Password?
-            </Link>
-          </div>
         </div>
 
         <button 
@@ -96,7 +82,6 @@ export default function AdminLogin() {
         </button>
       </form>
 
-      {/* Admin Notice */}
       <p className="mt-8 text-center text-base text-slate-500 font-medium">
         Restricted access for authorized personnel only.
       </p>
