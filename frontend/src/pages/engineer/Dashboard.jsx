@@ -27,6 +27,8 @@ const UserDashboard = ({ isDark }) => {
     employeeId: '', firstName: '', secondName: '', email: '', phoneNum: '', nationalId: '', address: '', password: '', division: ''
   });
 
+  const [userDivision, setUserDivision] = useState('');
+
 const fetchData = async () => {
   try {
     const division = localStorage.getItem('userDivision');
@@ -51,9 +53,10 @@ const fetchUsers = async () => {
 };
 
   useEffect(() => { 
-      fetchData(); 
-      fetchUsers(); 
-  }, []);
+    setUserDivision(localStorage.getItem('userDivision') || '');
+    fetchData(); 
+    fetchUsers(); 
+}, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -141,10 +144,13 @@ const handleUndoApproval = async (jobNo) => {
         </aside>
 
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
+          <h2 className="division-page-title" style={{ marginBottom: '20px', fontWeight: '800' }}>
+            {userDivision ? `${userDivision} Division` : 'Division Not Set'}
+          </h2>
+
           {activeTab === 'my-jobs' && (
             <>
-              <h3>My Jobs</h3>
-              <select onChange={(e) => setFilterDivision(e.target.value)} style={{marginBottom: '10px', padding: '5px'}}></select>
+              
 
               <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
