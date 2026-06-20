@@ -4,6 +4,45 @@ import { Save, Briefcase, RefreshCw, User, Settings, X, Edit, Trash2, LogOut, Ed
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
+const MINISTRY_DEPARTMENTS = {
+  'CHIEF MINISTRY': [
+    'DEPARTMENT OF EDUCATION',
+    'DEPARTMENT OF CULTURAL AFFAIR',
+    'DEPARTMENT OF SPORTS-NCP',
+  ],
+  'MINISTRY OF AGRICULTURE': [
+    'DEPARTMENT OF AGRICULTURE',
+    'DEPARTMENT OF ANIMAL PRODUCTION & HEALTH',
+    'DEPARTMENT OF IRRIGATION DEPARTMENT',
+  ],
+  'MINISTRY OF HEALTH': [
+    'DEPARTMENT OF HEALTH',
+    'DEPARTMENT OF AYURVEDA',
+    'DEPARTMENT OF PROBATION & CHILD CARE',
+    'DEPARTMENT OF SOCIAL WELFARE',
+  ],
+  'MINISTRY OF CO-OPERATIVE': [
+    'DEPARTMENT OF CO-OPERATIVE DEVELOPMENT',
+    'DEPARTMENT OF INDUSTRIAL DEVELOPMENT',
+    'PROVINCIAL MOTOR VEHICLE TRANSPORT DEPARTMENT',
+    'ROAD PASSENGER TRANSPORT SERVICE AUTHORITY',
+  ],
+  'MINISTRY OF LOCAL GOVERNMENT': [
+    'DEPARTMENT OF LOCAL GOVERNMENT',
+    'DEPARTMENT OF RURAL DEVELOPMENT',
+    'PROVINCIAL ROAD DEVELOPMENT AUTHORITY',
+  ],
+  'OTHER': [
+    'CHIEF SECRETARY OFFICE',
+    'DEPARTMENT OF TREASURY',
+    'DEPARTMENT OF PLANNING',
+    'DEPARTMENT OF PROVINCIAL ENGINEERING',
+    'INTERNAL AUDIT & INVESTIGATION',
+    'DEPARTMENT OF PROVINCIAL REVENUE',
+    'DEPARTMENT OF OTHER',
+  ],
+};
+
 const AdminDashboard = ({ isDark }) => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
@@ -15,6 +54,12 @@ const AdminDashboard = ({ isDark }) => {
     jobName: '', ministry: 'Finance', department: 'Procurement', division: 'Administration',
     allocation: '', dateReq: '', ref: '', institute: ''
   });
+
+  const [filters, setFilters] = useState({ department: '', ministry: '', division: '' });
+
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
 
   // FIXED: Moved fetchData outside of useEffect so it can be called by handleDeleteJob
   const fetchData = async () => { 
@@ -41,8 +86,14 @@ const AdminDashboard = ({ isDark }) => {
   const [editPhoneNo, setEditPhoneNo] = useState('');
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const { name, value } = e.target;
+  if (name === 'ministry') {
+    const firstDept = MINISTRY_DEPARTMENTS[value]?.[0] || '';
+    setFormData({ ...formData, ministry: value, department: firstDept });
+  } else {
+    setFormData({ ...formData, [name]: value });
+  }
+};
 
   const handleProfileTabOpen = () => {
     setEditProfileName(profileName);
@@ -143,6 +194,27 @@ const AdminDashboard = ({ isDark }) => {
   };
   
   
+  const getUniqueValues = (key) => {
+    const values = jobs.map((j) => j[key]).filter((v) => v !== undefined && v !== null && v !== '');
+    return [...new Set(values)].sort();
+  };
+
+  const departmentOptions = getUniqueValues('department');
+  const ministryOptions = getUniqueValues('ministry');
+  const divisionOptions = getUniqueValues('division');
+
+  const filteredJobs = jobs.filter((j) => {
+    if (filters.department && j.department !== filters.department) return false;
+    if (filters.ministry && j.ministry !== filters.ministry) return false;
+    if (filters.division && j.division !== filters.division) return false;
+    return true;
+  });
+
+  const handleClearFilters = () => {
+    setFilters({ department: '', ministry: '', division: '' });
+  };
+  const availableDepartments = MINISTRY_DEPARTMENTS[formData.ministry] || [];
+
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
       <button
@@ -265,37 +337,13 @@ const AdminDashboard = ({ isDark }) => {
                     <div className="input-row-group">
                       <label>Department <span style={{ color: "red" }}>*</span></label>
                       <select name="department" value={formData.department} onChange={handleInputChange} className="job-select-dropdown" required>
-                        
-                        <option value="Dept. Of EDUCATION">Dept. of EDUCATION</option>
-                        <option value="Dept. Of CULTURAL AFFAIR">Dept. of CULTURAL AFFAIR</option>
-                        <option value="Dept. of SPORTS">Dept. of SPORTS</option>
-                        
-                        <option value="Dept. of AGRICULTURE">Dept. of AGRICULTURE</option>
-                        <option value="Dept. of ANIMAL PRODUCTION & HEALTH">Dept. of ANIMAL PRODUCTION & HEALTH</option>
-                        <option value="Dept. Of IRRIGATION">Dept. Of IRRIGATION</option>
-
-                        <option value="Dept. Of HEALTH">Dept. Of HEALTH</option>
-                        <option value="Dept. Of AYURVEDA">Dept. Of AYURVEDA</option>
-                        <option value="Dept. Of PROBATION & CHILD CARE">Dept. Of PROBATION & CHILD CARE</option>
-                        <option value="Dept. Of SOCIAL WELFARE">Dept. Of SOCIAL WELFARE</option>
-
-                        <option value="Dept. Of CO-OPERATIVE DEVELOPMENT">Dept. Of CO-OPERATIVE DEVELOPMENT</option>
-                        <option value="Dept. Of INDUSTRIAL DEVELOPMENT">Dept. Of INDUSTRIAL DEVELOPMENT</option>
-                        <option value="Dept. Of MOTOR VEHICLE TRSANSPORT">Dept. Of MOTOR VEHICLE TRANSPORT</option>
-                        <option value="ROAD PASSENGER TRANSPORT SERVICE AUTHORITY">ROAD PASSENGER TRANSPORT SERVICE AUTHORITY</option>
-                        
-                        <option value="Dept. Of LOCAL GOVERNMENT">Dept. Of LOCAL GOVERNMENT</option>
-                        <option value="Dept. Of RURAL DEVELOPMENT">Dept. Of RURAL DEVELOPMENT</option>
-                        <option value="ROAD DEVELOPMENT AUTHORITY">ROAD DEVELOPMENT AUTHORITY</option>
-                        
-                        <option value="CHIEF SECRETARY OFFICE">CHIEF SECRETARY OFFICE</option>
-                        <option value="Dept. Of TREASURY">Dept. Of TREASURY</option>
-                        <option value="Dept. Of PLANNING">Dept. Of PLANNING</option>
-                        <option value="Dept. Of ENGINEERING">Dept. Of ENGINEERING</option>
-                        <option value="INTERNAL AUDIT & INVESTIGATION">INTERNAL AUDIT & INVESTIGATION</option>
-                        <option value="Dept. Of REVENUE">Dept. of REVENUE</option>
-                        <option value="Dept. Of OTHER">OTHER</option>
-
+                        {availableDepartments.length === 0 ? (
+                          <option value="">Select a ministry first</option>
+                        ) : (
+                          availableDepartments.map((dept) => (
+                            <option key={dept} value={dept}>{dept}</option>
+                          ))
+                        )}
                       </select>
                     </div>
                     <div className="input-row-group">
@@ -381,6 +429,67 @@ const AdminDashboard = ({ isDark }) => {
 
               <div className="recent-jobs-card">
                 <h3 className="recent-jobs-title">Recent Jobs</h3>
+
+                <div
+                  className="table-filters-row"
+                  style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px', alignItems: 'flex-end' }}
+                >
+                  <div className="input-row-group" style={{ minWidth: '160px' }}>
+                    <label>Filter by Department</label>
+                    <select
+                      name="department"
+                      value={filters.department}
+                      onChange={handleFilterChange}
+                      className="input-field"
+                    >
+                      <option value="">All Departments</option>
+                      {departmentOptions.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="input-row-group" style={{ minWidth: '160px' }}>
+                    <label>Filter by Ministry</label>
+                    <select
+                      name="ministry"
+                      value={filters.ministry}
+                      onChange={handleFilterChange}
+                      className="input-field"
+                    >
+                      <option value="">All Ministries</option>
+                      {ministryOptions.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="input-row-group" style={{ minWidth: '160px' }}>
+                    <label>Filter by Division</label>
+                    <select
+                      name="division"
+                      value={filters.division}
+                      onChange={handleFilterChange}
+                      className="input-field"
+                    >
+                      <option value="">All Divisions</option>
+                      {divisionOptions.map((dv) => (
+                        <option key={dv} value={dv}>{dv}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {(filters.department || filters.ministry || filters.division) && (
+                    <button
+                      className="cancel-btn"
+                      onClick={handleClearFilters}
+                      style={{ padding: '8px 16px', fontSize: '0.85rem', height: 'fit-content' }}
+                    >
+                      <X size={14} /> Clear Filters
+                    </button>
+                  )}
+                </div>
+
                 <div className="table-scroll-wrapper">
                   <table className="project-table">
                     <thead>
@@ -389,14 +498,14 @@ const AdminDashboard = ({ isDark }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {jobs.length === 0 ? (
+                      {filteredJobs.length === 0 ? (
                         <tr>
                           <td colSpan={12} style={{ textAlign: 'center', color: '#94a3b8', padding: '30px' }}>
-                            No jobs added yet.
+                            {jobs.length === 0 ? 'No jobs added yet.' : 'No jobs match the selected filters.'}
                           </td>
                         </tr>
                       ) : (
-                        jobs.map((j) => (
+                        filteredJobs.map((j) => (
                           <tr key={j._id}>
                             <td className="font-mono text-cyan-500">{j.jobNo}</td>
                             <td>{j.division}</td>
