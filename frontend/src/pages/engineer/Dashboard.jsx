@@ -178,22 +178,18 @@ const handleSaveUser = async (e) => {
 
           {activeTab === 'my-jobs' && (
             <>
-              
-
-              <h3>My Jobs</h3>
-              <select onChange={(e) => setFilterDivision(e.target.value)} style={{marginBottom: '10px', padding: '5px'}}><option value="All">All</option></select>
-              <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
+                <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
                 <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
               </div>
 
               {jobSubTab === 'approvals' && (
                 <table className="project-table">
-                  <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Date of request</th><th>Allocation</th><th>Approval</th></tr></thead>
+                  <thead><tr><th>No</th><th>Job No</th><th>Job Name</th><th>Date of request</th><th>Allocation</th><th>Approval</th></tr></thead>
                   <tbody>
                     {approvalData.filter(j => filterDivision === 'All' || j.division === filterDivision).map((job) => (
                       <tr key={job.jobNo}>
-                        <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.division}</td><td>{job.jobName}</td><td>{formatDate(job.dateReq)}</td><td>{job.allocation}</td>
+                        <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.jobName}</td><td>{formatDate(job.dateReq)}</td><td>{job.allocation}</td>
                         <td>
                           {job.status === 'Pending' ? (
                             <>
