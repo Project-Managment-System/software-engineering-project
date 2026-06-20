@@ -38,19 +38,11 @@ function App() {
         
         {/* Engineer Routes */}
         <Route path="/engineer/login" element={<EngineerLogin />} />
-        <Route path="/engineer/dashboard" element={
-          <ProtectedRoute>
-            <EngineerDashboard />
-          </ProtectedRoute>
-        } />
+        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />       } />
         
         {/* User Routes */}
         <Route path="/user/login" element={<UserLogin />} />
-        <Route path="/user/dashboard" element={
-          <ProtectedRoute>
-            <UserDashboard />
-          </ProtectedRoute>
-        } />
+        <Route path="/user/dashboard" element={<UserDashboard />} />
       </Routes>
     </BrowserRouter>
   );

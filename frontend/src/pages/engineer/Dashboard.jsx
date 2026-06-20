@@ -22,23 +22,7 @@ const UserDashboard = ({ isDark }) => {
   const [userFormData, setUserFormData] = useState({
     employeeId: '', firstName: '', secondName: '', email: '', password: '', division: ''
   });
-
   const [userDivision, setUserDivision] = useState('');
-
-const fetchData = async () => {
-  try {
-    const division = localStorage.getItem('userDivision');
-    const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
-    
-    const data = res.data.map((item, index) => ({
-      ...item,
-      sNo: index + 1,
-      assignee: item.assignee || '' // Ensure assignee field exists
-    }));
-    setApprovalData(data);
-    setJobTrackingData(data);
-  } catch (err) { console.error("Error fetching data:", err); }
-};
   // User Edit States
   const [editingUser, setEditingUser] = useState(null);
   const [editUserForm, setEditUserForm] = useState({});
