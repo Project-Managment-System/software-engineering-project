@@ -26,80 +26,48 @@ export default function DivisionLogin() {
   };
 
   // Add this mapping
-const divisionMap = {
-  'enae1': 'Anuradhapura-East',
-  'enaw1': 'Anuradhapura-West',
-  'enme1': 'Medawachchiya',
-  'enmi1': 'Mihinthale',
-  'enth1': 'Thambuththegama',
-  'enke1': 'Kekirawa',
-  'enpo1': 'Polonnaruwa',
-  'enhi1': 'Higurakgoda'
-};
-
-
   const divisionMap = {
-    'enae1': 'Anuradhapura-East', 'enaw1': 'Anuradhapura-West',
-    'enme1': 'Mihinthale', 'enth1': 'Thambuththegama',
-    'enke1': 'Kekirawa', 'enpo1': 'Polonnaruwa', 'enhi1': 'Higurakgoda'
+    'enae1': 'Anuradhapura-East',
+    'enaw1': 'Anuradhapura-West',
+    'enme1': 'Medawachchiya',
+    'enmi1': 'Mihinthale',
+    'enth1': 'Thambuththegama',
+    'enke1': 'Kekirawa',
+    'enpo1': 'Polonnaruwa',
+    'enhi1': 'Higurakgoda'
   };
 
   const handleLogin = (e) => {
-  e.preventDefault();
-  const prefix = username.substring(0, 2).toLowerCase();
+    e.preventDefault();
+    const prefix = username.substring(0, 2).toLowerCase();
 
-  // 1. Admin Check
-  if (prefix === 'cl') {
-    if (username === 'cl0001' && password === 'cl1') {
-      localStorage.setItem('isAdmin', 'true');
-      navigate('/admin/dashboard');
-    } else {
-      alert('Invalid Admin credentials. Access Denied.');
-    }
-    return;
-  }
-
-  // 2. Engineer Check (Strict Validation)
-  if (prefix === 'en') {
-    if (engineerCredentials[username] === password) {
-      localStorage.setItem('userDivision', divisionMap[username]); // Save division
-      navigate('/engineer/dashboard');
-    } else {
-      alert('Invalid Engineering credentials. Access Denied.');
-    }
-    return;
-  }
-
-  // 3. Other Portals
-  switch (prefix) {
-    case 'us': navigate('/user/dashboard'); break;
-    case 'da': alert('Divisional Assistant portal is under future development.'); break;
-    case 'sa': alert('SuperAdmin portal is under future development.'); break;
-    default: alert('Invalid username or credentials. Please check your input.');
-  }
     // 1. Admin Check
     if (prefix === 'cl') {
       if (username === 'cl0001' && password === 'cl1') {
         localStorage.setItem('isAdmin', 'true');
+        localStorage.setItem('isAuthenticated', 'true');
         navigate('/admin/dashboard');
       } else {
-        alert('Invalid Admin credentials.');
+        alert('Invalid Admin credentials. Access Denied.');
       }
       return;
     }
 
-    // 2. Engineer Check
+    // 2. Engineer Check (Strict Validation)
     if (prefix === 'en') {
       if (engineerCredentials[username] === password) {
-        localStorage.setItem('userDivision', divisionMap[username]);
+        localStorage.setItem('isAuthenticated', 'true'); // Added to pass ProtectedRoute
+        localStorage.setItem('userDivision', divisionMap[username]); // Save division
         navigate('/engineer/dashboard');
       } else {
-        alert('Invalid Engineering credentials.');
+        alert('Invalid Engineering credentials. Access Denied.');
       }
       return;
     }
+
     console.log("Attempting Login for:", { username, password });
     console.log("Checking against these users:", allUsers);
+
     // 3. User Check (Dynamic - matches what you add in Engineer Dashboard)
     const authenticatedUser = allUsers.find(
       (u) => u.employeeId === username && u.password === password
@@ -114,11 +82,12 @@ const divisionMap = {
       return;
     }
 
-    // 4. Default / Other (Moved inside handleLogin)
-    switch(prefix) {
+    // 4. Default / Other Portals fallback
+    switch (prefix) {
+      case 'us': navigate('/user/dashboard'); break;
       case 'da': alert('Divisional Assistant portal is under future development.'); break;
       case 'sa': alert('SuperAdmin portal is under future development.'); break;
-      default: alert('Invalid username format or credentials.');
+      default: alert('Invalid username or credentials. Please check your input.');
     }
   };
 
