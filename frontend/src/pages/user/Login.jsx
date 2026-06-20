@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { Lock, User, ShieldCheck, ArrowLeft } from 'lucide-react';
+import { Lock, User, ShieldCheck, ArrowLeft, Hash } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { loginUser } from '../../api/api';
 
 export default function UserLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  // Changed state from 'email' to 'employeeId'
+  const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await loginUser({ email, password });
+      // Sending employeeId to your backend API
+      const response = await loginUser({ employeeId, password });
+      
       if (response.data.status === 'LOGIN_SUCCESS') {
         localStorage.setItem('userId', response.data.userId);
+        localStorage.setItem('employeeId', employeeId);
         navigate('/user/dashboard');
       }
     } catch (error) {
@@ -44,18 +48,18 @@ export default function UserLogin() {
       </div>
 
       <form className="space-y-6" onSubmit={handleLogin}>
-        {/* Email Field */}
+        {/* Employee ID Field */}
         <div>
-          <label className="block text-base font-bold text-slate-700 mb-2">EMAIL</label>
+          <label className="block text-base font-bold text-slate-700 mb-2">EMPLOYEE ID</label>
           <div className="relative">
-            <User className="absolute left-4 top-4 text-slate-400" size={20} />
+            <Hash className="absolute left-4 top-4 text-slate-400" size={20} />
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
               required
               className="w-full pl-12 pr-4 py-4 rounded-xl border border-slate-200 bg-slate-50 focus:border-purple-500 outline-none text-base"
-              placeholder="Enter email"
+              placeholder="Enter Employee ID"
             />
           </div>
         </div>
