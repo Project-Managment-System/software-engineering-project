@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, Lock, User, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Lock, User, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Component animation frames
@@ -37,28 +37,79 @@ const letterVariants = {
   }
 };
 
-export default function HeadOfficeLogin() {
+export default function DivisionLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    // Future: Add authentication logic here
-    console.log("Head Office Login Attempt:", username);
-    navigate('/headoffice/dashboard');
+  // Valid Engineering credentials (kept exactly as requested)
+  const engineerCredentials = {
+    'enae1': 'ae1',
+    'enaw1': 'aw1',
+    'enme1': 'me1',
+    'enmi1': 'mi1',
+    'enth1': 'th1',
+    'enke1': 'ke1',
+    'enpo1': 'po1',
+    'enhi1': 'hi1'
   };
 
-  const pageTitle = "HEAD OFFICE";
+  // Division map mapping (kept exactly as requested)
+  const divisionMap = {
+    'enae1': 'Anuradhapura-East',
+    'enaw1': 'Anuradhapura-West',
+    'enme1': 'Mihinthale',
+    'enth1': 'Thambuththegama',
+    'enke1': 'Kekirawa',
+    'enpo1': 'Polonnaruwa',
+    'enhi1': 'Higurakgoda'
+  };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const prefix = username.substring(0, 2).toLowerCase();
+
+    // 1. Admin Check
+    if (prefix === 'cl') {
+      if (username === 'cl0001' && password === 'cl1') {
+        localStorage.setItem('isAdmin', 'true');
+        navigate('/admin/dashboard');
+      } else {
+        alert('Invalid Admin credentials. Access Denied.');
+      }
+      return;
+    }
+
+    // 2. Engineer Check (Strict Validation fixed to execute safely without double execution loop)
+    if (prefix === 'en') {
+      if (engineerCredentials[username] === password) {
+        localStorage.setItem('userDivision', divisionMap[username]); // Save division
+        navigate('/engineer/dashboard');
+      } else {
+        alert('Invalid Engineering credentials. Access Denied.');
+      }
+      return;
+    }
+
+    // 3. Other Portals
+    switch(prefix) {
+      case 'us': navigate('/user/dashboard'); break;
+      case 'da': alert('Divisional Assistant portal is under future development.'); break;
+      case 'sa': alert('SuperAdmin portal is under future development.'); break;
+      default: alert('Invalid username or credentials. Please check your input.');
+    }
+  };
+
+  const pageTitle = "DIVISION LOGIN";
 
   return (
     <div 
       className="min-h-screen relative flex items-center justify-center p-6 antialiased font-sans bg-cover bg-center bg-fixed bg-slate-900"
       style={{ 
-        backgroundImage: `url("https://i.pinimg.com/736x/ad/31/d3/ad31d39d17b3bc1957c7d5ed5ff35f8d.jpg")` 
+        backgroundImage: `url("https://i.pinimg.com/736x/aa/f5/52/aaf552b182a4253d5ec0de4aa4838af6.jpg")` 
       }}
     >
-      {/* Background Image Safety Layer (Kept transparent to preserve original image colors) */}
+      {/* Background Image Safety Layer (Kept clear/transparent to maintain original image colors) */}
       <div className="absolute inset-0 bg-black/5 z-0 pointer-events-none" />
 
       {/* Main Form Box Structure */}
@@ -82,45 +133,36 @@ export default function HeadOfficeLogin() {
           </button>
         </motion.div>
 
-        {/* Brand Icon & Premium Header Layout Block */}
-        <div className="flex items-center gap-5 mb-8">
-          <motion.div 
-            variants={itemVariants}
-            className="p-4 rounded-2xl bg-[#90D5FF]/20 border border-[#90D5FF]/50 text-[#006EB1] shadow-sm select-none"
+        {/* Animated Brand Header */}
+        <div className="mb-8">
+          <motion.h2 
+            variants={titleContainerVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-3xl sm:text-4xl font-black tracking-tight text-[#002B49] uppercase flex items-center select-none mb-2"
           >
-            <Building2 size={26} strokeWidth={2} />
-          </motion.div>
-          
-          <div>
-            <motion.h2 
-              variants={titleContainerVariants}
-              initial="hidden"
-              animate="visible"
-              className="text-3xl font-black tracking-tight text-[#002B49] uppercase flex items-center select-none"
-            >
-              {pageTitle.split("").map((char, index) => (
-                <motion.span key={index} variants={letterVariants}>
-                  {char === " " ? "\u00A0" : char}
-                </motion.span>
-              ))}
-            </motion.h2>
-            <motion.p variants={itemVariants} className="text-slate-600 text-sm font-medium">
-              Secure Administrative Access
-            </motion.p>
-          </div>
+            {pageTitle.split("").map((char, index) => (
+              <motion.span key={index} variants={letterVariants}>
+                {char === " " ? "\u00A0" : char}
+              </motion.span>
+            ))}
+          </motion.h2>
+          <motion.p variants={itemVariants} className="text-slate-600 text-sm font-medium">
+            Enter enterprise credentials to access your administrative hub.
+          </motion.p>
         </div>
 
         {/* Authorization Form Segment */}
         <form onSubmit={handleLogin} className="space-y-5 relative z-20">
           
-          {/* Head Office ID Controlled Core Input Field Container */}
+          {/* Username Controlled Core Input Field Container */}
           <motion.div variants={itemVariants} className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#006EB1]/70">
               <User size={18} />
             </span>
             <input 
               type="text"
-              placeholder="Head Office ID"
+              placeholder="Username"
               className="w-full pl-12 pr-4 py-4 bg-white/60 border border-[#90D5FF]/40 rounded-xl text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:ring-2 focus:ring-[#006EB1] focus:border-[#006EB1] outline-none transition-all duration-300 text-sm shadow-inner"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -160,7 +202,7 @@ export default function HeadOfficeLogin() {
           className="mt-8 pt-6 border-t border-slate-200/60 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
         >
           <ShieldAlert size={12} className="text-[#006EB1]" />
-          SECURE ADMINISTRATIVE NODE
+          SECURE ENCRYPTED NODE
         </motion.div>
       </motion.div>
     </div>
