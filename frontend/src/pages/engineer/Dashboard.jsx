@@ -13,6 +13,11 @@ const UserDashboard = ({ isDark }) => {
   
   const [filterDivision, setFilterDivision] = useState('All');
 
+  // Division shown at the top of the dashboard. Starts from localStorage
+  // (set at login) and gets refreshed from the DB once allSystemUsers loads,
+  // in case an admin has changed it since this engineer last logged in.
+  const [currentDivision, setCurrentDivision] = useState(localStorage.getItem('userDivision') || '');
+
   // Real logged-in user info, set by DivisionLogin.js into localStorage
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem('fullName') || 'User',
@@ -53,6 +58,15 @@ const fetchUsers = async () => {
     try {
         const res = await axios.get(`http://127.0.0.1:5000/api/users`);
         setAllSystemUsers(res.data);
+
+        // Refresh this engineer's division from the DB (in case it changed
+        // since they last logged in), rather than trusting localStorage alone.
+        const myEmployeeId = localStorage.getItem('employeeId');
+        const me = res.data.find(u => u.employeeId === myEmployeeId);
+        if (me && me.division) {
+            setCurrentDivision(me.division);
+            localStorage.setItem('userDivision', me.division);
+        }
     } catch (err) { console.error("Error fetching users:", err); }
 };
 
@@ -152,10 +166,22 @@ const handleUndoApproval = async (jobNo) => {
         </aside>
 
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
+          {currentDivision && (
+            <div className="division-banner" style={{
+              marginBottom: '20px',
+              padding: '12px 20px',
+              background: 'transparent',
+              color: '#000',
+              border: '2px solid #d1d5db',
+              borderRadius: '8px',
+              fontWeight: '700',
+              fontSize: '1.1rem'
+            }}>
+              {currentDivision} Division
+            </div>
+          )}
           {activeTab === 'my-jobs' && (
             <>
-              <h3>My Jobs</h3>
-              <select onChange={(e) => setFilterDivision(e.target.value)} style={{marginBottom: '10px', padding: '5px'}}></select>
 
               <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
