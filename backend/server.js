@@ -13,6 +13,10 @@ app.use(cors());
 connectDB();
 
 // --- ROUTES (Define each prefix only ONCE) ---
+app.use('/api/auth', require('./routes/authRoutes')); 
+app.use('/api/projects', require('./routes/projectRoutes')); // This is the ONLY project line
+app.use('/api/users', require('./routes/userRoutes'));
+
 // --- ERROR HANDLING ---
 app.use((err, req, res, next) => {
   console.error("[SYSTEM ERROR]:", err.stack);
