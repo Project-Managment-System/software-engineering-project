@@ -115,9 +115,10 @@ const AdminDashboard = ({ isDark }) => {
   };
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      window.location.href = '/';
-    }
+    // Clear the specific key you used
+    localStorage.removeItem('isAdmin'); 
+    localStorage.clear();
+    navigate('/');
   };
 
   const isFormValid = () => {
