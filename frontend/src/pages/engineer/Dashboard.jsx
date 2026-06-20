@@ -23,6 +23,22 @@ const UserDashboard = ({ isDark }) => {
     employeeId: '', firstName: '', secondName: '', email: '', password: '', division: ''
   });
 
+  const [userDivision, setUserDivision] = useState('');
+
+const fetchData = async () => {
+  try {
+    const division = localStorage.getItem('userDivision');
+    const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+    
+    const data = res.data.map((item, index) => ({
+      ...item,
+      sNo: index + 1,
+      assignee: item.assignee || '' // Ensure assignee field exists
+    }));
+    setApprovalData(data);
+    setJobTrackingData(data);
+  } catch (err) { console.error("Error fetching data:", err); }
+};
   // User Edit States
   const [editingUser, setEditingUser] = useState(null);
   const [editUserForm, setEditUserForm] = useState({});
@@ -49,9 +65,10 @@ const UserDashboard = ({ isDark }) => {
   };
 
   useEffect(() => { 
-      fetchData(); 
-      fetchUsers(); 
-  }, []);
+    setUserDivision(localStorage.getItem('userDivision') || '');
+    fetchData(); 
+    fetchUsers(); 
+}, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -171,8 +188,14 @@ const handleSaveUser = async (e) => {
         </aside>
 
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
+          <h2 className="division-page-title" style={{ marginBottom: '20px', fontWeight: '800' }}>
+            {userDivision ? `${userDivision} Division` : 'Division Not Set'}
+          </h2>
+
           {activeTab === 'my-jobs' && (
             <>
+              
+
               <h3>My Jobs</h3>
               <select onChange={(e) => setFilterDivision(e.target.value)} style={{marginBottom: '10px', padding: '5px'}}><option value="All">All</option></select>
               <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>

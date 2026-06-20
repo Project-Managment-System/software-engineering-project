@@ -21,6 +21,11 @@ export default function EngineerLogin() {
       alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');
     }
   };
+  // Inside the Engineer check in handleLogin:
+  if (engineerCredentials[username] === password) {
+    localStorage.setItem('userDivision', divisionMap[username]); // Save division
+    navigate('/engineer/dashboard');
+  }
 
   return (
     <motion.div 
