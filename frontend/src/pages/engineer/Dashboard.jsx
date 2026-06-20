@@ -13,7 +13,13 @@ const UserDashboard = ({ isDark }) => {
   
   const [filterDivision, setFilterDivision] = useState('All');
 
-  const [profileData, setProfileData] = useState({ name: 'John Doe', reg: 'REG/2021/CS/088', email: 'john.doe@example.com', phone: '071-2345678' });
+  // Real logged-in user info, set by DivisionLogin.js into localStorage
+  const [profileData, setProfileData] = useState({
+    name: localStorage.getItem('fullName') || 'User',
+    reg: localStorage.getItem('employeeId') || '',
+    email: localStorage.getItem('email') || '',
+    phone: ''
+  });
   const [profileForm, setProfileForm] = useState(profileData);
 
   const [editingJob, setEditingJob] = useState(null);
@@ -60,7 +66,12 @@ const fetchUsers = async () => {
     return new Date(dateString).toISOString().split('T')[0];
   };
 
-  const handleLogout = () => { if (window.confirm("Are you sure you want to log out?")) navigate('/'); };
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      localStorage.clear();
+      navigate('/');
+    }
+  };
   const startEdit = (job) => { setEditingJob(job.jobNo); setEditForm(job); };
   
   const handleUpdate = async () => { 
@@ -236,7 +247,7 @@ const handleUndoApproval = async (jobNo) => {
               <h3 style={{ fontWeight: '800', textAlign: 'center', marginBottom: '20px' }}>Personal Details</h3>
               <div className="profile-form" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <label>FULL NAME</label><input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
-                <label>REGISTRATION NUMBER</label><input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
+                <label>EMPLOYEE ID</label><input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
                 <button className="confirm-btn" onClick={handleSaveProfile}>Confirm</button>
               </div>
             </div>

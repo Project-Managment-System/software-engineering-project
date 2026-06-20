@@ -1,73 +1,60 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import axios from 'axios';
 
 export default function DivisionLogin() {
+  // "username" the user types is actually their employeeId (e.g. enae1, cl0001)
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // Define valid Engineering credentials
-  const engineerCredentials = {
-    'enae1': 'ae1',
-    'enaw1': 'aw1',
-    'enme1': 'me1',
-    'enmi1': 'mi1',
-    'enth1': 'th1',
-    'enke1': 'ke1',
-    'enpo1': 'po1',
-    'enhi1': 'hi1'
-  };
-
-  // Add this mapping
-const divisionMap = {
-  'enae1': 'Anuradhapura-East',
-  'enaw1': 'Anuradhapura-West',
-  'enme1': 'Mihinthale',
-  'enth1': 'Thambuththegama',
-  'enke1': 'Kekirawa',
-  'enpo1': 'Polonnaruwa',
-  'enhi1': 'Higurakgoda'
-};
-
-
-
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const prefix = username.substring(0, 2).toLowerCase();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    // 1. Admin Check
-    if (prefix === 'cl') {
-      if (username === 'cl0001' && password === 'cl1') {
-        localStorage.setItem('isAdmin', 'true');
+    try {
+      const res = await axios.post('http://127.0.0.1:5000/api/auth/login', {
+        employeeId: username,
+        password,
+      });
+
+      const { role, userId, employeeId, fullName, email, division } = res.data;
+
+      // Store session info for the dashboards to use
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('employeeId', employeeId);
+      localStorage.setItem('fullName', fullName);
+      localStorage.setItem('email', email || '');
+      localStorage.setItem('role', role);
+      if (division) localStorage.setItem('userDivision', division);
+
+      // Route based on the real role from the database
+      if (role === 'admin') {
         navigate('/admin/dashboard');
-      } else {
-        alert('Invalid Admin credentials. Access Denied.');
-      }
-      return;
-    }
-    // Inside the Engineer check in handleLogin:
-    if (engineerCredentials[username] === password) {
-      localStorage.setItem('userDivision', divisionMap[username]); // Save division
-      navigate('/engineer/dashboard');
-    }
-
-    // 2. Engineer Check (Strict Validation)
-    if (prefix === 'en') {
-      if (engineerCredentials[username] === password) {
+      } else if (role === 'engineer') {
         navigate('/engineer/dashboard');
       } else {
-        alert('Invalid Engineering credentials. Access Denied.');
+        // Other roles (e.g. divisional assistant, super admin) aren't
+        // supported by the User schema's role enum yet.
+        alert('This portal is not yet available for your account role.');
       }
-      return;
-    }
-
-    // 3. Other Portals
-    switch(prefix) {
-      case 'us': navigate('/user/dashboard'); break;
-      case 'da': alert('Divisional Assistant portal is under future development.'); break;
-      case 'sa': alert('SuperAdmin portal is under future development.'); break;
-      default: alert('Invalid username or credentials. Please check your input.');
+    } catch (err) {
+      const code = err.response?.data?.error;
+      if (code === 'USER_NOT_FOUND') {
+        alert('No account found with that username.');
+      } else if (code === 'INVALID_PASSWORD') {
+        alert('Incorrect password. Please try again.');
+      } else if (code === 'MISSING_CREDENTIALS') {
+        alert('Please enter both username and password.');
+      } else {
+        alert('Login failed. Please try again.');
+        console.error('Login error:', err);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -98,8 +85,8 @@ const divisionMap = {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-          <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all">
-            SIGN IN
+          <button type="submit" disabled={isSubmitting} className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all disabled:opacity-60">
+            {isSubmitting ? 'SIGNING IN...' : 'SIGN IN'}
           </button>
         </form>
       </div>

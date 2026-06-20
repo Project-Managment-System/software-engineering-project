@@ -76,12 +76,17 @@ exports.enroll = async (req, res, next) => {
 };
 
 // LOGIN PERSONNEL
+// NOTE: Login is now by employeeId (the system "username"), not email.
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
-    console.log(`>>> [AUTH]: LOGIN ATTEMPT FOR: ${email}`);
+    const { employeeId, password } = req.body;
+    console.log(`>>> [AUTH]: LOGIN ATTEMPT FOR EMPLOYEE ID: ${employeeId}`);
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!employeeId || !password) {
+      return res.status(400).json({ error: "MISSING_CREDENTIALS" });
+    }
+
+    const user = await User.findOne({ employeeId });
     if (!user) {
       return res.status(404).json({ error: "USER_NOT_FOUND" });
     }
@@ -92,7 +97,7 @@ exports.login = async (req, res, next) => {
      * This handles old accounts that were created before we fixed the enroll function.
      */
     if (user.isVerified === false) {
-      console.log(`>>> [AUTH]: AUTO-VERIFYING ACCOUNT FOR: ${email}`);
+      console.log(`>>> [AUTH]: AUTO-VERIFYING ACCOUNT FOR: ${employeeId}`);
       user.isVerified = true;
     }
 
@@ -113,7 +118,10 @@ exports.login = async (req, res, next) => {
       status: "LOGIN_SUCCESS",
       role: user.role,
       userId: user._id,
+      employeeId: user.employeeId,
       fullName: user.fullName,
+      email: user.email,
+      division: user.division || null,
       // Explicitly send true so the frontend allows the session
       isVerified: true 
     });
