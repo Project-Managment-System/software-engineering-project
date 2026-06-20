@@ -11,114 +11,25 @@ const UserDashboard = ({ isDark }) => {
   const [profilePic, setProfilePic] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
-  const [filterDivision, setFilterDivision] = useState('All');
-
+  // Profile State
   const [profileData, setProfileData] = useState({ name: 'John Doe', reg: 'REG/2021/CS/088', email: 'john.doe@example.com', phone: '071-2345678' });
   const [profileForm, setProfileForm] = useState(profileData);
 
+  // Job State
   const [editingJob, setEditingJob] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [jobTrackingData, setJobTrackingData] = useState([]); 
-  const [approvalData, setApprovalData] = useState([]); 
-
-  const [systemUsers, setSystemUsers] = useState([]);
-  const [allSystemUsers, setAllSystemUsers] = useState([]); // New: Stores users for dropdown
-  const [userFormData, setUserFormData] = useState({
-    employeeId: '', firstName: '', secondName: '', email: '', phoneNum: '', nationalId: '', address: '', password: '', division: ''
-  });
-
-const fetchData = async () => {
-  try {
-    const division = localStorage.getItem('userDivision');
-    const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
-    
-    const data = res.data.map((item, index) => ({
-      ...item,
-      sNo: index + 1,
-      assignee: item.assignee || '' // Ensure assignee field exists
-    }));
-    setApprovalData(data);
-    setJobTrackingData(data);
-  } catch (err) { console.error("Error fetching data:", err); }
-};
-
-// New: Fetch users to populate dropdown
-const fetchUsers = async () => {
-    try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users`);
-        setAllSystemUsers(res.data);
-    } catch (err) { console.error("Error fetching users:", err); }
-};
-
-  useEffect(() => { 
-      fetchData(); 
-      fetchUsers(); 
-  }, []);
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
-  };
+  const [jobTrackingData, setJobTrackingData] = useState([
+    { sNo: 1, jobNo: "JB-7701", jobName: "Foundation Piling", to: "Eng. Smith", allCot: "Site A", regDate: "2026-06-01", visitDate: "2026-06-05", estDate: "2026-06-10" }
+  ]);
+  const [approvalData, setApprovalData] = useState([
+    { sNo: 1, jobNo: "JB-7701", to: "Manager", jobName: "Foundation Piling", reqDate: "2026-06-11", allocation: "Site A", estAmount: "50,000", approval: "Pending" }
+  ]);
 
   const handleLogout = () => { if (window.confirm("Are you sure you want to log out?")) navigate('/'); };
   const startEdit = (job) => { setEditingJob(job.jobNo); setEditForm(job); };
-  
-  const handleUpdate = async () => { 
-    await axios.put(`http://127.0.0.1:5000/api/projects/update/${editForm.jobNo}`, editForm);
-    setEditingJob(null);
-    fetchData();
-  };
-  
-  const handleDelete = async (jobNo) => {
-    if (window.confirm("Are you sure you want to delete this job?")) {
-      await axios.delete(`http://127.0.0.1:5000/api/projects/delete/${jobNo}`);
-      fetchData();
-    }
-  };
-
-  const handleApprove = async (jobNo, status) => { 
-    await axios.patch(`http://127.0.0.1:5000/api/projects/status/${jobNo}`, { status });
-    fetchData(); 
-  };
-
-const handleUndoApproval = async (jobNo) => {
-  try {
-    await axios.patch(`http://127.0.0.1:5000/api/projects/undo/${jobNo}`);
-    fetchData(); 
-  } catch (error) {
-    console.error("Error undoing status:", error);
-    alert("Could not undo status. Check console.");
-  }
-  };
-
-  // New: Update Assignee
-  const handleAssigneeChange = async (jobNo, newAssignee) => {
-      await axios.patch(`http://127.0.0.1:5000/api/projects/assign/${jobNo}`, { assignee: newAssignee });
-      fetchData();
-  };
-
+  const handleUpdate = () => { setJobTrackingData(jobTrackingData.map(j => j.jobNo === editForm.jobNo ? editForm : j)); setEditingJob(null); };
+  const handleApprove = (id, status) => { setApprovalData(approvalData.map(j => j.jobNo === id ? { ...j, approval: status } : j)); };
   const handleSaveProfile = () => { setProfileData(profileForm); alert("Profile Updated!"); };
-  const handleUserFormChange = (e) => { setUserFormData({ ...userFormData, [e.target.name]: e.target.value }); };
-
-
-  const handleSaveUser = async (e) => {
-    e.preventDefault();
-    
-    // 1. Add simple loading state to prevent double-clicks
-    if (e.target.dataset.submitting === "true") return;
-    e.target.dataset.submitting = "true";
-
-    try {
-        // ... your axios code ...
-        await axios.post('http://127.0.0.1:5000/api/users/add', userFormData);
-        alert("User saved successfully!");
-        // ...
-    } catch (err) {
-        console.error("Error:", err);
-    } finally {
-        e.target.dataset.submitting = "false";
-    }
-   };
 
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
@@ -144,38 +55,11 @@ const handleUndoApproval = async (jobNo) => {
           {activeTab === 'my-jobs' && (
             <>
               <h3>My Jobs</h3>
-              <select onChange={(e) => setFilterDivision(e.target.value)} style={{marginBottom: '10px', padding: '5px'}}></select>
-
+              {/* Sub-tab Navigation */}
               <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
                 <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
               </div>
-
-              {jobSubTab === 'approvals' && (
-                <table className="project-table">
-                  <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Date of request</th><th>Allocation</th><th>Approval</th></tr></thead>
-                  <tbody>
-                    {approvalData.filter(j => filterDivision === 'All' || j.division === filterDivision).map((job) => (
-                      <tr key={job.jobNo}>
-                        <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.division}</td><td>{job.jobName}</td><td>{formatDate(job.dateReq)}</td><td>{job.allocation}</td>
-                        <td>
-                          {job.status === 'Pending' ? (
-                            <>
-                              <button className="approve-btn" onClick={() => handleApprove(job.jobNo, 'Approved')}><Check size={16} /></button>
-                              <button className="reject-btn" onClick={() => handleApprove(job.jobNo, 'Rejected')}><X size={16} /></button>
-                            </>
-                          ) : (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              {job.status} 
-                              <button onClick={() => handleUndoApproval(job.jobNo)} title="Reset to Pending" style={{ cursor: 'pointer', background: 'none', border: 'none' }}><Undo size={14}/></button>
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
 
               {jobSubTab === 'tracking' && (
                 <>
@@ -184,19 +68,8 @@ const handleUndoApproval = async (jobNo) => {
                     <tbody>
                       {jobTrackingData.map((job) => (
                         <tr key={job.jobNo}>
-                          <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.division}</td><td>{job.jobName}</td><td>{job.allocation}</td>
-                          <td>
-                              <select value={job.assignee || ''} onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}>
-                                  <option value="">Select Assignee</option>
-                                  {allSystemUsers.map(user => (
-                                      <option key={user.employeeId} value={user.firstName}>{user.firstName}</option>
-                                  ))}
-                              </select>
-                          </td>
-                          <td>
-                            <button className="edit-btn" onClick={() => startEdit(job)}><Edit3 size={16} /> Edit</button>
-                            <button className="delete-btn" onClick={() => handleDelete(job.jobNo)}><Trash2 size={16} color="red" /></button>
-                          </td>
+                          <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.jobName}</td><td>{job.to}</td><td>{job.allCot}</td><td>{job.regDate}</td><td>{job.visitDate}</td><td>{job.estDate}</td>
+                          <td><button className="edit-btn" onClick={() => startEdit(job)}><Edit3 size={16} /> Edit</button></td>
                         </tr>
                       ))}
                     </tbody>
@@ -210,6 +83,20 @@ const handleUndoApproval = async (jobNo) => {
                     </div>
                   )}
                 </>
+              )}
+
+              {jobSubTab === 'approvals' && (
+                <table className="project-table">
+                  <thead><tr><th>Serial No</th><th>Job No</th><th>TO</th><th>Job Name</th><th>Date of request</th><th>Allocation</th><th>Est. amount</th><th>Approval</th></tr></thead>
+                  <tbody>
+                    {approvalData.map((job) => (
+                      <tr key={job.jobNo}>
+                        <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.to}</td><td>{job.jobName}</td><td>{job.reqDate}</td><td>{job.allocation}</td><td>{job.estAmount}</td>
+                        <td>{job.approval === 'Pending' ? (<><button className="approve-btn" onClick={() => handleApprove(job.jobNo, 'Yes')}><Check size={16} /></button><button className="reject-btn" onClick={() => handleApprove(job.jobNo, 'No')}><X size={16} /></button></>) : (<span>{job.approval}</span>)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </>
           )}

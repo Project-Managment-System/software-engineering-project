@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import { User, Briefcase, RefreshCw, Settings, ArrowLeft, Send, Calendar, Save, Edit3, Camera, LogOut, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -40,6 +40,22 @@ const UserDashboard = ({ isDark }) => {
     ));
   };
 
+  // Add this inside your UserDashboard component
+  useEffect(() => {
+      const isAuth = localStorage.getItem('isAuthenticated');
+      if (isAuth !== 'true') {
+          navigate('/'); // Redirect to Login if not authenticated
+      }
+  }, [navigate]);
+
+  // Update your handleLogout to clear session
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userDivision');
+      navigate('/');
+    }
+  };
   const handleProfileTabOpen = () => {
     setEditProfileName(profileName);
     setEditRegNo(regNo);
@@ -124,12 +140,7 @@ const UserDashboard = ({ isDark }) => {
     alert("Estimate submitted to OA");
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Are you sure you want to log out?")) {
-      window.location.href = '/';
-    }
-  };
-
+  
   const handleCalendarClick = () => {
     if (dateInputRef.current) {
       dateInputRef.current.showPicker ? dateInputRef.current.showPicker() : dateInputRef.current.focus();
