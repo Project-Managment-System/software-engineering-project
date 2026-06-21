@@ -18,6 +18,8 @@ const UserSchema = new mongoose.Schema({
       return this.role !== 'admin';
     }
   },
+  phoneNo: { type: String, default: '' },
+  profilePic: { type: String, default: '' },
 }, { timestamps: true });
 
 UserSchema.pre("save", async function () {

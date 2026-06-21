@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Edit3, LogOut, Save,
   Check, X, Menu, UserPlus, Undo, Trash2, Shield, Clock,
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3, Wrench, Filter,
-  Globe, Sun, Moon, Lightbulb
+  Globe, Sun, Moon, Lightbulb, Camera
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -54,10 +54,11 @@ const getRoleBadgeClass = (role) => {
 /* ─────────────────────────────────────── */
 const EngineerDashboard = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [activeTab, setActiveTab] = useState('overview');
   const [jobSubTab, setJobSubTab] = useState('approvals');
-  const [profilePic, setProfilePic] = useState(null);
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [filterDivision, setFilterDivision] = useState('All');
@@ -67,7 +68,7 @@ const EngineerDashboard = () => {
     name: localStorage.getItem('fullName') || 'User',
     reg: localStorage.getItem('employeeId') || '',
     email: localStorage.getItem('email') || '',
-    phone: ''
+    phone: localStorage.getItem('phoneNo') || ''
   });
   const [profileForm, setProfileForm] = useState(profileData);
   const [editingJob, setEditingJob] = useState(null);
@@ -142,11 +143,41 @@ const EngineerDashboard = () => {
     } catch (err) { console.error("Error fetching users:", err); }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const user = res.data;
+        if (user) {
+          const fetchedProfile = {
+            name: user.fullName || 'User',
+            reg: user.employeeId || '',
+            email: user.email || '',
+            phone: user.phoneNo || ''
+          };
+          setProfileData(fetchedProfile);
+          setProfileForm(fetchedProfile);
+          setProfilePic(user.profilePic || null);
+
+          localStorage.setItem('fullName', user.fullName || '');
+          localStorage.setItem('employeeId', user.employeeId || '');
+          localStorage.setItem('email', user.email || '');
+          localStorage.setItem('phoneNo', user.phoneNo || '');
+          localStorage.setItem('profilePic', user.profilePic || '');
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching engineer profile:", err);
+    }
+  };
+
   useEffect(() => {
     setUserDivision(localStorage.getItem('userDivision') || '');
     fetchData();
     fetchUsers();
     fetchAllProjects();
+    fetchUserProfile();
   }, []);
 
   const formatDate = (dateString) => {
@@ -247,9 +278,57 @@ const EngineerDashboard = () => {
     } catch (error) { console.error("Failed to update:", error); }
   };
 
-  const handleSaveProfile = () => {
-    setProfileData(profileForm);
-    addToast('Profile updated!', 'success');
+  const handleSaveProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        addToast("User session not found", "error");
+        return;
+      }
+      const payload = {
+        fullName: profileForm.name,
+        email: profileForm.email,
+        phoneNo: profileForm.phone
+      };
+      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      if (res.data) {
+        setProfileData(profileForm);
+        localStorage.setItem('fullName', profileForm.name);
+        localStorage.setItem('employeeId', profileForm.reg);
+        localStorage.setItem('email', profileForm.email);
+        localStorage.setItem('phoneNo', profileForm.phone);
+        addToast('Profile updated!', 'success');
+      }
+    } catch (err) {
+      console.error("Error updating engineer profile:", err);
+      addToast(err.response?.data?.error || "Failed to update profile", "error");
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        setProfilePic(base64Data);
+        localStorage.setItem('profilePic', base64Data);
+
+        try {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+              profilePic: base64Data
+            });
+            addToast("Profile photo updated successfully!", "success");
+          }
+        } catch (err) {
+          console.error("Error saving engineer profile photo to backend:", err);
+          addToast("Failed to sync photo to database", "error");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleUserFormChange = (e) => {
@@ -954,7 +1033,23 @@ const EngineerDashboard = () => {
             {activeTab === 'profile' && (
               <motion.div key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div className="profile-section">
-                  <h3><Edit3 size={18} /> Personal Details</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
+                    <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative', margin: '0' }}>
+                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={40} />}
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
+                      <button 
+                        onClick={() => fileInputRef.current.click()} 
+                        className="approve-btn"
+                        style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Camera size={14}/>
+                      </button>
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0 }}><Edit3 size={18} /> Personal Details</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your user credentials</p>
+                    </div>
+                  </div>
                   <div className="profile-form">
                     <label>Full Name</label>
                     <input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />

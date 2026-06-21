@@ -3,7 +3,7 @@ import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
-  Send, Calendar, Globe, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle
+  Send, Calendar, Globe, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -99,6 +99,31 @@ const UserDashboard = () => {
     }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const user = res.data;
+        if (user) {
+          setProfileName(user.fullName || 'User');
+          setRegNo(user.employeeId || '');
+          setEmail(user.email || '');
+          setPhoneNo(user.phoneNo || '');
+          setProfilePic(user.profilePic || null);
+
+          localStorage.setItem('fullName', user.fullName || '');
+          localStorage.setItem('employeeId', user.employeeId || '');
+          localStorage.setItem('email', user.email || '');
+          localStorage.setItem('phoneNo', user.phoneNo || '');
+          localStorage.setItem('profilePic', user.profilePic || '');
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+    }
+  };
+
   useEffect(() => {
     const isAuth = localStorage.getItem('isAuthenticated');
     if (isAuth !== 'true') {
@@ -106,6 +131,7 @@ const UserDashboard = () => {
     }
     fetchData();
     fetchAllProjects();
+    fetchUserProfile();
   }, [navigate]);
 
   const handleCheckEstimate = (estimateNo) => {
@@ -129,12 +155,36 @@ const UserDashboard = () => {
     setEditPhoneNo(phoneNo);
   };
 
-  const handleConfirmProfile = () => {
-    setProfileName(editProfileName);
-    setRegNo(editRegNo);
-    setEmail(editEmail);
-    setPhoneNo(editPhoneNo);
-    addToast("Profile saved successfully!", "success");
+  const handleConfirmProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        addToast("User session not found", "error");
+        return;
+      }
+      const payload = {
+        fullName: editProfileName,
+        email: editEmail,
+        phoneNo: editPhoneNo
+      };
+      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      if (res.data) {
+        setProfileName(editProfileName);
+        setRegNo(editRegNo);
+        setEmail(editEmail);
+        setPhoneNo(editPhoneNo);
+
+        localStorage.setItem('fullName', editProfileName);
+        localStorage.setItem('employeeId', editRegNo);
+        localStorage.setItem('email', editEmail);
+        localStorage.setItem('phoneNo', editPhoneNo);
+
+        addToast("Profile saved successfully!", "success");
+      }
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      addToast(err.response?.data?.error || "Failed to update profile", "error");
+    }
   };
 
   const handleCancelProfile = () => {
@@ -200,9 +250,23 @@ const UserDashboard = () => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePic(reader.result);
-        localStorage.setItem('profilePic', reader.result);
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        setProfilePic(base64Data);
+        localStorage.setItem('profilePic', base64Data);
+
+        try {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+              profilePic: base64Data
+            });
+            addToast("Profile photo updated successfully!", "success");
+          }
+        } catch (err) {
+          console.error("Error saving profile photo to backend:", err);
+          addToast("Failed to sync photo to database", "error");
+        }
       };
       reader.readAsDataURL(file);
     }
