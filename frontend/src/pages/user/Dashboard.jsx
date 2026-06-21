@@ -1,26 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
-import { User, Briefcase, RefreshCw, Settings, ArrowLeft, Send, Calendar, Save, Edit3, Camera, LogOut, Menu } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
+  Send, Calendar, Globe, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const UserDashboard = ({ isDark }) => {
+/* ─── Animation variants ─── */
+const pageVariants = {
+  hidden:  { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+  exit:    { opacity: 0, y: -12, transition: { duration: 0.2 } }
+};
+
+const staggerContainer = {
+  visible: { transition: { staggerChildren: 0.08 } }
+};
+
+const cardVariant = {
+  hidden:  { opacity: 0, y: 16, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
+};
+
+/* ─────────────────────────────────────── */
+const UserDashboard = () => {
   const navigate = useNavigate();
   const dateInputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('my-jobs');
 
-  // Collapsible Sidebar visibility control state variable
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [activeTab, setActiveTab] = useState('my-jobs');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   const [selectedJobId, setSelectedJobId] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [estimateAmount, setEstimateAmount] = useState('');
 
-  const [profileName, setProfileName] = useState('John Doe');
-  const [regNo, setRegNo] = useState('REG/2021/CS/088');
-  const [email, setEmail] = useState('john.doe@example.com');
-  const [phoneNo, setPhoneNo] = useState('071-2345678');
-  const [profilePic, setProfilePic] = useState(null);
+  const [profileName, setProfileName] = useState(localStorage.getItem('fullName') || 'User');
+  const [regNo, setRegNo] = useState(localStorage.getItem('employeeId') || 'REG/2021/CS/088');
+  const [email, setEmail] = useState(localStorage.getItem('email') || 'user@cems.local');
+  const [phoneNo, setPhoneNo] = useState(localStorage.getItem('phoneNo') || '071-2345678');
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
 
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
@@ -33,29 +55,73 @@ const UserDashboard = ({ isDark }) => {
   const [editableDeadline, setEditableDeadline] = useState('');
 
   const [submittedEstimates, setSubmittedEstimates] = useState([]);
+  const [jobData, setJobData] = useState([]);
+  const [allProjects, setAllProjects] = useState([]);
+
+  /* ─── Toast system ─── */
+  const [toasts, setToasts] = useState([]);
+  const addToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  };
+
+  const toggleDarkMode = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    addToast(`${nextDark ? 'Dark' : 'Light'} theme activated`, 'info');
+  };
+
+  const fetchData = async () => {
+    try {
+      const division = localStorage.getItem('userDivision');
+      if (division) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+        setJobData(res.data.map((item, index) => ({
+          ...item,
+          sNo: index + 1,
+          assignDate: item.dateReq ? new Date(item.dateReq).toISOString().split('T')[0] : 'N/A',
+          deadline: item.submitDate ? new Date(item.submitDate).toISOString().split('T')[0] : 'N/A'
+        })));
+      }
+    } catch (err) {
+      console.error("Error fetching user division projects:", err);
+    }
+  };
+
+  const fetchAllProjects = async () => {
+    try {
+      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
+      setAllProjects(res.data);
+    } catch (err) {
+      console.error("Error fetching all projects:", err);
+    }
+  };
+
+  useEffect(() => {
+    const isAuth = localStorage.getItem('isAuthenticated');
+    if (isAuth !== 'true') {
+      navigate('/');
+    }
+    fetchData();
+    fetchAllProjects();
+  }, [navigate]);
 
   const handleCheckEstimate = (estimateNo) => {
     setSubmittedEstimates(submittedEstimates.map(est => 
       est.no === estimateNo ? { ...est, isChecked: !est.isChecked } : est
     ));
+    addToast("Estimate status updated!", "info");
   };
 
-  // Add this inside your UserDashboard component       
-  useEffect(() => {
-      const isAuth = localStorage.getItem('isAuthenticated');
-      if (isAuth !== 'true') {
-          navigate('/'); // Redirect to Login if not authenticated
-      }
-  }, [navigate]);
-
-  // Update your handleLogout to clear session
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('userDivision');
+      localStorage.clear();
       navigate('/');
     }
   };
+
   const handleProfileTabOpen = () => {
     setEditProfileName(profileName);
     setEditRegNo(regNo);
@@ -68,31 +134,12 @@ const UserDashboard = ({ isDark }) => {
     setRegNo(editRegNo);
     setEmail(editEmail);
     setPhoneNo(editPhoneNo);
-    alert("Profile Saved!");
+    addToast("Profile saved successfully!", "success");
   };
 
   const handleCancelProfile = () => {
     setActiveTab('my-jobs');
   };
-
-  const [jobData, setJobData] = useState([
-    { 
-      sNo: 1, 
-      jobNo: "JB-7701", 
-      jobName: "Foundation Piling", 
-      allocation: "Site A", 
-      assignDate: "2024-03-01", 
-      deadline: "2024-04-15" 
-    },
-    { 
-      sNo: 2, 
-      jobNo: "JB-7705", 
-      jobName: "Structural Framing", 
-      allocation: "Site B", 
-      assignDate: "2024-03-10", 
-      deadline: "2024-05-20" 
-    },
-  ]);
 
   const selectedJob = jobData.find(job => job.jobNo === selectedJobId);
 
@@ -107,20 +154,23 @@ const UserDashboard = ({ isDark }) => {
     }
   };
 
-  const handleSaveJob = () => {
-    setJobData(jobData.map(job => job.jobNo === selectedJobId ? {
-      ...job,
-      jobName: editableJobName,
-      allocation: editableAllocation,
-      assignDate: editableAssignDate,
-      deadline: editableDeadline
-    } : job));
-    alert("Job details saved successfully!");
+  const handleSaveJob = async () => {
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+        jobName: editableJobName,
+        allocation: editableAllocation,
+      });
+      addToast("Job details saved successfully!", "success");
+      fetchData();
+      fetchAllProjects();
+    } catch (err) {
+      addToast("Failed to save changes", "error");
+    }
   };
 
   const handleSubmitEstimate = () => {
     if (!selectedJobId || !visitDate || !estimateAmount) {
-      alert("Please fill in all fields");
+      addToast("Please fill in all fields", "warning");
       return;
     }
     const newEstimate = {
@@ -137,10 +187,9 @@ const UserDashboard = ({ isDark }) => {
     setSubmittedEstimates([...submittedEstimates, newEstimate]);
     setVisitDate('');
     setEstimateAmount('');
-    alert("Estimate submitted to OA");
+    addToast("Estimate submitted to OA", "success");
   };
 
-  
   const handleCalendarClick = () => {
     if (dateInputRef.current) {
       dateInputRef.current.showPicker ? dateInputRef.current.showPicker() : dateInputRef.current.focus();
@@ -151,29 +200,40 @@ const UserDashboard = ({ isDark }) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setProfilePic(reader.result);
+      reader.onloadend = () => {
+        setProfilePic(reader.result);
+        localStorage.setItem('profilePic', reader.result);
+      };
       reader.readAsDataURL(file);
     }
   };
 
   const handleEstimateAmountChange = (e) => {
     const value = e.target.value;
-    // Allow only digits and decimal point
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setEstimateAmount(value);
     }
   };
 
   const handleEstimateAmountKeyDown = (e) => {
-    // Prevent e, E, +, - from being typed
     if (['e', 'E', '+', '-'].includes(e.key)) {
       e.preventDefault();
     }
   };
 
+  /* ─── Computed stats ─── */
+  const totalDivisionJobs = jobData.length;
+  const totalSubmittedEstimates = submittedEstimates.length;
+  const pendingApprovalsCount = jobData.filter(j => !j.status || j.status === 'Pending').length;
+
+  const statCards = [
+    { label: 'Division Jobs',      value: totalDivisionJobs,       icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Estimates Sent',     value: totalSubmittedEstimates, icon: Send,      color: 'var(--accent-2)' },
+    { label: 'Pending Approvals',  value: pendingApprovalsCount,   icon: Clock,     color: 'var(--warning)' },
+  ];
+
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
-
       {/* Floating Hamburger Button */}
       <button
         className="sidebar-toggle-menu-btn"
@@ -184,10 +244,11 @@ const UserDashboard = ({ isDark }) => {
       </button>
 
       <div className="dashboard-container">
+        {/* ─── Sidebar ─── */}
         <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
-            <div className="profile-photo" style={{ overflow: 'hidden' }}>
-              {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={48} />}
+            <div className="profile-photo">
+              {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}
             </div>
             <div className="profile-info">
               <h3>{profileName}</h3>
@@ -195,254 +256,442 @@ const UserDashboard = ({ isDark }) => {
             </div>
           </div>
           <nav className="sidebar-nav">
-            <button 
-              className={`nav-item ${activeTab === 'my-jobs' ? 'active' : ''}`}
-              onClick={() => setActiveTab('my-jobs')}
-            >
-              <Briefcase size={18} /> My Jobs
+            {[
+              { id: 'my-jobs',         icon: Briefcase, label: 'My Jobs' },
+              { id: 'public-jobs',     icon: Globe,     label: 'Explore Projects' },
+              { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
+              { id: 'profile',         icon: Edit3,     label: 'Profile' },
+              { id: 'settings',        icon: Settings,  label: 'Settings' },
+            ].map(item => (
+              <button 
+                key={item.id}
+                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (item.id === 'profile') handleProfileTabOpen();
+                }}
+              >
+                <item.icon size={18} /> {item.label}
+              </button>
+            ))}
+
+            {/* Dark Mode Switch in Sidebar */}
+            <button className="nav-item" onClick={toggleDarkMode} style={{ marginTop: '20px', borderTop: '1px solid var(--border-base)', paddingTop: '15px' }}>
+              {isDark ? <Sun size={18} style={{ color: '#d97706' }} /> : <Moon size={18} style={{ color: '#8b5cf6' }} />}
+              <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
             </button>
-            <button 
-              className={`nav-item ${activeTab === 'update-progress' ? 'active' : ''}`}
-              onClick={() => setActiveTab('update-progress')}
-            >
-              <RefreshCw size={18} /> <strong>Update Progress</strong>
+
+            <button className="nav-item logout-nav-item" onClick={handleLogout}>
+              <LogOut size={18} /> Logout
             </button>
-            <button 
-              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => {
-                setActiveTab('profile');
-                handleProfileTabOpen();
-              }}
-            >
-              <Edit3 size={18} /> Profile
-            </button>
-            <button 
-              className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <Settings size={18} /> Settings
-            </button>
-            <button className="nav-item logout-nav-item" onClick={handleLogout}><LogOut size={18} /> Logout</button>
-            
           </nav>
         </aside>
 
+        {/* ─── Main Content ─── */}
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
           <header className="content-header">
-            <div className="header-left">    
-            </div>
+            <div className="header-left" />
           </header>
+
+          {/* ─── Stat Cards ─── */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '28px' }}
+          >
+            {statCards.map((stat) => (
+              <motion.div
+                key={stat.label}
+                variants={cardVariant}
+                className="field-card"
+                style={{ padding: '20px', cursor: 'default' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '10px',
+                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
+                  }}>
+                    <stat.icon size={19} />
+                  </div>
+                </div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                  {stat.value}
+                </div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                  {stat.label}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
         
-          {activeTab === 'my-jobs' && (
-            <section className="project-table-section">
-              <table className="project-table">
-                <thead>
-                  <tr>
-                    <th>Serial No</th>
-                    <th>Job No</th>
-                    <th>Job Name</th>
-                    <th>Allocation</th>
-                    <th>Assign Date</th>
-                    <th>To be Completed</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {jobData.map((job) => (
-                    <tr key={job.jobNo}>
-                      <td>{job.sNo}</td>
-                      <td className="font-mono text-cyan-500">{job.jobNo}</td>
-                      <td className="font-bold">{job.jobName}</td>
-                      <td>{job.allocation}</td>
-                      <td>{job.assignDate}</td>
-                      <td>
-                        <span className="deadline-tag">{job.deadline}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </section>
-          )}
+          <AnimatePresence mode="wait">
+            {/* ── My Jobs Tab ── */}
+            {activeTab === 'my-jobs' && (
+              <motion.section key="my-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
+                <div className="field-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Division Allocated Jobs</h3>
+                  </div>
+                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Serial No</th>
+                          <th>Job No</th>
+                          <th>Job Name</th>
+                          <th>Allocation</th>
+                          <th>Assign Date</th>
+                          <th>Timeline Limit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {jobData.length === 0 ? (
+                          <tr>
+                            <td colSpan={6}>
+                              <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
+                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                <span>No allocated division jobs found.</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          jobData.map((job) => (
+                            <tr key={job.jobNo}>
+                              <td>{job.sNo}</td>
+                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-bold">{job.jobName}</td>
+                              <td>{job.allocation}</td>
+                              <td>{job.assignDate}</td>
+                              <td>
+                                <span className="deadline-tag">{job.deadline}</span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.section>
+            )}
 
-          {activeTab === 'update-progress' && (
-            <section className="update-progress-view">
-              <div className="selection-area" style={{ marginBottom: '30px' }}>
-                <label>Select Job</label>
-                <select 
-                  className="job-select-dropdown" 
-                  value={selectedJobId} 
-                  onChange={(e) => handleSelectionChange(e.target.value)}
-                >
-                  <option value="">-- Choose Job ID --</option>
-                  {jobData.map(job => (
-                    <option key={job.jobNo} value={job.jobNo}>{job.jobNo} - {job.jobName}</option>
-                  ))}
-                </select>
-              </div>
-
-              {selectedJob && (
-                <div className="form-container" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                  <div className="field-card">
-                    <p className="instruction-text" style={{ marginTop: '0px', marginBottom: '20px' }}>You can update the job details below:</p>
-                    <div className="input-row-group">
-                      <label>Job No:</label>
-                      <input type="text" disabled value={selectedJob.jobNo} className="input-field disabled" />
-                    </div>
-                    <div className="input-row-group">
-                      <label>Job Name</label>
-                      <input type="text" value={editableJobName} onChange={(e) => setEditableJobName(e.target.value)} className="input-field" />
-                    </div>
-                    <div className="input-row-group">
-                      <label>Allocation</label>
-                      <input type="text" value={editableAllocation} onChange={(e) => setEditableAllocation(e.target.value)} className="input-field" />
-                    </div>
-                    <div className="input-row-group">
-                      <label>Assign Date</label>
-                      <input type="date" value={editableAssignDate} onChange={(e) => setEditableAssignDate(e.target.value)} className="input-field" />
-                    </div>
-                    <div className="input-row-group">
-                      <label>Target Complete Date</label>
-                      <input type="date" value={editableDeadline} onChange={(e) => setEditableDeadline(e.target.value)} className="input-field" />
-                    </div>
-                    <button className="save-btn" onClick={handleSaveJob}>
-                      <Save size={16} /> Save Changes
-                    </button>
+            {/* ── Explore Projects (Public Jobs Board) Tab ── */}
+            {activeTab === 'public-jobs' && (
+              <motion.section key="public-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="field-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <Globe size={20} style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Global Projects Board</h3>
                   </div>
 
-                  <div className="field-card">
+                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Job No</th>
+                          <th>Job Name</th>
+                          <th>Division</th>
+                          <th>Ministry</th>
+                          <th>Department</th>
+                          <th>Assignee</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allProjects.length === 0 ? (
+                          <tr>
+                            <td colSpan={7}>
+                              <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                <span>No system projects found.</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          allProjects.map((job) => (
+                            <tr key={job.jobNo}>
+                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-bold">{job.jobName}</td>
+                              <td>{job.division}</td>
+                              <td>{job.ministry}</td>
+                              <td>{job.department}</td>
+                              <td>
+                                {job.assignee ? (
+                                  <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>{job.assignee}</span>
+                                ) : (
+                                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
+                                )}
+                              </td>
+                              <td>
+                                <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
+                                  {job.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.section>
+            )}
+
+            {/* ── Update Progress Tab ── */}
+            {activeTab === 'update-progress' && (
+              <motion.section key="update-progress" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="update-progress-view">
+                <div className="field-card" style={{ marginBottom: '24px', padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <RefreshCw size={20} style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Select Active Job to Update</h3>
+                  </div>
+                  <div className="vertical-form">
                     <div className="input-row-group">
-                      <label>Field Visit Date</label>
-                      <div className="hybrid-date-wrapper">
-                        <input type="text" className="input-field" placeholder="YYYY-MM-DD" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
-                        <button type="button" className="cal-btn" onClick={handleCalendarClick}><Calendar size={18} /></button>
-                        <input type="date" ref={dateInputRef} className="hidden-date" onChange={(e) => setVisitDate(e.target.value)} style={{ opacity: 0, position: 'absolute' }} />
+                      <label>Job Directory Reference</label>
+                      <select 
+                        className="job-select-dropdown" 
+                        value={selectedJobId} 
+                        onChange={(e) => handleSelectionChange(e.target.value)}
+                      >
+                        <option value="">-- Choose Job ID --</option>
+                        {jobData.map(job => (
+                          <option key={job.jobNo} value={job.jobNo}>{job.jobNo} - {job.jobName}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedJob && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+                    
+                    {/* Column 1: Core Job Specs */}
+                    <div className="field-card" style={{ padding: '24px' }}>
+                      <p className="instruction-text" style={{ marginTop: '0px', marginBottom: '20px', fontWeight: 600 }}>Update structural specifications:</p>
+                      <div className="vertical-form">
+                        <div className="input-row-group">
+                          <label>Job Reference Code</label>
+                          <input type="text" disabled value={selectedJob.jobNo} className="input-field disabled" />
+                        </div>
+                        <div className="input-row-group">
+                          <label>Job Description</label>
+                          <input type="text" value={editableJobName} onChange={(e) => setEditableJobName(e.target.value)} className="input-field" />
+                        </div>
+                        <div className="input-row-group">
+                          <label>Allocation Area</label>
+                          <input type="text" value={editableAllocation} onChange={(e) => setEditableAllocation(e.target.value)} className="input-field" />
+                        </div>
+                        <div className="input-row-group">
+                          <label>Work Allocation Date</label>
+                          <input type="date" value={editableAssignDate} onChange={(e) => setEditableAssignDate(e.target.value)} className="input-field" />
+                        </div>
+                        <div className="input-row-group">
+                          <label>Deadline Limit</label>
+                          <input type="date" value={editableDeadline} onChange={(e) => setEditableDeadline(e.target.value)} className="input-field" />
+                        </div>
+                        <button className="save-btn" onClick={handleSaveJob} style={{ marginTop: '10px' }}>
+                          <Save size={16} /> Save Changes
+                        </button>
                       </div>
                     </div>
-                    <div className="input-row-group">
-                      <label>Estimate Amount (LKR)</label>
-                      <input 
-                        type="number" 
-                        className="input-field" 
-                        placeholder="0.00" 
-                        value={estimateAmount} 
-                        onChange={handleEstimateAmountChange}
-                        onKeyDown={handleEstimateAmountKeyDown}
-                      />
+
+                    {/* Column 2: Estimates Submission */}
+                    <div className="field-card" style={{ padding: '24px' }}>
+                      <p className="instruction-text" style={{ marginTop: '0px', marginBottom: '20px', fontWeight: 600 }}>Generate structural field estimate:</p>
+                      <div className="vertical-form">
+                        <div className="input-row-group">
+                          <label>Field Survey Verification Date</label>
+                          <div className="hybrid-date-wrapper" style={{ display: 'flex', gap: '8px' }}>
+                            <input type="text" className="input-field" placeholder="YYYY-MM-DD" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
+                            <button type="button" className="cal-btn" onClick={handleCalendarClick} style={{ padding: '0 12px' }}><Calendar size={18} /></button>
+                            <input type="date" ref={dateInputRef} className="hidden-date" onChange={(e) => setVisitDate(e.target.value)} style={{ opacity: 0, position: 'absolute', pointerEvents: 'none' }} />
+                          </div>
+                        </div>
+                        <div className="input-row-group">
+                          <label>Calculated Estimate Value (LKR)</label>
+                          <input 
+                            type="number" 
+                            className="input-field" 
+                            placeholder="0.00" 
+                            value={estimateAmount} 
+                            onChange={handleEstimateAmountChange}
+                            onKeyDown={handleEstimateAmountKeyDown}
+                          />
+                        </div>
+                        <button className="send-btn" onClick={handleSubmitEstimate} style={{ marginTop: '10px' }}>
+                          <Send size={16} /> Submit Estimate
+                        </button>
+                      </div>
                     </div>
-                    <button className="send-btn" onClick={handleSubmitEstimate}>
-                      <Send size={16} /> Submit Estimate
-                    </button>
+
                   </div>
-                </div>
-              )}
+                )}
 
-              {submittedEstimates.length > 0 && (
-                <div style={{ marginTop: '3rem' }}>
-                  <h3 style={{ marginBottom: '1.5rem', color: 'var(--text-main)', fontWeight: 900 }}>Submitted Estimates</h3>
-                  <table className="project-table">
-                    <thead>
-                      <tr>
-                        <th>NO</th>
-                        <th>Job No</th>
-                        <th>Job Name</th>
-                        <th>To Name</th>
-                        <th>Allocation</th>
-                        <th>Estimated Amount (LKR)</th>
-                        <th>Checked On</th>
-                        <th>Send Approval</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {submittedEstimates.map((estimate) => (
-                        <tr key={estimate.no}>
-                          <td>{estimate.no}</td>
-                          <td className="font-mono text-cyan-500">{estimate.jobNo}</td>
-                          <td className="font-bold">{estimate.jobName}</td>
-                          <td>{estimate.toName}</td>
-                          <td>{estimate.allocation}</td>
-                          <td className="font-bold">{estimate.estimatedAmount}</td>
-                          <td>
-                            <button 
-                              onClick={() => handleCheckEstimate(estimate.no)}
-                              style={{
-                                background: estimate.isChecked ? '#10b981' : '#f0f0f0',
-                                color: estimate.isChecked ? 'white' : '#666',
-                                border: 'none',
-                                padding: '8px 16px',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                fontWeight: 600,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                transition: 'all 0.2s'
-                              }}
-                            >
-                              {estimate.isChecked ? '✓ Checked' : '☐ Not Checked'}
-                            </button>
-                          </td>
-                          <td>
-                            <span style={{ background: '#fef3c7', color: '#92400e', padding: '6px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600 }}>
-                              {estimate.sendApproval}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-          )}
+                {/* Submitted Estimates Directory */}
+                {submittedEstimates.length > 0 && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: '30px' }}>
+                    <div className="field-card" style={{ padding: '24px' }}>
+                      <h3 className="recent-jobs-title" style={{ marginBottom: '20px' }}>Submitted Structural Estimates</h3>
+                      <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                        <table className="project-table">
+                          <thead>
+                            <tr>
+                              <th>No</th>
+                              <th>Job No</th>
+                              <th>Job Name</th>
+                              <th>To Name</th>
+                              <th>Allocation</th>
+                              <th>Estimate (LKR)</th>
+                              <th>Survey Date</th>
+                              <th>Approval Flow</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {submittedEstimates.map((estimate) => (
+                              <tr key={estimate.no}>
+                                <td>{estimate.no}</td>
+                                <td className="font-mono">{estimate.jobNo}</td>
+                                <td className="font-bold">{estimate.jobName}</td>
+                                <td>{estimate.toName}</td>
+                                <td>{estimate.allocation}</td>
+                                <td className="font-bold">{estimate.estimatedAmount}</td>
+                                <td>
+                                  <button 
+                                    onClick={() => handleCheckEstimate(estimate.no)}
+                                    className={`status-badge status-${estimate.isChecked ? 'approved' : 'pending'}`}
+                                    style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                  >
+                                    {estimate.isChecked ? '✓ Checked' : '☐ Mark Check'}
+                                  </button>
+                                </td>
+                                <td>
+                                  <span className={`status-badge status-${estimate.sendApproval ? estimate.sendApproval.toLowerCase() : 'pending'}`}>
+                                    {estimate.sendApproval}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.section>
+            )}
 
-          {activeTab === 'profile' && (
-            <section className="profile-view">
-              <div className="form-container" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                <div className="field-card">
+            {/* ── Profile Tab ── */}
+            {activeTab === 'profile' && (
+              <motion.section key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="profile-view">
+                <div className="field-card" style={{ maxWidth: '600px', padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
-                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                      {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={40} />}
+                    <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative' }}>
+                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={40} />}
                       <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
-                      <button onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', bottom: '0', right: '0', borderRadius: '50%', padding: '6px', border: 'none', cursor: 'pointer' }}><Camera size={16}/></button>
+                      <button 
+                        onClick={() => fileInputRef.current.click()} 
+                        className="approve-btn"
+                        style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', padding: 0 }}
+                      >
+                        <Camera size={14}/>
+                      </button>
                     </div>
-                    <h3>Personal Details</h3>
-                  </div>
-                  <div className="input-row-group">
-                    <label>FULL NAME</label>
-                    <input type="text" value={editProfileName} onChange={(e) => setEditProfileName(e.target.value)} className="input-field" />
-                  </div>
-                  <div className="input-row-group">
-                    <label>REGISTRATION NUMBER</label>
-                    <input type="text" value={editRegNo} onChange={(e) => setEditRegNo(e.target.value)} className="input-field" />
-                  </div>
-                  <div className="input-row-group">
-                    <label>EMAIL ADDRESS</label>
-                    <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="input-field" />
-                  </div>
-                  <div className="input-row-group">
-                    <label>PHONE NUMBER</label>
-                    <input type="text" value={editPhoneNo} onChange={(e) => setEditPhoneNo(e.target.value)} className="input-field" />
+                    <div>
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Personal Details</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your user credentials</p>
+                    </div>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                    <button className="confirm-btn" onClick={handleConfirmProfile} style={{ padding: '10px 20px', background: 'purple', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                      Confirm
-                    </button>
-                    <button className="cancel-btn" onClick={handleCancelProfile} style={{ padding: '10px 20px', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                      Cancel
-                    </button>
+                  <div className="vertical-form">
+                    <div className="input-row-group">
+                      <label>Full Name</label>
+                      <input type="text" value={editProfileName} onChange={(e) => setEditProfileName(e.target.value)} className="input-field" />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Registration Reference</label>
+                      <input type="text" value={editRegNo} onChange={(e) => setEditRegNo(e.target.value)} className="input-field" />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Email Address</label>
+                      <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="input-field" />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Phone Contact</label>
+                      <input type="text" value={editPhoneNo} onChange={(e) => setEditPhoneNo(e.target.value)} className="input-field" />
+                    </div>
+                    
+                    <div className="form-action-row" style={{ marginTop: '20px' }}>
+                      <button className="save-btn" onClick={handleConfirmProfile}>
+                        <Save size={14} /> Confirm
+                      </button>
+                      <button className="cancel-btn" onClick={handleCancelProfile}>
+                        <X size={14} /> Cancel
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          )}
+              </motion.section>
+            )}
 
-          {activeTab === 'settings' && (
-            <div className="placeholder-content">
-              <p>Content for {activeTab.replace('-', ' ')} coming soon...</p>
-            </div>
-          )}
+            {/* ── Settings Tab ── */}
+            {activeTab === 'settings' && (
+              <motion.section key="settings" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="profile-view">
+                <div className="field-card" style={{ maxWidth: '600px', padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <Settings size={20} style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>System Settings</h3>
+                  </div>
+                  <div className="vertical-form">
+                    <div className="input-row-group">
+                      <label>Theme Preferences</label>
+                      <select
+                        value={isDark ? 'Dark Mode' : 'Light Mode'}
+                        onChange={(e) => {
+                          const nextDark = e.target.value === 'Dark Mode';
+                          setIsDark(nextDark);
+                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                        }}
+                        className="job-select-dropdown"
+                      >
+                        <option value="Light Mode">Light Mode</option>
+                        <option value="Dark Mode">Dark Mode</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
         </main>
+      </div>
+
+      {/* ─── Toast Notifications ─── */}
+      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
+        <AnimatePresence>
+          {toasts.map(toast => (
+            <motion.div
+              key={toast.id}
+              initial={{ x: 80, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              className={`alert-banner alert-${toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : toast.type === 'info' ? 'info' : 'success'}`}
+              style={{ pointerEvents: 'all', minWidth: '280px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+            >
+              {toast.type === 'success' && <CheckCircle size={18} />}
+              {toast.type === 'error' && <XCircle size={18} />}
+              {toast.type === 'warning' && <AlertTriangle size={18} />}
+              {toast.type === 'info' && <Clock size={18} />}
+              <span style={{ flex: 1, fontSize: '0.85rem' }}>{toast.message}</span>
+              <button onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px', display: 'flex' }}>
+                <X size={14} />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );

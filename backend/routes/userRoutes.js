@@ -1,19 +1,17 @@
 const express = require('express');
 const router = express.Router();
-// Assuming you have a User model imported
 const User = require('../models/User'); 
 
 // Ensure you have an async function with await
 router.post('/add', async (req, res) => {
     try {
-        // Map frontend fields to match your Mongoose Schema
         const userData = {
-            fullName: `${req.body.firstName} ${req.body.secondName}`,
+            fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
             employeeId: req.body.employeeId,
             email: req.body.email,
             password: req.body.password,
             division: req.body.division,
-            role: 'engineer' // Force a default role if not provided
+            role: 'engineer'
         };
 
         const newUser = new User(userData);
@@ -25,7 +23,7 @@ router.post('/add', async (req, res) => {
     }
 });
 
-// Add this to your userRoutes.js file
+// Delete user
 router.delete('/:id', async (req, res) => {
     try {
         const deletedUser = await User.findByIdAndDelete(req.params.id);
@@ -37,15 +35,18 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-// Add this to your userRoutes.js
+
+// Get all users
 router.get('/', async (req, res) => {
     try {
-        const users = await User.find(); // Fetches all users from DB
+        const users = await User.find();
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Update user details
 router.put('/:id', async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -57,4 +58,49 @@ router.put('/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Change password for a logged-in user. Requires the current password to be correct.
+router.patch('/:id/password', async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: "MISSING_FIELDS" });
+        }
+        if (newPassword.length < 4) {
+            return res.status(400).json({ error: "PASSWORD_TOO_SHORT" });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ error: "USER_NOT_FOUND" });
+        }
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ error: "INCORRECT_CURRENT_PASSWORD" });
+        }
+
+        user.password = newPassword; // pre('save') hook hashes it
+        await user.save();
+
+        res.json({ status: "PASSWORD_UPDATED" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get single user details by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: "USER_NOT_FOUND" });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(400).json({ error: "INVALID_USER_ID" });
+    }
+});
+
 module.exports = router;
