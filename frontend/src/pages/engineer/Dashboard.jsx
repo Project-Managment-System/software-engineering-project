@@ -39,7 +39,25 @@ const UserDashboard = ({ isDark }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [editUserForm, setEditUserForm] = useState({});
 
+  // Fetches the jobs/projects for this engineer's division
   const fetchData = async () => {
+    try {
+      const division = localStorage.getItem('userDivision');
+      const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+
+      const data = res.data.map((item, index) => ({
+        ...item,
+        sNo: index + 1,
+        assignee: item.assignee || '' // Ensure assignee field exists
+      }));
+      setApprovalData(data);
+      setJobTrackingData(data);
+    } catch (err) { console.error("Error fetching data:", err); }
+  };
+
+  // Fetches all system users (for the assignee dropdown, Add User table,
+  // and to refresh this engineer's own division from the DB)
+  const fetchUsers = async () => {
     try {
         const res = await axios.get(`http://127.0.0.1:5000/api/users`);
         setAllSystemUsers(res.data);

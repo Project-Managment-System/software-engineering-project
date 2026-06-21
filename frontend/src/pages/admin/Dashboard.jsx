@@ -51,9 +51,9 @@ const AdminDashboard = ({ isDark }) => {
   const [jobs, setJobs] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    jobName: '', ministry: 'Finance', department: 'Procurement', division: 'Administration',
-    allocation: '', dateReq: '', ref: '', institute: ''
-  });
+  jobName: '', ministry: '', department: '', division: '',
+  allocation: '', dateReq: '', ref: '', institute: ''
+});
 
   const [filters, setFilters] = useState({ department: '', ministry: '', division: '' });
 
@@ -178,12 +178,12 @@ const AdminDashboard = ({ isDark }) => {
   role: 'engineer' // Add this as a default
    });
   const handleCancel = () => {
-    setEditingId(null);
-    setFormData({
-      jobName: '', ministry: 'Finance', department: 'Procurement', division: 'Administration',
-      allocation: '', dateReq: '', ref: '', institute: ''
-    });
-  };
+  setEditingId(null);
+  setFormData({
+    jobName: '', ministry: '', department: '', division: '',
+    allocation: '', dateReq: '', ref: '', institute: ''
+  });
+};
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -292,6 +292,7 @@ const AdminDashboard = ({ isDark }) => {
                       style={{ width: '49%' }}
                       className="job-select-dropdown" required
                     >
+                      <option value="" disabled>Select Division</option>
                       <option value="Anuradhapura-East">Anuradhapura-East</option>
                       <option value="Anuradhapura-West">Anuradhapura-West</option>
                       <option value="Medawachchiya">Medawachchiya</option>
@@ -300,7 +301,6 @@ const AdminDashboard = ({ isDark }) => {
                       <option value="Thabuththegama">Thabuththegama</option>
                       <option value="Polonnaruwa">Polonnaruwa</option>
                       <option value="Higurakgoda">Higurakgoda</option>
-                      
                     </select>
                   </div>
 
@@ -324,6 +324,7 @@ const AdminDashboard = ({ isDark }) => {
                         className="job-select-dropdown"
                         required
                       >
+                        <option value="" disabled>Select Ministry</option>
                         <option value="CHIEF MINISTRY">CHIEF MINISTRY</option>
                         <option value="MINISTRY OF AGRICULTURE">MINISTRY OF AGRICULTURE</option>
                         <option value="MINISTRY OF HEALTH">MINISTRY OF HEALTH</option>
@@ -507,7 +508,10 @@ const AdminDashboard = ({ isDark }) => {
                         </tr>
                       ) : (
                         filteredJobs.map((j) => (
-                          <tr key={j._id}>
+                        <tr
+                          key={j._id}
+                          style={j.status === 'Rejected' ? { backgroundColor: '#fee2e2' } : undefined}
+                        >
                             <td className="font-mono text-cyan-500">{j.jobNo}</td>
                             <td>{j.division}</td>
                             <td className="font-bold">{j.jobName}</td>
