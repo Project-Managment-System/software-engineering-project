@@ -308,3 +308,33 @@ h3 {
     margin-left: 0 !important;
   }
 }
+
+/* Ensure the dropdown options have readable colors */
+/* Ensure the select options are visible */
+select option {
+    background-color: #ffffff;
+    color: #000000 !important; /* Force black text */
+    padding: 10px;
+}
+
+/* Force inputs to be interactive in tables */
+.table-edit-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #4a90e2;
+  border-radius: 4px;
+  background: white;
+  color: black;
+  position: relative;
+  z-index: 100;
+  display: block;
+  box-sizing: border-box;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-save { color: green; border: none; background: none; cursor: pointer; }
+.action-cancel { color: red; border: none; background: none; cursor: pointer; }
