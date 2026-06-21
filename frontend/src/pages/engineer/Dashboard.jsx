@@ -207,81 +207,81 @@ const handleSaveUser = async (e) => {
               )}
 
               {jobSubTab === 'tracking' && (
-  <table className="project-table">
-    <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr></thead>
-    <tbody>
-      {jobTrackingData.map((job) => (
-        <tr key={job.jobNo}>
-          <td>{job.sNo}</td>
-          <td>{job.jobNo}</td>
-          <td>
-            {editingJob === job.jobNo ? (
-              <input
-                value={editForm.division || ''}
-                onChange={(e) => setEditForm({ ...editForm, division: e.target.value })}
-                style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-              />
-            ) : job.division}
-          </td>
-          <td>
-            {editingJob === job.jobNo ? (
-              <input
-                value={editForm.jobName || ''}
-                onChange={(e) => setEditForm({ ...editForm, jobName: e.target.value })}
-                style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-              />
-            ) : job.jobName}
-          </td>
-          <td>
-            {editingJob === job.jobNo ? (
-              <input
-                value={editForm.allocation || ''}
-                onChange={(e) => setEditForm({ ...editForm, allocation: e.target.value })}
-                style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-              />
-            ) : job.allocation}
-          </td>
-          <td>
-            <select
-              style={{ color: 'black', backgroundColor: 'white', padding: '5px' }}
-              value={job.assignee || ""}
-              onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}
-            >
-              <option value="" disabled>Select Assignee</option>
-              {allSystemUsers.map((user) => {
-                const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
-                return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
-              })}
-            </select>
-          </td>
-          <td>
-            {editingJob === job.jobNo ? (
-              <div style={{ display: 'flex', gap: '5px' }}>
-                <button onClick={handleUpdate} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                  <Check size={16} />
-                </button>
-                <button onClick={() => setEditingJob(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: '5px' }}>
-                <button className="edit-btn" onClick={() => startEdit(job)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-                  <Edit3 size={16} />
-                </button>
-                <button className="delete-btn" onClick={() => handleDelete(job.jobNo)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
+                <table className="project-table">
+                  <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr></thead>
+                  <tbody>
+                    {jobTrackingData.map((job) => (
+                      <tr key={job.jobNo}>
+                        <td>{job.sNo}</td>
+                        <td>{job.jobNo}</td>
+                        <td>
+                          {editingJob === job.jobNo ? (
+                            <input
+                              value={editForm.division || ''}
+                              onChange={(e) => setEditForm({ ...editForm, division: e.target.value })}
+                              style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                          ) : job.division}
+                        </td>
+                        <td>
+                          {editingJob === job.jobNo ? (
+                            <input
+                              value={editForm.jobName || ''}
+                              onChange={(e) => setEditForm({ ...editForm, jobName: e.target.value })}
+                              style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                          ) : job.jobName}
+                        </td>
+                        <td>
+                          {editingJob === job.jobNo ? (
+                            <input
+                              value={editForm.allocation || ''}
+                              onChange={(e) => setEditForm({ ...editForm, allocation: e.target.value })}
+                              style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                          ) : job.allocation}
+                        </td>
+                        <td>
+                          <select
+                            style={{ color: 'black', backgroundColor: 'white', padding: '5px' }}
+                            value={job.assignee || ""}
+                            onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}
+                          >
+                            <option value="" disabled>Select Assignee</option>
+                            {allSystemUsers.map((user) => {
+                              const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
+                              return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
+                            })}
+                          </select>
+                        </td>
+                        <td>
+                          {editingJob === job.jobNo ? (
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button onClick={handleUpdate} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                                <Check size={16} />
+                              </button>
+                              <button onClick={() => setEditingJob(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button className="edit-btn" onClick={() => startEdit(job)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                                <Edit3 size={16} />
+                              </button>
+                              <button className="delete-btn" onClick={() => handleDelete(job.jobNo)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              </>
             )}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-)}
-            </>
-          )}
 
           {activeTab === 'add-user' && (
              <div style={{ padding: '20px' }}>
@@ -305,69 +305,69 @@ const handleSaveUser = async (e) => {
                <table className="project-table">
                  <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Division</th><th>Action</th></tr></thead>
                  <tbody>
-  {allSystemUsers.map((user, i) => (
-    <tr key={user._id}>
-      <td>{i + 1}</td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.employeeId || ''} 
-            onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.employeeId}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.fullName || ''} 
-            onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.fullName}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.email || ''} 
-            onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.email}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.division || ''} 
-            onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.division}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button onClick={handleUpdateUser} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              <Check size={16} />
-            </button>
-            <button onClick={() => setEditingUser(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              <X size={16} />
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button className="edit-btn" onClick={() => startEditUser(user)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-              <Edit3 size={16} />
-            </button>
-            <button className="delete-btn" onClick={() => handleDeleteUser(user._id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
+                    {allSystemUsers.map((user, i) => (
+                      <tr key={user._id}>
+                        <td>{i + 1}</td>
+                        <td>
+                          {editingUser === user._id ? (
+                            <input 
+                              value={editUserForm.employeeId || ''} 
+                              onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
+                              style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                          ) : user.employeeId}
+                        </td>
+                        <td>
+                          {editingUser === user._id ? (
+                            <input 
+                              value={editUserForm.fullName || ''} 
+                              onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
+                              style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                          ) : user.fullName}
+                        </td>
+                        <td>
+                          {editingUser === user._id ? (
+                            <input 
+                              value={editUserForm.email || ''} 
+                              onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
+                              style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                          ) : user.email}
+                        </td>
+                        <td>
+                          {editingUser === user._id ? (
+                            <input 
+                              value={editUserForm.division || ''} 
+                              onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
+                              style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                          ) : user.division}
+                        </td>
+                        <td>
+                          {editingUser === user._id ? (
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button onClick={handleUpdateUser} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                                <Check size={16} />
+                              </button>
+                              <button onClick={() => setEditingUser(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                              <button className="edit-btn" onClick={() => startEditUser(user)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                                <Edit3 size={16} />
+                              </button>
+                              <button className="delete-btn" onClick={() => handleDeleteUser(user._id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
                </table>
              </div>
           )}
