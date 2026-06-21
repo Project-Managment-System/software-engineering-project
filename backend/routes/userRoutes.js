@@ -8,7 +8,8 @@ router.post('/add', async (req, res) => {
     try {
         // Map frontend fields to match your Mongoose Schema
         const userData = {
-            fullName: `${req.body.firstName} ${req.body.secondName}`,
+            // FIX: Safely fallback to combined fields if req.body.fullName isn't provided directly
+            fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
             employeeId: req.body.employeeId,
             email: req.body.email,
             password: req.body.password,
@@ -37,6 +38,7 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 // Add this to your userRoutes.js
 router.get('/', async (req, res) => {
     try {
@@ -46,6 +48,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 router.put('/:id', async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -55,6 +58,22 @@ router.put('/:id', async (req, res) => {
         res.json(updatedUser);
     } catch (err) {
         res.status(500).json({ error: err.message });
+    }
+});
+
+// Get a single user by ID, excluding the password field.
+// Used by ProtectedRoute on the frontend to verify a session is real
+// (the user still exists in the DB and actually has the claimed role),
+// rather than trusting a localStorage flag alone.
+router.get('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: "USER_NOT_FOUND" });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(400).json({ error: "INVALID_USER_ID" });
     }
 });
 module.exports = router;
