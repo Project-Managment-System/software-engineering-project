@@ -8,7 +8,8 @@ router.post('/add', async (req, res) => {
     try {
         // Map frontend fields to match your Mongoose Schema
         const userData = {
-            fullName: `${req.body.firstName} ${req.body.secondName}`,
+            // FIX: Safely fallback to combined fields if req.body.fullName isn't provided directly
+            fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
             employeeId: req.body.employeeId,
             email: req.body.email,
             password: req.body.password,
@@ -37,6 +38,7 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 // Add this to your userRoutes.js
 router.get('/', async (req, res) => {
     try {
@@ -46,6 +48,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 router.put('/:id', async (req, res) => {
     try {
         const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
