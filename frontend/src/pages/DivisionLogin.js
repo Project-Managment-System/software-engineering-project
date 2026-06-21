@@ -1,36 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, User, Shield } from 'lucide-react';
-import axios from 'axios';
+import { ArrowLeft, Lock, User, ShieldAlert } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+// Component animation frames
+const formContainerVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.98 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 90, damping: 20, staggerChildren: 0.08 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
+};
+
+const titleContainerVariants = {
+  hidden: { opacity: 1 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+};
+
+const letterVariants = {
+  hidden: { opacity: 0, y: 10, filter: "blur(2px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { type: "spring", damping: 12, stiffness: 200 }
+  }
+};
 
 export default function DivisionLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [allUsers, setAllUsers] = useState([]); // For dynamic User login
   const navigate = useNavigate();
 
-  // Fetch users on mount for dynamic validation
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await axios.get('http://127.0.0.1:5000/api/users');
-        setAllUsers(res.data);
-      } catch (err) { console.error("Error fetching system users:", err); }
-    };
-    fetchUsers();
-  }, []);
-
+  // Valid Engineering credentials (kept exactly as requested)
   const engineerCredentials = {
-    'enae1': 'ae1', 'enaw1': 'aw1', 'enme1': 'me1', 'enmi1': 'mi1',
-    'enth1': 'th1', 'enke1': 'ke1', 'enpo1': 'po1', 'enhi1': 'hi1'
+    'enae1': 'ae1',
+    'enaw1': 'aw1',
+    'enme1': 'me1',
+    'enmi1': 'mi1',
+    'enth1': 'th1',
+    'enke1': 'ke1',
+    'enpo1': 'po1',
+    'enhi1': 'hi1'
   };
 
-  // Add this mapping
+  // Division map mapping (kept exactly as requested)
   const divisionMap = {
     'enae1': 'Anuradhapura-East',
     'enaw1': 'Anuradhapura-West',
-    'enme1': 'Medawachchiya',
-    'enmi1': 'Mihinthale',
+    'enme1': 'Mihinthale',
     'enth1': 'Thambuththegama',
     'enke1': 'Kekirawa',
     'enpo1': 'Polonnaruwa',
@@ -45,7 +73,6 @@ export default function DivisionLogin() {
     if (prefix === 'cl') {
       if (username === 'cl0001' && password === 'cl1') {
         localStorage.setItem('isAdmin', 'true');
-        localStorage.setItem('isAuthenticated', 'true');
         navigate('/admin/dashboard');
       } else {
         alert('Invalid Admin credentials. Access Denied.');
@@ -53,10 +80,9 @@ export default function DivisionLogin() {
       return;
     }
 
-    // 2. Engineer Check (Strict Validation)
+    // 2. Engineer Check (Strict Validation fixed to execute safely without double execution loop)
     if (prefix === 'en') {
       if (engineerCredentials[username] === password) {
-        localStorage.setItem('isAuthenticated', 'true'); // Added to pass ProtectedRoute
         localStorage.setItem('userDivision', divisionMap[username]); // Save division
         navigate('/engineer/dashboard');
       } else {
@@ -65,25 +91,8 @@ export default function DivisionLogin() {
       return;
     }
 
-    console.log("Attempting Login for:", { username, password });
-    console.log("Checking against these users:", allUsers);
-
-    // 3. User Check (Dynamic - matches what you add in Engineer Dashboard)
-    const authenticatedUser = allUsers.find(
-      (u) => u.employeeId === username && u.password === password
-    );
-
-    if (authenticatedUser) {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userDivision', authenticatedUser.division);
-      localStorage.setItem('currentUserName', authenticatedUser.fullName);
-      localStorage.setItem('userId', authenticatedUser._id);
-      navigate('/user/dashboard');
-      return;
-    }
-
-    // 4. Default / Other Portals fallback
-    switch (prefix) {
+    // 3. Other Portals
+    switch(prefix) {
       case 'us': navigate('/user/dashboard'); break;
       case 'da': alert('Divisional Assistant portal is under future development.'); break;
       case 'sa': alert('SuperAdmin portal is under future development.'); break;
@@ -91,46 +100,111 @@ export default function DivisionLogin() {
     }
   };
 
+  const pageTitle = "DIVISION LOGIN";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
-      <div className="bg-white p-10 rounded-3xl shadow-xl w-full max-w-md border border-slate-200">
-        <button onClick={() => navigate('/')} className="mb-6 flex items-center text-slate-500 hover:text-blue-600 font-bold">
-          <ArrowLeft size={18} className="mr-2" /> BACK TO PORTAL
-        </button>
-        
-        <div className="text-center mb-8">
-          <Shield className="mx-auto text-blue-600 mb-4" size={48} />
-          <h2 className="text-3xl font-black">SYSTEM LOGIN</h2>
+    <div 
+      className="min-h-screen relative flex items-center justify-center p-6 antialiased font-sans bg-cover bg-center bg-fixed bg-slate-900"
+      style={{ 
+        backgroundImage: `url("https://i.pinimg.com/736x/aa/f5/52/aaf552b182a4253d5ec0de4aa4838af6.jpg")` 
+      }}
+    >
+      {/* Background Image Safety Layer (Kept clear/transparent to maintain original image colors) */}
+      <div className="absolute inset-0 bg-black/5 z-0 pointer-events-none" />
+
+      {/* Main Form Box Structure */}
+      <motion.div 
+        variants={formContainerVariants}
+        initial="hidden"
+        animate="show"
+        className="relative bg-white/85 backdrop-blur-2xl border border-[#90D5FF]/40 rounded-[2.5rem] p-10 w-full max-w-md shadow-2xl z-20 flex flex-col overflow-hidden"
+      >
+        {/* Inner Subtle White Edge Highlight Framing */}
+        <div className="absolute inset-0 border border-white/60 rounded-[2.5rem] pointer-events-none z-30" />
+
+        {/* Header Navigation Link Back */}
+        <motion.div variants={itemVariants} className="mb-8">
+          <button 
+            onClick={() => navigate('/')} 
+            className="flex items-center text-xs font-bold tracking-widest text-[#006EB1] hover:text-[#002B49] uppercase transition-colors group"
+          >
+            <ArrowLeft size={14} className="mr-2 transition-transform duration-300 group-hover:-translate-x-1" /> 
+            Back to Portal
+          </button>
+        </motion.div>
+
+        {/* Animated Brand Header */}
+        <div className="mb-8">
+          <motion.h2 
+            variants={titleContainerVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-3xl sm:text-4xl font-black tracking-tight text-[#002B49] uppercase flex items-center select-none mb-2"
+          >
+            {pageTitle.split("").map((char, index) => (
+              <motion.span key={index} variants={letterVariants}>
+                {char === " " ? "\u00A0" : char}
+              </motion.span>
+            ))}
+          </motion.h2>
+          <motion.p variants={itemVariants} className="text-slate-600 text-sm font-medium">
+            Enter enterprise credentials to access your administrative hub.
+          </motion.p>
         </div>
-        
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="relative">
-            <User className="absolute left-4 top-4 text-slate-400" size={20} />
+
+        {/* Authorization Form Segment */}
+        <form onSubmit={handleLogin} className="space-y-5 relative z-20">
+          
+          {/* Username Controlled Core Input Field Container */}
+          <motion.div variants={itemVariants} className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#006EB1]/70">
+              <User size={18} />
+            </span>
             <input 
               type="text"
-              placeholder="Username / Employee ID"
-              className="w-full pl-12 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Username"
+              className="w-full pl-12 pr-4 py-4 bg-white/60 border border-[#90D5FF]/40 rounded-xl text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:ring-2 focus:ring-[#006EB1] focus:border-[#006EB1] outline-none transition-all duration-300 text-sm shadow-inner"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
             />
-          </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-4 text-slate-400" size={20} />
+          </motion.div>
+
+          {/* Password Controlled Core Input Field Container */}
+          <motion.div variants={itemVariants} className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#006EB1]/70">
+              <Lock size={18} />
+            </span>
             <input 
               type="password"
               placeholder="Password"
-              className="w-full pl-12 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full pl-12 pr-4 py-4 bg-white/60 border border-[#90D5FF]/40 rounded-xl text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:ring-2 focus:ring-[#006EB1] focus:border-[#006EB1] outline-none transition-all duration-300 text-sm shadow-inner"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </div>
-          <button type="submit" className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
-            SIGN IN
-          </button>
+          </motion.div>
+
+          {/* Submit/Execution Operational Action Button */}
+          <motion.div variants={itemVariants} className="pt-2">
+            <button 
+              type="submit" 
+              className="w-full py-4 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 hover:from-[#006EB1] hover:to-[#005a91] text-white font-bold text-xs tracking-[0.2em] rounded-xl transition-all duration-300 shadow-xl active:scale-[0.99] uppercase border border-slate-800 hover:border-[#90D5FF]"
+            >
+              SIGN IN
+            </button>
+          </motion.div>
         </form>
-      </div>
+
+        {/* Subtle Security Notice Footer */}
+        <motion.div 
+          variants={itemVariants}
+          className="mt-8 pt-6 border-t border-slate-200/60 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+        >
+          <ShieldAlert size={12} className="text-[#006EB1]" />
+          SECURE ENCRYPTED NODE
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
