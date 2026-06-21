@@ -102,6 +102,11 @@ const AdminDashboard = ({ isDark }) => {
     setEditPhoneNo(phoneNo);
   };
 
+  const handleUserFormChange = (e) => {
+  const { name, value } = e.target;
+    setUserFormData({ ...userFormData, [name]: value });
+  };
+
   const handleConfirmProfile = () => {
     setProfileName(editProfileName);
     setRegNo(editRegNo);
@@ -544,8 +549,7 @@ const AdminDashboard = ({ isDark }) => {
               <div className="form-container" style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
                 <div className="field-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
-                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifycontent: 'center', position: 'relative', overflow: 'hidden' }}>
-                      {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={40} />}
+                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>                      {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <User size={40} />}
                       <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
                       <button onClick={() => fileInputRef.current.click()} style={{ position: 'absolute', bottom: '0', right: '0', borderRadius: '50%', padding: '6px', border: 'none', cursor: 'pointer', background: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}><Camera size={16} /></button>
                     </div>
@@ -564,15 +568,15 @@ const AdminDashboard = ({ isDark }) => {
                   </div>
                   <div className="input-row-group">
                     <label>REGISTRATION NUMBER</label>
-                    <input type="text" value={editRegNo} onChange={(e) => setEditRegNo(e.target.value)} className="input-field" />
+                    <input type="text" value={userFormData.regNo} onChange={handleUserFormChange} name="regNo" className="input-field" />
                   </div>
                   <div className="input-row-group">
                     <label>EMAIL ADDRESS</label>
-                    <input type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="input-field" />
+                    <input type="email" value={userFormData.email} onChange={handleUserFormChange} name="email" className="input-field" />
                   </div>
                   <div className="input-row-group">
                     <label>PHONE NUMBER</label>
-                    <input type="text" value={editPhoneNo} onChange={(e) => setEditPhoneNo(e.target.value)} className="input-field" />
+                    <input type="text" value={userFormData.phoneNo} onChange={handleUserFormChange} name="phoneNo" className="input-field" />
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>

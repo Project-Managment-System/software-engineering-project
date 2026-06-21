@@ -40,7 +40,7 @@ const UserDashboard = ({ isDark }) => {
     ));
   };
 
-  // Add this inside your UserDashboard component
+  // Add this inside your UserDashboard component       
   useEffect(() => {
       const isAuth = localStorage.getItem('isAuthenticated');
       if (isAuth !== 'true') {
