@@ -10,16 +10,21 @@ const UserSchema = new mongoose.Schema({
   division: { type: String, required: function() { return this.role === 'engineer'; } },
 }, { timestamps: true });
 
-// PASSWORD HASHING MIDDLEWARE (NO 'next' ARGUMENT)
+// Password Hashing Middleware
+// NOTE: async pre-save hooks do NOT receive a `next` callback in this
+// Mongoose version. Just return normally on success, or throw on error —
+// Mongoose automatically converts a thrown error into the save() rejection.
 UserSchema.pre("save", async function () {
+  // If the password hasn't been changed, skip hashing
   if (!this.isModified("password")) return;
 
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-  } catch (err) {
-    throw err; // Mongoose will catch this and reject the save
-  }
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
 });
+
+// Password Comparison Method — required by authController.js's login function
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model("User", UserSchema);

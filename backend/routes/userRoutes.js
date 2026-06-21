@@ -61,4 +61,19 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// Get a single user by ID, excluding the password field.
+// Used by ProtectedRoute on the frontend to verify a session is real
+// (the user still exists in the DB and actually has the claimed role),
+// rather than trusting a localStorage flag alone.
+router.get('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: "USER_NOT_FOUND" });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(400).json({ error: "INVALID_USER_ID" });
+    }
+});
 module.exports = router;

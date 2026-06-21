@@ -38,7 +38,7 @@ function App() {
         
         {/* Engineer Routes */}
         <Route path="/engineer/login" element={<EngineerLogin />} />
-        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />       
+        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />      
         
         {/* User Routes */}
         <Route path="/user/login" element={<UserLogin />} />
