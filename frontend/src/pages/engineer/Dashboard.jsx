@@ -26,6 +26,31 @@ const cardVariant = {
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
 };
 
+/* ─── Role Formatting Helpers ─── */
+const formatRoleName = (role) => {
+  if (!role) return 'N/A';
+  switch (role.toLowerCase()) {
+    case 'admin': return 'Admin';
+    case 'engineer': return 'Engineer';
+    case 'division_assistant': return 'Division Assistant';
+    case 'technical_officer': return 'Technical Officer';
+    case 'clerk': return 'Clerk';
+    default: return role;
+  }
+};
+
+const getRoleBadgeClass = (role) => {
+  if (!role) return 'status-pending';
+  switch (role.toLowerCase()) {
+    case 'admin': return 'status-rejected';
+    case 'engineer': return 'status-approved';
+    case 'division_assistant': return 'status-success';
+    case 'technical_officer': return 'status-pending';
+    case 'clerk': return 'status-success';
+    default: return 'status-pending';
+  }
+};
+
 /* ─────────────────────────────────────── */
 const EngineerDashboard = () => {
   const navigate = useNavigate();
@@ -52,7 +77,13 @@ const EngineerDashboard = () => {
   const [allProjects, setAllProjects] = useState([]);
   const [allSystemUsers, setAllSystemUsers] = useState([]);
   const [userFormData, setUserFormData] = useState({
-    employeeId: '', firstName: '', secondName: '', email: '', password: '', division: ''
+    employeeId: '',
+    firstName: '',
+    secondName: '',
+    email: '',
+    password: '',
+    division: localStorage.getItem('userDivision') || '',
+    role: ''
   });
   const [userDivision, setUserDivision] = useState('');
   const [editingUser, setEditingUser] = useState(null);
@@ -100,13 +131,13 @@ const EngineerDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/users`);
-      setAllSystemUsers(res.data);
-      const myEmployeeId = localStorage.getItem('employeeId');
-      const me = res.data.find(u => u.employeeId === myEmployeeId);
-      if (me && me.division) {
-        setCurrentDivision(me.division);
-        localStorage.setItem('userDivision', me.division);
+      const division = localStorage.getItem('userDivision');
+      if (division) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/division/${division}`);
+        setAllSystemUsers(res.data);
+      } else {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users`);
+        setAllSystemUsers(res.data);
       }
     } catch (err) { console.error("Error fetching users:", err); }
   };
@@ -232,16 +263,25 @@ const EngineerDashboard = () => {
       fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
       email: userFormData.email,
       password: userFormData.password,
-      division: userFormData.division,
-      role: 'engineer'
+      division: userFormData.division || localStorage.getItem('userDivision') || '',
+      role: userFormData.role
     };
     try {
       await axios.post('http://127.0.0.1:5000/api/users/add', payload);
       addToast('User saved! They can now log in.', 'success');
-      setUserFormData({ employeeId: '', firstName: '', secondName: '', email: '', password: '', division: '' });
+      setUserFormData({
+        employeeId: '',
+        firstName: '',
+        secondName: '',
+        email: '',
+        password: '',
+        division: localStorage.getItem('userDivision') || '',
+        role: ''
+      });
       await fetchUsers();
     } catch (err) {
-      addToast('Save failed. Check if all fields are filled.', 'error');
+      const errMsg = err.response?.data?.error || 'Save failed. Check if all fields are filled.';
+      addToast(errMsg, 'error');
     }
   };
 
@@ -364,6 +404,9 @@ const EngineerDashboard = () => {
             </div>
             <h3>{profileData.name}</h3>
             <p className="reg-number">{profileData.reg}</p>
+            <p className="role-title" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', marginTop: '4px', textTransform: 'uppercase' }}>
+              {formatRoleName(localStorage.getItem('role') || 'engineer')}
+            </p>
           </div>
           <nav className="sidebar-nav">
             {[
@@ -463,7 +506,7 @@ const EngineerDashboard = () => {
                         <thead>
                           <tr>
                             <th>User Name</th>
-                            <th>Role</th>
+                            <th>Position</th>
                             <th>Division</th>
                             <th style={{ textAlign: 'center' }}>Active Jobs</th>
                           </tr>
@@ -482,8 +525,8 @@ const EngineerDashboard = () => {
                               <tr key={user._id}>
                                 <td className="font-bold">{user.displayName}</td>
                                 <td>
-                                  <span className={`status-badge status-${user.role === 'admin' ? 'rejected' : user.role === 'engineer' ? 'approved' : 'pending'}`}>
-                                    {user.role}
+                                  <span className={`status-badge ${getRoleBadgeClass(user.role)}`}>
+                                    {formatRoleName(user.role)}
                                   </span>
                                 </td>
                                 <td>{user.division || 'Head Office'}</td>
@@ -760,17 +803,24 @@ const EngineerDashboard = () => {
                   <h3><UserPlus size={18} /> Add User Into System</h3>
                   <form className="profile-form" onSubmit={handleSaveUser}>
                     <label>Employee ID *</label>
-                    <input name="employeeId" value={userFormData.employeeId} onChange={handleUserFormChange} />
+                    <input name="employeeId" value={userFormData.employeeId} onChange={handleUserFormChange} required />
                     <label>First Name *</label>
-                    <input name="firstName" value={userFormData.firstName} onChange={handleUserFormChange} />
+                    <input name="firstName" value={userFormData.firstName} onChange={handleUserFormChange} required />
                     <label>Second Name</label>
                     <input name="secondName" value={userFormData.secondName} onChange={handleUserFormChange} />
                     <label>Email Address *</label>
-                    <input type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} />
+                    <input type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required />
                     <label>Password *</label>
-                    <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} />
-                    <label>Division</label>
-                    <input name="division" value={userFormData.division} onChange={handleUserFormChange} />
+                    <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} required />
+                    <label>Division *</label>
+                    <input name="division" value={userFormData.division} disabled className="input-field" style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                    <label>Position *</label>
+                    <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
+                      <option value="" disabled>Select Position</option>
+                      <option value="division_assistant">Division Assistant</option>
+                      <option value="technical_officer">Technical Officer</option>
+                      <option value="clerk">Clerk</option>
+                    </select>
                     <div className="action-buttons">
                       <button type="submit" className="confirm-btn"><Save size={14} /> Save User</button>
                       <button type="button" className="cancel-btn" onClick={() => setActiveTab('my-jobs')}><X size={14} /> Cancel</button>
@@ -791,12 +841,20 @@ const EngineerDashboard = () => {
                   <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
                     <table className="project-table">
                       <thead>
-                        <tr><th>#</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Division</th><th>Action</th></tr>
+                        <tr>
+                          <th>#</th>
+                          <th>Employee ID</th>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Division</th>
+                          <th>Position</th>
+                          <th>Action</th>
+                        </tr>
                       </thead>
                       <tbody>
                         {allSystemUsers.length === 0 ? (
                           <tr>
-                            <td colSpan={6}>
+                            <td colSpan={7}>
                               <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
                                 <Users size={24} style={{ opacity: 0.35 }} />
                                 <span>No users in system yet</span>
@@ -838,10 +896,28 @@ const EngineerDashboard = () => {
                                 {editingUser === user._id ? (
                                   <input
                                     value={editUserForm.division || ''}
-                                    onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
+                                    disabled
                                     className="input-field"
+                                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
                                   />
                                 ) : user.division}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <select
+                                    value={editUserForm.role || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, role: e.target.value})}
+                                    className="job-select-dropdown"
+                                  >
+                                    <option value="division_assistant">Division Assistant</option>
+                                    <option value="technical_officer">Technical Officer</option>
+                                    <option value="clerk">Clerk</option>
+                                  </select>
+                                ) : (
+                                  <span className={`status-badge ${getRoleBadgeClass(user.role)}`}>
+                                    {formatRoleName(user.role)}
+                                  </span>
+                                )}
                               </td>
                               <td>
                                 {editingUser === user._id ? (
