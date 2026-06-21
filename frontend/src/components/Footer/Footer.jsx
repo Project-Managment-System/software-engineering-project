@@ -1,173 +1,171 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { 
-  Shield, Terminal, Cpu, Mail, Github, Linkedin, 
-  MessageSquare, Radio, Globe, Zap, Fingerprint, ChevronUp,
-  Server, Activity, Share2
+  Instagram, 
+  Phone, 
+  Mail, 
+  Facebook, 
+  ArrowRight, 
+  MapPin, 
+  Clock 
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import './Footer.css';
 
 export default function Footer({ isDark }) {
   const currentYear = new Date().getFullYear();
-  const [hoveredLink, setHoveredLink] = useState(null);
-  const [ping, setPing] = useState(24);
 
-  // Simulate live network latency
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPing(Math.floor(Math.random() * (32 - 18 + 1) + 18));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  // Custom Company Action Hooks
+  const companyLinks = {
+    instagram: "https://instagram.com/civilpromax", // Replace with actual account url
+    facebook: "https://facebook.com/civilpromax",   // Replace with actual page url
+    email: "mailto:info@civilpromax.com",           // Opens user email client instantly
+    whatsapp: "https://wa.me/94771234567"           // Connects directly to WhatsApp chat thread
+  };
 
-  const connections = [
-    { id: 'github', icon: Github, label: 'SOURCE_CODE', link: 'https://github.com/your-repo' },
-    { id: 'linkedin', icon: Linkedin, label: 'CORP_LINK', link: 'https://linkedin.com/in/your-profile' },
-    { id: 'mail', icon: Mail, label: 'SECURE_MSG', link: 'mailto:contact@civilpromax.com' },
-    { id: 'discord', icon: MessageSquare, label: 'COMMS_HUB', link: 'https://discord.gg/your-invite' }
-  ];
+  // Stagger Container Animation Rules
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15, // Creates step-by-step entry cascade
+        delayChildren: 0.1
+      }
+    }
+  };
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Single Item Slide-Up Animation Rule
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { type: "spring", stiffness: 60, damping: 15 } 
+    }
+  };
 
   return (
-    <footer className={`relative border-t overflow-hidden transition-all duration-700 ${
-      isDark ? 'bg-[#010409] border-white/5' : 'bg-slate-50 border-slate-200'
-    }`}>
-      
-      {/* Background Decorative Element */}
-      <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-full h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent ${isDark ? 'opacity-50' : 'opacity-20'}`} />
+    <footer className={`pro-footer ${isDark ? 'dark-mode' : 'light-mode'}`}>
+      {/* Background Animated Matrix Glow Accent */}
+      <div className="footer-background-mesh"></div>
 
-      <div className="w-full px-8 pt-20 pb-12">
-        {/* Main Content Row - Changed to Flex for "Fill" effect */}
-        <div className="flex flex-col md:flex-row justify-between items-start gap-12">
+      <motion.div 
+        className="footer-content-wrapper"
+        variants={containerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.15 }}
+      >
+        {/* Main Columns Grid Array */}
+        <div className="footer-main-grid">
           
-          {/* Section 1: Terminal Context (Far Left) */}
-          <div className="space-y-6 min-w-[250px]">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${isDark ? 'bg-white/5' : 'bg-slate-200'}`}>
-                <Terminal size={18} className="text-cyan-500" />
-              </div>
-              <h3 className="font-mono text-[10px] font-black tracking-[4px] uppercase opacity-80">
-                Terminal_Info
-              </h3>
-            </div>
-            
-            <div className="space-y-4 font-mono text-[10px] tracking-widest opacity-50">
-              <div className="flex items-center gap-3">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse" />
-                SESSION: <span className={isDark ? 'text-white' : 'text-slate-900'}>0x8291A-PRIME</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Radio size={12} className="text-green-500" />
-                LATENCY: <span className={isDark ? 'text-white' : 'text-slate-900'}>{ping}ms</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Globe size={12} className="text-blue-500" />
-                REGION: <span className={isDark ? 'text-white' : 'text-slate-900'}>GLOBAL_NODES</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Section 2: Middle - Branding & Topology (Center Expansion) */}
-          <div className="flex-1 flex flex-col items-center justify-center space-y-8 px-4 border-x border-white/5">
-            <motion.div 
-              whileHover={{ scale: 1.05 }}
-              className="cursor-default text-center"
-            >
-              <h2 className="text-2xl font-black tracking-tighter uppercase leading-none mb-2">
-                CivilPro <span className="text-cyan-500">Max</span>
+          {/* Column 1: About Panel */}
+          <motion.div variants={itemVariants} className="grid-column about-col">
+            <div className="brand-animation-box">
+              <h2 className="animated-brand-text">
+                CIVIL PRO <span className="highlight">MAX</span>
               </h2>
-              <p className="text-[9px] font-mono tracking-[4px] opacity-40 uppercase">
-                &copy; {currentYear} System Integrity
-              </p>
-            </motion.div>
+            </div>
+            <p className="about-description">
+              Pioneering high-precision software infrastructure and engineering framework components. Streamlining construction layout management pipelines across enterprise ecosystems with structural efficiency.
+            </p>
+          </motion.div>
 
-            {/* Interactive Links Grid */}
-            <div className="flex gap-4 p-2 rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm">
-              {connections.map((conn) => (
-                <div key={conn.id} className="relative">
-                  <motion.a
-                    href={conn.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onMouseEnter={() => setHoveredLink(conn.id)}
-                    onMouseLeave={() => setHoveredLink(null)}
-                    whileHover={{ y: -5, backgroundColor: 'rgba(8, 145, 178, 0.1)' }}
-                    className={`block p-3 rounded-xl transition-colors ${
-                      isDark ? 'text-slate-400 border-white/5 hover:text-cyan-400' : 'text-slate-600 border-slate-200 hover:text-cyan-600'
-                    }`}
-                  >
-                    <conn.icon size={20} />
-                  </motion.a>
-                  
-                  <AnimatePresence>
-                    {hoveredLink === conn.id && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1 bg-cyan-600 text-[8px] font-mono text-white rounded whitespace-nowrap z-50 shadow-lg shadow-cyan-900/40"
-                      >
-                        {conn.label}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+          {/* Column 2: Quick Links Array */}
+          <motion.div variants={itemVariants} className="grid-column links-col">
+            <h3 className="column-title">Quick Links</h3>
+            <ul className="links-list">
+              {['Portal Home', 'System Dashboard', 'Admin Gateway', 'Engineer Console', 'User Core'].map((text, i) => (
+                <li key={i}>
+                  <a href={`#${text.toLowerCase().replace(/\s+/g, '-')}`} className="nav-link-item">
+                    <ArrowRight size={12} className="link-arrow" />
+                    <span>{text}</span>
+                  </a>
+                </li>
               ))}
-            </div>
+            </ul>
+          </motion.div>
 
-            {/* Center Visual Filler: Topology Map (New) */}
-            <div className="hidden lg:flex items-center gap-8 opacity-20 font-mono text-[7px] tracking-[2px]">
-                <span className="flex items-center gap-2"><Server size={10}/> NODE_01: ONLINE</span>
-                <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent" />
-                <span className="flex items-center gap-2"><Activity size={10}/> CORE: STABLE</span>
-                <div className="w-12 h-[1px] bg-gradient-to-r from-transparent via-white to-transparent" />
-                <span className="flex items-center gap-2"><Share2 size={10}/> RELAY: ACTIVE</span>
-            </div>
-          </div>
-
-          {/* Section 3: Integrity Shield (Far Right) */}
-          <div className="flex flex-col items-end space-y-6 min-w-[250px]">
-            <div className={`p-4 rounded-2xl border text-right space-y-2 group transition-all duration-500 ${
-              isDark ? 'bg-black/40 border-white/5 hover:border-cyan-500/20' : 'bg-white border-slate-100 shadow-sm'
-            }`}>
-              <div className="flex items-center justify-end gap-3">
-                <span className="text-[9px] font-mono tracking-widest opacity-40 uppercase">Protection_Active</span>
-                <Shield size={16} className="text-cyan-500" />
+          {/* Column 3: Contact Channels */}
+          <motion.div variants={itemVariants} className="grid-column contact-col">
+            <h3 className="column-title">Contact Us</h3>
+            <div className="contact-info-stack">
+              <div className="info-entry-row">
+                <MapPin size={16} className="text-cyan-500 shrink-0" />
+                <span>Enterprise Plaza, Level 4, Tech Sector Node</span>
               </div>
-              <div className="flex items-center justify-end gap-2 text-[10px] font-mono font-black">
-                <Zap size={10} className="text-yellow-500" />
-                QUANTUM_SHIELD v4.2
+              <div className="info-entry-row">
+                <Mail size={16} className="text-cyan-500 shrink-0" />
+                <a href={companyLinks.email} className="hover-action-text">info@civilpromax.com</a>
+              </div>
+              <div className="info-entry-row">
+                <Clock size={16} className="text-cyan-500 shrink-0" />
+                <span>Comms Matrix: 24/7 Monitoring</span>
               </div>
             </div>
+          </motion.div>
 
-            <button 
-              onClick={scrollToTop}
-              className={`flex items-center gap-3 px-4 py-2 rounded-xl font-mono text-[9px] tracking-widest uppercase transition-all ${
-                isDark ? 'hover:bg-white/5 text-slate-500 hover:text-white' : 'hover:bg-slate-200 text-slate-500'
-              }`}
-            >
-              Back_to_Top <ChevronUp size={14} />
-            </button>
-          </div>
+          {/* Column 4: External Interactive Links Network */}
+          <motion.div variants={itemVariants} className="grid-column social-col">
+            <h3 className="column-title">Secure Links</h3>
+            <p className="social-cta-text">Touch an array node below to open real-time company transmission lines:</p>
+            
+            <div className="social-icon-matrix">
+              
+              <motion.a 
+                whileHover={{ scale: 1.15, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                href={companyLinks.instagram} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="social-icon-wrapper insta-node"
+                title="Instagram Network"
+              >
+                <Instagram size={20} />
+              </motion.a>
+
+              <motion.a 
+                whileHover={{ scale: 1.15, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                href={companyLinks.whatsapp} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="social-icon-wrapper whatsapp-node"
+                title="WhatsApp Channel"
+              >
+                <Phone size={20} />
+              </motion.a>
+
+              <motion.a 
+                whileHover={{ scale: 1.15, y: -4 }}
+                whileTap={{ scale: 0.95 }}
+                href={companyLinks.facebook} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="social-icon-wrapper facebook-node"
+                title="Facebook Portal"
+              >
+                <Facebook size={20} />
+              </motion.a>
+
+            </div>
+          </motion.div>
+
         </div>
 
-        {/* Lower Security Bar - Full width row */}
-        <div className={`mt-20 pt-8 border-t flex flex-col md:flex-row justify-between items-center gap-6 ${
-          isDark ? 'border-white/5' : 'border-slate-200'
-        }`}>
-          <div className="flex gap-8 text-[7px] font-mono opacity-30 tracking-[4px] uppercase">
-            <span className="flex items-center gap-2"><Fingerprint size={10} /> Neural_Handshake: OK</span>
-            <span className="flex items-center gap-2 font-black text-cyan-500">Access: Level_Admin</span>
+        {/* Lower Verification Bar Layer */}
+        <motion.div variants={itemVariants} className="footer-bottom-bar">
+          <p className="copyright-text">
+            &copy; {currentYear} <span className="text-cyan-500 font-bold">CIVIL PRO MAX</span> Systems Corp. All absolute access parameters monitored.
+          </p>
+          <div className="compliance-links-row">
+            <a href="#privacy">Privacy Nodes</a>
+            <span className="divider-dot">•</span>
+            <a href="#terms">Usage Tokens</a>
           </div>
-          
-          <div className="flex gap-6 text-[8px] font-mono opacity-40 tracking-widest">
-            <a href="/legal" className="hover:text-cyan-400 transition-colors">Privacy_Protocol</a>
-            <a href="/security" className="hover:text-cyan-400 transition-colors">Security_Log</a>
-            <a href="/terms" className="hover:text-cyan-400 transition-colors">Usage_Terms</a>
-          </div>
-        </div>
-      </div>
+        </motion.div>
+
+      </motion.div>
     </footer>
   );
 }
