@@ -29,14 +29,14 @@ function App() {
       {/* Routes define the content that changes based on the URL */}
       <Routes>
         {/* Main Entry Points */}
-        <Route path="/" element={<Portal />} />
+        <Route path="/" element={<><Portal /><Footer /></>} />
         <Route path="/division/login" element={<DivisionLogin />} />
         <Route path="/headoffice/login" element={<HeadOfficeLogin />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin']}>
             <AdminDashboard />
           </ProtectedRoute>
         } />
@@ -44,7 +44,7 @@ function App() {
         {/* Engineer Routes */}
         <Route path="/engineer/login" element={<EngineerLogin />} />
         <Route path="/engineer/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['engineer']}>
             <EngineerDashboard />
           </ProtectedRoute>
         } /> 
@@ -52,14 +52,11 @@ function App() {
         {/* User Routes */}
         <Route path="/user/login" element={<UserLogin />} />
         <Route path="/user/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin', 'engineer']}>
             <UserDashboard />
           </ProtectedRoute>
         } />
       </Routes>
-
-      {/* Footer is placed here so it persists across all routes */}
-      <Footer />
     </BrowserRouter>
   );
 }
