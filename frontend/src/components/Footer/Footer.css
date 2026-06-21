@@ -1,102 +1,282 @@
-/* --- Footer Container --- */
-.portal-footer {
+/* --- Core Footer Structural Baseline --- */
+.pro-footer {
   position: relative;
   width: 100%;
-  transition: background-color 0.5s ease, border-color 0.5s ease;
+  padding: 0;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- Typography System --- */
-.footer-mono-text {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-  letter-spacing: 0.2em;
+/* --- Theme Variable Assignments --- */
+
+
+.pro-footer.dark-mode {
+  background-color: #b6c4cd; /* Changed from #010409 */
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  color: #1e293b; /* Changed to dark slate so text is easily readable on light blue */
 }
 
-.brand-name {
-  text-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+.pro-footer.light-mode {
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  color: #475569;
 }
 
-/* --- Status Indicators --- */
-.status-indicator {
-  transition: all 0.3s ease;
-  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+/* --- Dynamic Moving Gradient Mesh Background --- */
+.footer-background-mesh {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 75% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 45%),
+              radial-gradient(circle at 20% 30%, rgba(6, 182, 212, 0.03) 0%, transparent 50%);
+  animation: meshWaveAmbient 25s infinite linear;
+  z-index: 1;
 }
 
-.footer-dark .status-indicator {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+@keyframes meshWaveAmbient {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.footer-light .status-indicator {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-/* --- Animations --- */
-@keyframes pulse-cyan {
-  0% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 5px #06b6d4); }
-  100% { transform: scale(1); opacity: 0.8; }
-}
-
-.animate-pulse-cyan {
-  animation: pulse-cyan 2s infinite ease-in-out;
-}
-
-/* --- Link Styling --- */
-.footer-link-icon {
+/* --- Main Layout Grid Matrix Engine --- */
+.footer-content-wrapper {
   position: relative;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 5rem 2rem 2.5rem 2.25rem;
+  z-index: 5;
+}
+
+
+.footer-main-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 3.5rem;
+  margin-bottom: 4rem;
+}
+
+.grid-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Column Header Elements --- */
+.column-title {
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 1.75rem;
+  position: relative;
+}
+
+.dark-mode .column-title { color: #053360; }
+.light-mode .column-title { color: #0f172a; }
+
+/* --- Special CIVIL PRO MAX Background Animation --- */
+.brand-animation-box {
+  margin-bottom: 1.25rem;
+  display: inline-block;
+}
+
+.animated-brand-text {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  background: linear-gradient(
+    270deg, 
+    #95b0e3, 
+    #3e639e, 
+    #101748, 
+    #ffffff
+  );
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientTextFlow 8s ease infinite;
+}
+
+@keyframes gradientTextFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --- Custom Column Inner Elements --- */
+.about-description {
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.links-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.links-list li {
+  margin-bottom: 0.85rem;
+}
+
+.nav-link-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.25s ease;
+}
+
+.link-arrow {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.25s ease;
+  color: #06b6d4;
+}
+
+.nav-link-item:hover {
+  color: #06b6d4 !important;
+  transform: translateX(4px);
+}
+
+.nav-link-item:hover .link-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* --- Contact Information Arrays --- */
+.contact-info-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  font-size: 0.9rem;
+}
+
+.info-entry-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hover-action-text {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.hover-action-text:hover {
+  color: #06b6d4;
+}
+
+/* --- Touch Social Connect Arrays Matrix --- */
+.social-cta-text {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.social-icon-matrix {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.footer-dark .footer-link-icon:hover {
-  background: rgba(6, 182, 212, 0.1);
-  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+
+.dark-mode .social-icon-wrapper {
+  background-color: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #06b6d4; /* Changed from gray to your vibrant brand cyan so they are instantly visible */
 }
 
-/* --- Lower Security Bar Overlay --- */
-.security-bar-text {
-  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.1), transparent);
-  padding: 4px 0;
+.light-mode .social-icon-wrapper {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
 }
 
-/* --- Responsive Adjustments --- */
-@media (max-width: 768px) {
-  .footer-container {
-    grid-template-columns: 1fr;
-    text-align: center;
+/* Specific Interactive Brand Node Colors on Hover */
+.insta-node:hover {
+  background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(238, 42, 123, 0.3);
+}
+
+.whatsapp-node:hover {
+  background-color: #25d366 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+}
+
+.facebook-node:hover {
+  background-color: #1877f2 !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
+}
+
+/* --- Lower Footer Baseline Integrity Bar --- */
+.footer-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 2rem;
+  font-size: 0.8rem;
+}
+
+.dark-mode .footer-bottom-bar { border-top: 1px solid rgba(255, 255, 255, 0.05); }
+.light-mode .footer-bottom-bar { border-top: 1px solid #e2e8f0; }
+
+.compliance-links-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.compliance-links-row a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.compliance-links-row a:hover {
+  color: #06b6d4;
+}
+
+.divider-dot {
+  opacity: 0.3;
+}
+
+/* --- Fully Responsive Breakpoint Adjustments --- */
+@media (max-width: 1024px) {
+  .footer-main-grid {
+    grid-template-columns: 1fr 1fr;
     gap: 3rem;
   }
-
-  .footer-section {
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  .footer-section:nth-child(2) {
-    order: -1; /* Move brand to top on mobile */
-  }
-
-  .footer-section.flex.flex-col.items-end {
-    align-items: center;
-  }
 }
 
-/* --- Glassmorphism Text Highlight --- */
-.text-highlight {
-  color: #06b6d4;
-  font-weight: 800;
-  text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
-}
-
-/* --- Scroll to Top Button --- */
-.scroll-top-btn {
-  cursor: pointer;
-  transition: transform 0.3s ease;
-}
-
-.scroll-top-btn:hover {
-  transform: translateY(-3px);
+@media (max-width: 640px) {
+  .footer-main-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  
+  .footer-bottom-bar {
+    flex-direction: column;
+    gap: 1.25rem;
+    text-align: center;
+  }
 }
