@@ -2,7 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: smooth transitions for animations */
-* {
-  transition: all 0.3s ease-in-out;
+/* Define Design Tokens and Global Theme Settings */
+:root {
+  /* Role Brand Accents */
+  --admin-color: #f43f5e;     /* Rose-500 */
+  --engineer-color: #06b6d4;  /* Cyan-500 */
+  --user-color: #10b981;      /* Emerald-500 */
+  --ops-color: #8b5cf6;       /* Violet-500 */
+
+  /* Global Color Themes */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+}
+
+/* Base resets & typography */
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0f172a; /* Slate-900 */
+  color: #f8fafc;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+/* Custom Scrollbar for professional console look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Micro-interaction utility transitions (replace wildcard transitions) */
+.transition-smooth {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-fast {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
