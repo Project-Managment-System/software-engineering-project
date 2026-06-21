@@ -1,37 +1,31 @@
-const express = require('express');
-const router = express.Router();
-// Assuming you have a User model imported
-const User = require('../models/User'); 
-
-// Ensure you have an async function with await
-router.post('/add', async (req, res) => {
+// Change password for a logged-in user. Requires the current password
+// to be correct before allowing the change.
+router.patch('/:id/password', async (req, res) => {
     try {
-        // Map frontend fields to match your Mongoose Schema
-        const userData = {
-            fullName: `${req.body.firstName} ${req.body.secondName}`,
-            employeeId: req.body.employeeId,
-            email: req.body.email,
-            password: req.body.password,
-            division: req.body.division,
-            role: 'engineer' // Force a default role if not provided
-        };
+        const { currentPassword, newPassword } = req.body;
 
-        const newUser = new User(userData);
-        await newUser.save();
-        res.status(201).json({ message: "User saved successfully!" });
-    } catch (err) {
-        console.error("DEBUG ERROR:", err.message);
-        res.status(400).json({ error: err.message });
-    }
-});
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: "MISSING_FIELDS" });
+        }
+        if (newPassword.length < 4) {
+            return res.status(400).json({ error: "PASSWORD_TOO_SHORT" });
+        }
 
-// Add this to your userRoutes.js
-router.get('/', async (req, res) => {
-    try {
-        const users = await User.find(); // Fetches all users from DB
-        res.json(users);
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ error: "USER_NOT_FOUND" });
+        }
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ error: "INCORRECT_CURRENT_PASSWORD" });
+        }
+
+        user.password = newPassword; // hashed automatically by the pre('save') hook
+        await user.save();
+
+        res.json({ status: "PASSWORD_UPDATED" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
-module.exports = router;

@@ -1,310 +1,908 @@
+/* ============================================================
+   ENGINEER DASHBOARD — CIVILPRO MAX
+   Theme: Precision · Technical Authority · Blueprint Grid
+   Palette: Deep Slate + Cyan/Cobalt Accents + Teal Highlights
+   Root: #cems-user-dashboard.light-mode / .dark-mode
+   ============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
 
-/* Layout Container */
-.user-dashboard-layout {
-  display: flex;
+/* ============================================================
+   1. CSS TOKENS — Light Mode
+   ============================================================ */
+#cems-user-dashboard.light-mode {
+  --bg-root:         #f0f8ff;
+  --bg-sidebar:      #ffffff;
+  --bg-card:         #ffffff;
+  --bg-card-hover:   #f5fbff;
+  --bg-input:        #f4fbff;
+  --bg-table-header: #eaf7ff;
+  --bg-table-alt:    #f5fbff;
+  --bg-table-hover:  #e0f4ff;
+  --border-base:     #d0eaf8;
+  --border-light:    #e5f4ff;
+  --text-primary:    #050e1f;
+  --text-secondary:  #1e3a52;
+  --text-muted:      #4d7a96;
+  --text-label:      #7aaabf;
+  --accent-primary:  #0891b2;
+  --accent-dark:     #0e7490;
+  --accent-glow:     rgba(8,145,178,0.15);
+  --accent-soft:     #ecfeff;
+  --accent-2:        #06b6d4;
+  --accent-3:        #38bdf8;
+  --success:         #059669;
+  --success-soft:    #d1fae5;
+  --warning:         #d97706;
+  --warning-soft:    #fef3c7;
+  --danger:          #dc2626;
+  --danger-soft:     #fee2e2;
+  --info:            #0284c7;
+  --info-soft:       #e0f2fe;
+  --shadow-card:     0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(8,145,178,0.07);
+  --shadow-hover:    0 8px 32px rgba(8,145,178,0.15), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn:      0 4px 16px rgba(8,145,178,0.28);
+  --radius-card:     16px;
+  --radius-btn:      10px;
+  --radius-input:    9px;
+}
+
+/* ============================================================
+   2. CSS TOKENS — Dark Mode
+   ============================================================ */
+#cems-user-dashboard.dark-mode {
+  --bg-root:         #050e1c;
+  --bg-sidebar:      #070e1d;
+  --bg-card:         #0a1628;
+  --bg-card-hover:   #0d1c34;
+  --bg-input:        #071020;
+  --bg-table-header: #071020;
+  --bg-table-alt:    #081221;
+  --bg-table-hover:  #0d1a30;
+  --border-base:     rgba(6,182,212,0.15);
+  --border-light:    rgba(6,182,212,0.07);
+  --text-primary:    #e2f8ff;
+  --text-secondary:  #a8d8ee;
+  --text-muted:      #4d7a96;
+  --text-label:      #2d5a70;
+  --accent-primary:  #06b6d4;
+  --accent-dark:     #0891b2;
+  --accent-glow:     rgba(6,182,212,0.22);
+  --accent-soft:     rgba(6,182,212,0.08);
+  --accent-2:        #22d3ee;
+  --accent-3:        #38bdf8;
+  --success:         #10b981;
+  --success-soft:    rgba(16,185,129,0.12);
+  --warning:         #f59e0b;
+  --warning-soft:    rgba(245,158,11,0.12);
+  --danger:          #ef4444;
+  --danger-soft:     rgba(239,68,68,0.12);
+  --info:            #38bdf8;
+  --info-soft:       rgba(56,189,248,0.12);
+  --shadow-card:     0 2px 8px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-hover:    0 12px 40px rgba(6,182,212,0.15), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn:      0 4px 20px rgba(6,182,212,0.3);
+  --radius-card:     16px;
+  --radius-btn:      10px;
+  --radius-input:    9px;
+}
+
+/* ============================================================
+   3. ROOT ELEMENT
+   ============================================================ */
+#cems-user-dashboard {
   min-height: 100vh;
-  height: 100vh;
-  background-color: #fafbfc;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-root);
+  color: var(--text-primary);
+  transition: background 0.4s ease, color 0.4s ease;
   position: relative;
   overflow-x: hidden;
 }
 
-/* Sidebar Styles */
-.sidebar {
-  width: 280px;
-  background: #ffffff;
-  border-right: 1px solid #edf2f7;
-  padding: 40px 20px;
+/* Blueprint dot grid — Dark mode */
+#cems-user-dashboard.dark-mode {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(6,182,212,0.1) 1px, transparent 0),
+    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(6,182,212,0.06) 0%, transparent 60%);
+  background-size: 32px 32px, 100% 100%;
+}
+
+/* Blueprint dot grid — Light mode */
+#cems-user-dashboard.light-mode {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(8,145,178,0.07) 1px, transparent 0),
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(8,145,178,0.04) 0%, transparent 60%);
+  background-size: 28px 28px, 100% 100%;
+}
+
+/* ============================================================
+   4. LAYOUT CONTAINERS
+   ============================================================ */
+#cems-user-dashboard .user-dashboard-layout,
+#cems-user-dashboard .dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   5. SIDEBAR — Engineer / Cyan Theme
+   ============================================================ */
+#cems-user-dashboard .sidebar {
+  width: 258px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-base);
   display: flex;
   flex-direction: column;
   height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 100;
+  z-index: 200;
+  padding: 24px 14px 24px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Sidebar Collapse Control States */
-.sidebar.sidebar-open {
-  transform: translateX(0);
+#cems-user-dashboard.dark-mode .sidebar {
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(6,182,212,0.12);
+  box-shadow: 2px 0 24px rgba(0,0,0,0.4);
 }
 
-.sidebar.sidebar-closed {
-  transform: translateX(-100%);
+/* Cyan gradient left stripe */
+#cems-user-dashboard .sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #06b6d4 0%, #0ea5e9 50%, #6366f1 100%);
+  border-radius: 0 2px 2px 0;
 }
 
-.user-profile,
-.profile-box {
-  text-align: center;
-  margin-bottom: 40px;
+#cems-user-dashboard .sidebar.sidebar-open  { transform: translateX(0); }
+#cems-user-dashboard .sidebar.sidebar-closed { transform: translateX(-100%); }
+
+#cems-user-dashboard .sidebar::-webkit-scrollbar { width: 4px; }
+#cems-user-dashboard .sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
 }
 
-.profile-photo {
-  width: 80px;
-  height: 80px;
-  background: #e0f2fe;
-  color: #0284c7;
-  border-radius: 16px;
+/* — Profile Box — */
+#cems-user-dashboard .profile-box {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto 15px;
+  text-align: center;
+  margin-bottom: 26px;
+  padding: 22px 10px 20px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-card);
+  position: relative;
   overflow: hidden;
 }
 
-.profile-photo img {
+#cems-user-dashboard .profile-box::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+}
+
+#cems-user-dashboard .profile-photo {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-2));
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 0 3px var(--bg-sidebar),
+    0 0 0 5px var(--accent-primary),
+    var(--shadow-btn);
+}
+
+#cems-user-dashboard .profile-photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.reg-number {
-  font-size: 0.9rem;
-  color: #64748b;
-  margin-top: 5px;
+#cems-user-dashboard .profile-info h3,
+#cems-user-dashboard .profile-box > h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.93rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
 }
 
-/* Sidebar Nav */
-.sidebar-nav {
+#cems-user-dashboard .reg-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.73rem;
+  color: var(--accent-primary);
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+/* — Sidebar Nav — */
+#cems-user-dashboard .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex-grow: 1;
-  height: 100%;
+  gap: 3px;
+  flex: 1;
 }
 
-.sidebar-nav .nav-item {
+#cems-user-dashboard .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: none;
-  background: none;
-  border-radius: 12px;
-  cursor: pointer;
+  gap: 11px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  font-size: 0.86rem;
   font-weight: 600;
-  color: #475569;
-  transition: all 0.2s;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
   width: 100%;
   text-align: left;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-.sidebar-nav .nav-item.active {
-  background: #e0f2fe;
-  color: #0284c7;
+#cems-user-dashboard .nav-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: var(--border-light);
 }
 
-.logout-nav-item {
-  margin-top: auto;
-  color: #dc2626 !important;
-  background: #fee2e2 !important;
+#cems-user-dashboard .nav-item.active {
+  background: linear-gradient(135deg, var(--accent-soft), transparent);
+  color: var(--accent-primary);
+  border-color: var(--accent-glow);
+  font-weight: 700;
+  box-shadow: 0 2px 10px var(--accent-glow);
 }
 
-.logout-nav-item:hover {
-  background-color: #fecaca !important;
-  color: #b91c1c !important;
+#cems-user-dashboard .nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-2));
+  border-radius: 0 3px 3px 0;
 }
 
-/* ========================================================
-   Main Content Workspace Styles — ADAPTIVE LAYOUT
-   ======================================================== */
-.dashboard-content {
+/* — Logout Nav — */
+#cems-user-dashboard .nav-item.logout-nav-item {
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
+  border-color: transparent !important;
+  margin-top: 12px;
+  font-weight: 700;
+}
+
+#cems-user-dashboard .nav-item.logout-nav-item:hover {
+  background: var(--danger) !important;
+  color: white !important;
+  box-shadow: 0 4px 14px rgba(239,68,68,0.3) !important;
+}
+
+/* ============================================================
+   6. HAMBURGER MENU BUTTON
+   ============================================================ */
+#cems-user-dashboard .sidebar-toggle-menu-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 300;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: 11px;
+  padding: 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#cems-user-dashboard .sidebar-toggle-menu-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: var(--accent-glow);
+  transform: scale(1.05);
+}
+
+/* ============================================================
+   7. MAIN CONTENT
+   ============================================================ */
+#cems-user-dashboard .dashboard-content {
   flex: 1;
-  padding: 40px;
-  margin-left: 0;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+  padding: 32px 32px 48px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 100vh;
   box-sizing: border-box;
 }
 
-/* Content adjustment state when sidebar is open */
-.dashboard-content.content-shifted-open {
-  margin-left: 280px;
+#cems-user-dashboard .dashboard-content.content-shifted-open  { margin-left: 258px; }
+#cems-user-dashboard .dashboard-content.content-shifted-closed { padding-left: 72px; }
+
+#cems-user-dashboard .content-header {
+  margin-bottom: 24px;
+  min-height: 32px;
 }
 
-/* Leaves clear space for the floating menu button when sidebar is closed */
-.dashboard-content.content-shifted-closed {
-  padding-left: 80px;
+/* Division Banner */
+#cems-user-dashboard .division-banner {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+  border: 2px solid var(--border-base) !important;
+  border-radius: 12px !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 1rem !important;
+  padding: 12px 20px !important;
+  letter-spacing: 0.03em;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Floating Responsive Menu Trigger Button */
-.sidebar-toggle-menu-btn {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 110;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 10px;
-  border-radius: 10px;
-  cursor: pointer;
+#cems-user-dashboard .division-banner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent-primary);
+}
+
+/* Sub-tabs */
+#cems-user-dashboard .sub-tabs {
   display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--border-base) !important;
+  margin-bottom: 20px;
+}
+
+#cems-user-dashboard .sub-tabs button {
+  padding: 10px 18px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-bottom: -2px !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+#cems-user-dashboard .sub-tabs button:hover {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* Active sub-tab override (#ddd applied inline) */
+#cems-user-dashboard .sub-tabs button[style*="background: rgb(221, 221, 221)"],
+#cems-user-dashboard .sub-tabs button[style*="background: #ddd"] {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+  border-bottom: 3px solid var(--accent-primary) !important;
+  font-weight: 700 !important;
+}
+
+/* ============================================================
+   8. TABLE — Engineer (project-table)
+   ============================================================ */
+#cems-user-dashboard .project-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-base);
+  position: relative;
+}
+
+#cems-user-dashboard .project-table::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-2) 50%, transparent 100%);
+}
+
+#cems-user-dashboard .project-table thead tr {
+  background: var(--bg-table-header);
+}
+
+#cems-user-dashboard .project-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  border-bottom: 2px solid var(--border-base);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+#cems-user-dashboard .project-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.845rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+#cems-user-dashboard .project-table tbody tr {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+#cems-user-dashboard .project-table tbody tr:nth-child(even) {
+  background: var(--bg-table-alt);
+}
+
+#cems-user-dashboard .project-table tbody tr:hover {
+  background: var(--bg-table-hover);
+  box-shadow: inset 3px 0 0 var(--accent-primary);
+}
+
+#cems-user-dashboard .project-table tbody tr:last-child td { border-bottom: none; }
+
+/* Mono job-no cells */
+#cems-user-dashboard .project-table .font-mono,
+#cems-user-dashboard .project-table td:nth-child(2) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.79rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+#cems-user-dashboard .project-table .font-bold {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   9. STATUS BADGES — Engineer
+   ============================================================ */
+#cems-user-dashboard .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+#cems-user-dashboard .status-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+#cems-user-dashboard .status-badge.status-pending {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-color: rgba(217,119,6,0.2);
+}
+#cems-user-dashboard .status-badge.status-pending::before {
+  background: var(--warning);
+  animation: pulse-dot 1.6s infinite;
+}
+
+#cems-user-dashboard .status-badge.status-approved {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: rgba(5,150,105,0.2);
+}
+#cems-user-dashboard .status-badge.status-approved::before { background: var(--success); }
+
+#cems-user-dashboard .status-badge.status-rejected {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: rgba(220,38,38,0.2);
+}
+#cems-user-dashboard .status-badge.status-rejected::before { background: var(--danger); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* ============================================================
+   10. APPROVE / REJECT / EDIT / DELETE BUTTONS
+   ============================================================ */
+#cems-user-dashboard .approve-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #475569;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: all 0.2s ease;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(5,150,105,0.2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-right: 6px;
 }
 
-.sidebar-toggle-menu-btn:hover {
-  background: #f8fafc;
-  color: #0284c7;
+#cems-user-dashboard .approve-btn:hover {
+  background: var(--success);
+  color: white;
+  transform: scale(1.08);
 }
 
-/* Header */
-.content-header {
+#cems-user-dashboard .reject-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid rgba(220,38,38,0.2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+#cems-user-dashboard .reject-btn:hover {
+  background: var(--danger);
+  color: white;
+  transform: scale(1.08);
+}
+
+#cems-user-dashboard .edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border: 1px solid var(--border-base);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+#cems-user-dashboard .edit-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: scale(1.05);
+  box-shadow: var(--shadow-btn);
+}
+
+#cems-user-dashboard .delete-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid rgba(220,38,38,0.18);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+#cems-user-dashboard .delete-btn:hover {
+  background: var(--danger);
+  color: white;
+  transform: scale(1.05);
+}
+
+/* ============================================================
+   11. CONFIRM / SAVE / CANCEL BUTTONS
+   ============================================================ */
+#cems-user-dashboard .confirm-btn,
+#cems-user-dashboard .save-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 22px !important;
+  font-size: 0.845rem !important;
+  font-weight: 700 !important;
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: 0.02em !important;
+  border-radius: var(--radius-btn) !important;
+  border: none !important;
+  cursor: pointer !important;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark)) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-btn) !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  min-height: 40px !important;
+  margin-top: 14px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+#cems-user-dashboard .confirm-btn:hover:not(:disabled),
+#cems-user-dashboard .save-btn:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(6,182,212,0.4) !important;
+  filter: brightness(1.08) !important;
+}
+
+#cems-user-dashboard .cancel-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 22px !important;
+  font-size: 0.845rem !important;
+  font-weight: 700 !important;
+  font-family: 'Outfit', sans-serif !important;
+  border-radius: var(--radius-btn) !important;
+  border: 1.5px solid var(--border-base) !important;
+  cursor: pointer !important;
+  background: var(--bg-input) !important;
+  color: var(--text-secondary) !important;
+  transition: all 0.22s ease !important;
+  min-height: 40px !important;
+  margin-top: 14px !important;
+  margin-left: 8px !important;
+}
+
+#cems-user-dashboard .cancel-btn:hover {
+  background: var(--danger-soft) !important;
+  border-color: var(--danger) !important;
+  color: var(--danger) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ============================================================
+   12. PROFILE / ADD-USER SECTIONS (card-like containers)
+   ============================================================ */
+#cems-user-dashboard .profile-section,
+#cems-user-dashboard .settings-section {
+  background: var(--bg-card) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 1px solid var(--border-base) !important;
+  padding: 28px 30px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  width: auto !important;
+  max-width: 540px !important;
+}
+
+#cems-user-dashboard .profile-section::before,
+#cems-user-dashboard .settings-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-2), transparent);
+}
+
+#cems-user-dashboard .profile-section h3,
+#cems-user-dashboard .settings-section h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary) !important;
+  margin: 0 0 18px !important;
+  letter-spacing: -0.02em;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 2rem;
-  padding-left: 55px;
+  gap: 8px;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-/* Tables */
-.project-table {
-  width: 100%;
-  background: white;
-  border-radius: 1.5rem;
-  border-collapse: collapse;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.project-table th {
-  background: #f8fafc;
-  padding: 1.5rem;
-  text-align: left;
-  font-weight: 900;
-  font-size: 0.75rem;
-  color: #64748b;
+/* Profile form labels/inputs */
+#cems-user-dashboard .profile-form label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--accent-primary);
   text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 4px;
+  margin-top: 12px;
 }
 
-.project-table td {
-  padding: 1.5rem;
-  border-top: 1px solid #e2e8f0;
-  font-weight: 600;
-  color: #0f172a;
+#cems-user-dashboard .profile-form input,
+#cems-user-dashboard .profile-form select {
+  display: block;
+  width: 100%;
+  padding: 9px 13px;
+  border: 1.5px solid var(--border-base);
+  border-radius: var(--radius-input);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
-/* Buttons */
-.confirm-btn {
-  background-color: #10b981 !important;
-  color: white !important;
-  padding: 12px 24px !important;
-  border-radius: 12px !important;
-  border: none !important;
-  font-weight: 700 !important;
+#cems-user-dashboard .profile-form input:focus,
+#cems-user-dashboard .profile-form select:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: var(--bg-card);
+}
+
+/* Action buttons row */
+#cems-user-dashboard .action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   13. EDIT SECTION (inline edit in table)
+   ============================================================ */
+#cems-user-dashboard .edit-section {
+  background: var(--bg-card) !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--border-base) !important;
+  box-shadow: var(--shadow-card) !important;
+  padding: 22px 24px !important;
+  margin-top: 20px !important;
+}
+
+#cems-user-dashboard .edit-section h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary) !important;
+  margin: 0 0 14px !important;
+}
+
+#cems-user-dashboard .edit-section input {
+  display: block;
+  width: 100%;
+  padding: 9px 13px;
+  border: 1.5px solid var(--border-base);
+  border-radius: var(--radius-input);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  outline: none;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+#cems-user-dashboard .edit-section input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ============================================================
+   14. ASSIGNEE SELECT (inline table dropdown)
+   ============================================================ */
+#cems-user-dashboard .project-table select {
+  padding: 7px 10px !important;
+  border: 1.5px solid var(--border-base) !important;
+  border-radius: 8px !important;
+  font-size: 0.82rem !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  color: var(--text-primary) !important;
+  background: var(--bg-input) !important;
+  outline: none !important;
+  transition: all 0.2s ease !important;
   cursor: pointer !important;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
-.cancel-btn {
-  background-color: #f1f5f9 !important;
-  color: #475569 !important;
-  padding: 12px 24px !important;
-  border-radius: 12px !important;
-  border: none !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+#cems-user-dashboard .project-table select:focus {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 0 2px var(--accent-glow) !important;
 }
 
-.edit-btn {
-  background: #e0f2fe;
-  color: #0284c7;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-}
-
-.edit-btn:hover {
-  background: #bae6fd;
-}
-
-/* Layout and Misc */
-.status-tag {
-  padding: 4px 8px;
-  background: #fef3c7;
-  color: #92400e;
-  border-radius: 4px;
-  font-size: 0.85rem;
-}
-
-h3 {
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  color: #1e293b;
-}
-
-.profile-section {
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-}
-
-.approve-btn, .reject-btn {
-  padding: 5px;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  margin-right: 5px;
-}
-.approve-btn { background: #dcfce7; color: #166534; }
-.reject-btn { background: #fee2e2; color: #991b1b; }
-.edit-section input { display: block; margin-bottom: 10px; padding: 8px; width: 250px; }
-
-/* Profile Form Styling */
-.profile-form {
+/* ============================================================
+   15. PLACEHOLDER TAB
+   ============================================================ */
+#cems-user-dashboard .placeholder-content {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 280px;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  border: 2px dashed var(--border-base);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: border-color 0.2s ease;
 }
 
-.profile-form label {
-  font-weight: 800;
-  font-size: 0.75rem;
-  color: #1e293b;
-  margin-bottom: -0.5rem;
+#cems-user-dashboard .placeholder-content:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
-.profile-form input,
-.profile-form select {
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
+/* ============================================================
+   16. MAIN SCROLLBAR
+   ============================================================ */
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar { width: 8px; }
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar-track { background: transparent; }
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
+}
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
 }
 
-/* Responsive Adjustments */
+/* ============================================================
+   17. RESPONSIVE
+   ============================================================ */
 @media (max-width: 768px) {
-  .dashboard-content {
-    padding: 85px 20px 40px 20px !important;
+  #cems-user-dashboard .dashboard-content {
+    padding: 80px 16px 32px !important;
   }
-  .dashboard-content.content-shifted-open {
+
+  #cems-user-dashboard .dashboard-content.content-shifted-open {
     margin-left: 0 !important;
+  }
+
+  #cems-user-dashboard .profile-section,
+  #cems-user-dashboard .settings-section {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #cems-user-dashboard .project-table {
+    min-width: 700px;
   }
 }

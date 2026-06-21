@@ -1,58 +1,107 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
-import { User, Briefcase, RefreshCw, Settings, Edit3, LogOut, Save, Check, X, Menu, UserPlus, Undo, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User, Briefcase, RefreshCw, Settings, Edit3, LogOut, Save,
+  Check, X, Menu, UserPlus, Undo, Trash2, Shield, Clock,
+  CheckCircle, XCircle, AlertTriangle, Users, BarChart3, Wrench, Filter,
+  Globe, Sun, Moon, Lightbulb
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const UserDashboard = ({ isDark }) => {
+/* ─── Animation variants ─── */
+const pageVariants = {
+  hidden:  { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
+  exit:    { opacity: 0, y: -12, transition: { duration: 0.2 } }
+};
+
+const staggerContainer = {
+  visible: { transition: { staggerChildren: 0.08 } }
+};
+
+const cardVariant = {
+  hidden:  { opacity: 0, y: 16, scale: 0.97 },
+  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
+};
+
+/* ─────────────────────────────────────── */
+const EngineerDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('my-jobs');
-  const [jobSubTab, setJobSubTab] = useState('approvals'); 
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [jobSubTab, setJobSubTab] = useState('approvals');
   const [profilePic, setProfilePic] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   const [filterDivision, setFilterDivision] = useState('All');
+  const [currentDivision, setCurrentDivision] = useState(localStorage.getItem('userDivision') || '');
 
-  const [profileData, setProfileData] = useState({ name: 'John Doe', reg: 'REG/2021/CS/088', email: 'john.doe@example.com', phone: '071-2345678' });
+  const [profileData, setProfileData] = useState({
+    name: localStorage.getItem('fullName') || 'User',
+    reg: localStorage.getItem('employeeId') || '',
+    email: localStorage.getItem('email') || '',
+    phone: ''
+  });
   const [profileForm, setProfileForm] = useState(profileData);
-
   const [editingJob, setEditingJob] = useState(null);
   const [editForm, setEditForm] = useState({});
-  const [jobTrackingData, setJobTrackingData] = useState([]); 
-  const [approvalData, setApprovalData] = useState([]); 
-
-  const [systemUsers, setSystemUsers] = useState([]);
-  const [allSystemUsers, setAllSystemUsers] = useState([]); // New: Stores users for dropdown
+  const [jobTrackingData, setJobTrackingData] = useState([]);
+  const [approvalData, setApprovalData] = useState([]);
+  const [allProjects, setAllProjects] = useState([]);
+  const [allSystemUsers, setAllSystemUsers] = useState([]);
   const [userFormData, setUserFormData] = useState({
-    employeeId: '', firstName: '', secondName: '', email: '', phoneNum: '', nationalId: '', address: '', password: '', division: ''
+    employeeId: '', firstName: '', secondName: '', email: '', password: '', division: ''
   });
+  const [userDivision, setUserDivision] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserForm, setEditUserForm] = useState({});
 
-const fetchData = async () => {
-  try {
-    const division = localStorage.getItem('userDivision');
-    const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
-    
-    const data = res.data.map((item, index) => ({
-      ...item,
-      sNo: index + 1,
-      assignee: item.assignee || '' // Ensure assignee field exists
-    }));
-    setApprovalData(data);
-    setJobTrackingData(data);
-  } catch (err) { console.error("Error fetching data:", err); }
-};
+  // Change password form state
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-// New: Fetch users to populate dropdown
-const fetchUsers = async () => {
+  // Fetches the jobs/projects for this engineer's division
+  const fetchData = async () => {
     try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users`);
-        setAllSystemUsers(res.data);
-    } catch (err) { console.error("Error fetching users:", err); }
-};
+      const division = localStorage.getItem('userDivision');
+      const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+      const data = res.data.map((item, index) => ({
+        ...item,
+        sNo: index + 1,
+        assignee: item.assignee || ''
+      }));
+      setApprovalData(data);
+      setJobTrackingData(data);
+    } catch (err) { console.error("Error fetching data:", err); }
+  };
 
-  useEffect(() => { 
-      fetchData(); 
-      fetchUsers(); 
+  const fetchAllProjects = async () => {
+    try {
+      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
+      setAllProjects(res.data);
+    } catch (err) { console.error("Error fetching all projects:", err); }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(`http://127.0.0.1:5000/api/users`);
+      setAllSystemUsers(res.data);
+      const myEmployeeId = localStorage.getItem('employeeId');
+      const me = res.data.find(u => u.employeeId === myEmployeeId);
+      if (me && me.division) {
+        setCurrentDivision(me.division);
+        localStorage.setItem('userDivision', me.division);
+      }
+    } catch (err) { console.error("Error fetching users:", err); }
+  };
+
+  useEffect(() => {
+    setUserDivision(localStorage.getItem('userDivision') || '');
+    fetchData();
+    fetchUsers();
+    fetchAllProjects();
   }, []);
 
   const formatDate = (dateString) => {
@@ -60,187 +109,634 @@ const fetchUsers = async () => {
     return new Date(dateString).toISOString().split('T')[0];
   };
 
-  const handleLogout = () => { if (window.confirm("Are you sure you want to log out?")) navigate('/'); };
-  const startEdit = (job) => { setEditingJob(job.jobNo); setEditForm(job); };
-  
-  const handleUpdate = async () => { 
-    await axios.put(`http://127.0.0.1:5000/api/projects/update/${editForm.jobNo}`, editForm);
-    setEditingJob(null);
-    fetchData();
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      localStorage.clear();
+      navigate('/');
+    }
   };
-  
+
+  const startEdit = (job) => { setEditingJob(job.jobNo); setEditForm(job); };
+
+  const handleUpdate = async () => {
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${editForm.jobNo}`, editForm);
+      setEditingJob(null);
+      fetchData();
+      fetchAllProjects();
+      addToast('Job updated successfully!', 'success');
+    } catch (err) {
+      addToast('Update failed!', 'error');
+    }
+  };
+
   const handleDelete = async (jobNo) => {
     if (window.confirm("Are you sure you want to delete this job?")) {
-      await axios.delete(`http://127.0.0.1:5000/api/projects/delete/${jobNo}`);
-      fetchData();
+      try {
+        await axios.delete(`http://127.0.0.1:5000/api/projects/delete/${jobNo}`);
+        fetchData();
+        fetchAllProjects();
+        addToast('Job deleted successfully!', 'success');
+      } catch (err) {
+        addToast('Delete failed!', 'error');
+      }
     }
   };
 
-  const handleApprove = async (jobNo, status) => { 
-    await axios.patch(`http://127.0.0.1:5000/api/projects/status/${jobNo}`, { status });
-    fetchData(); 
+  const handleDeleteUser = async (userId) => {
+    if (window.confirm("Are you sure you want to remove this user?")) {
+      try {
+        await axios.delete(`http://127.0.0.1:5000/api/users/${userId}`);
+        setAllSystemUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
+        addToast('User deleted successfully!', 'success');
+      } catch (err) {
+        console.error("Error deleting user:", err);
+        addToast('Failed to delete user.', 'error');
+      }
+    }
   };
 
-const handleUndoApproval = async (jobNo) => {
-  try {
-    await axios.patch(`http://127.0.0.1:5000/api/projects/undo/${jobNo}`);
-    fetchData(); 
-  } catch (error) {
-    console.error("Error undoing status:", error);
-    alert("Could not undo status. Check console.");
-  }
+  const startEditUser = (user) => {
+    setEditingUser(user._id);
+    setEditUserForm({ ...user });
   };
 
-  // New: Update Assignee
-  const handleAssigneeChange = async (jobNo, newAssignee) => {
-      await axios.patch(`http://127.0.0.1:5000/api/projects/assign/${jobNo}`, { assignee: newAssignee });
-      fetchData();
-  };
-
-  const handleSaveProfile = () => { setProfileData(profileForm); alert("Profile Updated!"); };
-  const handleUserFormChange = (e) => { setUserFormData({ ...userFormData, [e.target.name]: e.target.value }); };
-
-
-  const handleSaveUser = async (e) => {
-    e.preventDefault();
-    
-    // 1. Add simple loading state to prevent double-clicks
-    if (e.target.dataset.submitting === "true") return;
-    e.target.dataset.submitting = "true";
-
+  const handleUpdateUser = async () => {
     try {
-        // ... your axios code ...
-        await axios.post('http://127.0.0.1:5000/api/users/add', userFormData);
-        alert("User saved successfully!");
-        // ...
+      await axios.put(`http://127.0.0.1:5000/api/users/${editingUser}`, editUserForm);
+      setEditingUser(null);
+      fetchUsers();
+      addToast('User updated successfully!', 'success');
     } catch (err) {
-        console.error("Error:", err);
-    } finally {
-        e.target.dataset.submitting = "false";
+      console.error("Error updating user:", err);
+      addToast('Update failed.', 'error');
     }
-   };
+  };
+
+  const handleApprove = async (jobNo, status) => {
+    try {
+      await axios.patch(`http://127.0.0.1:5000/api/projects/status/${jobNo}`, { status });
+      fetchData();
+      fetchAllProjects();
+      addToast(`Job ${status.toLowerCase()} successfully!`, status === 'Approved' ? 'success' : 'warning');
+    } catch (err) {
+      addToast('Status update failed!', 'error');
+    }
+  };
+
+  const handleUndoApproval = async (jobNo) => {
+    try {
+      await axios.patch(`http://127.0.0.1:5000/api/projects/undo/${jobNo}`);
+      fetchData();
+      fetchAllProjects();
+      addToast('Status reset to Pending', 'info');
+    } catch (error) { console.error("Error undoing status:", error); }
+  };
+
+  const handleAssigneeChange = async (jobNo, newAssignee) => {
+    try {
+        await axios.patch(url, { assignee: newAssignee });
+        setJobTrackingData(prev => prev.map(j => j.jobNo === jobNo ? { ...j, assignee: newAssignee } : j));
+    } catch (error) { console.error("Failed to update:", error); }
+  };
+
+  const handleSaveProfile = () => {
+    setProfileData(profileForm);
+    addToast('Profile updated!', 'success');
+  };
+
+  const handleUserFormChange = (e) => {
+    setUserFormData({ ...userFormData, [e.target.name]: e.target.value });
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (isChangingPassword) return;
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert("New password and confirmation don't match.");
+      return;
+    }
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      alert("Please fill in all password fields.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      alert("Password updated successfully!");
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      const code = err.response?.data?.error;
+      if (code === 'INCORRECT_CURRENT_PASSWORD') {
+        alert("Current password is incorrect.");
+      } else if (code === 'PASSWORD_TOO_SHORT') {
+        alert("New password is too short.");
+      } else {
+        alert("Failed to update password. Please try again.");
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  // Inside EngineerDashboard.jsx
+const handleSaveUser = async (e) => {
+    e.preventDefault();
+    const payload = {
+        employeeId: userFormData.employeeId, // Essential for Login
+        fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
+        email: userFormData.email,
+        password: userFormData.password,      // Essential for Login
+        division: userFormData.division,
+        role: 'engineer'
+    };
+    try {
+        await axios.post('http://127.0.0.1:5000/api/users/add', payload);
+        alert("User saved! They can now log in using their Employee ID.");
+        // Reset form
+        setUserFormData({ employeeId: '', firstName: '', secondName: '', email: '', password: '', division: '' });
+        await fetchUsers(); 
+    } catch (err) {
+      addToast('Save failed. Check if all fields are filled.', 'error');
+    }
+};
+
+  /* ─── Computed stats ─── */
+  const totalDivisionJobs = approvalData.length;
+  const pendingApprovals = approvalData.filter(j => !j.status || j.status === 'Pending').length;
+  const approvedCount = approvalData.filter(j => j.status === 'Approved').length;
+  const totalUsers = allSystemUsers.length;
+
+  const statCards = [
+    { label: 'Division Jobs', value: totalDivisionJobs, icon: Briefcase,   color: 'var(--accent-primary)' },
+    { label: 'Pending',       value: pendingApprovals,  icon: Clock,       color: 'var(--warning)' },
+    { label: 'Approved',      value: approvedCount,     icon: CheckCircle, color: 'var(--success)' },
+    { label: 'System Users',  value: totalUsers,        icon: Users,       color: 'var(--info)' },
+  ];
+
+  /* ─── Compute Smart Suggestions & Recommendations ─── */
+  const usersWithJobs = allSystemUsers.map(user => {
+    const name = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
+    // Count active (non-completed) jobs across all projects assigned to this user
+    const jobCount = allProjects.filter(job => job.assignee === name && job.status !== 'Approved' && job.status !== 'Rejected').length;
+    return {
+      ...user,
+      displayName: name || 'Unnamed User',
+      jobCount
+    };
+  });
+
+  const getRecommendations = () => {
+    const recs = [];
+    const engineers = usersWithJobs.filter(u => u.role === 'engineer');
+
+    // 1. Workload Imbalance check
+    if (engineers.length > 1) {
+      const sortedByJobs = [...engineers].sort((a, b) => b.jobCount - a.jobCount);
+      const busiest = sortedByJobs[0];
+      const leastBusy = sortedByJobs[sortedByJobs.length - 1];
+      
+      if (busiest.jobCount >= 2 && leastBusy.jobCount === 0) {
+        recs.push({
+          type: 'warning',
+          text: `Workload Balancing Suggestion: ${busiest.displayName} currently has ${busiest.jobCount} active tasks, while ${leastBusy.displayName} is free. Suggest routing new tasks to ${leastBusy.displayName} to optimize division performance.`
+        });
+      }
+    }
+
+    // 2. Unassigned jobs check
+    const divisionUnassigned = approvalData.filter(job => !job.assignee);
+    if (divisionUnassigned.length > 0) {
+      recs.push({
+        type: 'info',
+        text: `Resource Action Items: There are ${divisionUnassigned.length} unassigned jobs in your division (e.g., Job ${divisionUnassigned[0].jobNo}). Assign them to an engineer to resume tracking.`
+      });
+    }
+
+    // 3. Pending approvals review check
+    if (pendingApprovals > 0) {
+      recs.push({
+        type: 'danger',
+        text: `Task Delay Warning: You have ${pendingApprovals} pending approvals in your division queue. Please check and approve them to unblock engineering operations.`
+      });
+    }
+
+    // 4. Default if empty
+    if (recs.length === 0) {
+      recs.push({
+        type: 'success',
+        text: 'All operational parameters are balanced! Every project in your division is fully staffed, and the approvals backlog is clear.'
+      });
+    }
+
+    return recs;
+  };
+
+  const recommendations = getRecommendations();
 
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
-      <button className="sidebar-toggle-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}><Menu size={20} /></button>
+      <button className="sidebar-toggle-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+        <Menu size={20} />
+      </button>
+
       <div className="user-dashboard-layout">
+        {/* ─── Sidebar ─── */}
         <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
-            <div className="profile-photo">{profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}</div>
+            <div className="profile-photo">
+              {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}
+            </div>
             <h3>{profileData.name}</h3>
             <p className="reg-number">{profileData.reg}</p>
           </div>
           <nav className="sidebar-nav">
-            <button className={`nav-item ${activeTab === 'my-jobs' ? 'active' : ''}`} onClick={() => setActiveTab('my-jobs')}><Briefcase size={18} /> My Jobs</button>
-            <button className={`nav-item ${activeTab === 'add-user' ? 'active' : ''}`} onClick={() => setActiveTab('add-user')}><UserPlus size={18} /> Add User</button>
-            <button className={`nav-item ${activeTab === 'update-progress' ? 'active' : ''}`} onClick={() => setActiveTab('update-progress')}><RefreshCw size={18} /> Update Progress</button>
-            <button className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}><Edit3 size={18} /> Profile</button>
-            <button className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}><Settings size={18} /> Settings</button>
-            <button className="nav-item logout-nav-item" onClick={handleLogout}><LogOut size={18} /> Logout</button>
+            {[
+              { id: 'overview',        icon: BarChart3, label: 'Overview' },
+              { id: 'my-jobs',         icon: Briefcase, label: 'My Jobs' },
+              { id: 'all-jobs',        icon: Globe,     label: 'All Jobs' },
+              { id: 'add-user',        icon: UserPlus,  label: 'Add User' },
+              { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
+              { id: 'profile',         icon: Edit3,     label: 'Profile' },
+              { id: 'settings',        icon: Settings,  label: 'Settings' },
+            ].map(item => (
+              <button
+                key={item.id}
+                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(item.id)}
+              >
+                <item.icon size={18} /> {item.label}
+              </button>
+            ))}
+
+            {/* Dark Mode Sidebar Switch Toggle */}
+            <button className="nav-item" onClick={toggleDarkMode} style={{ marginTop: '20px', borderTop: '1px solid var(--border-base)', paddingTop: '15px' }}>
+              {isDark ? <Sun size={18} style={{ color: '#d97706' }} /> : <Moon size={18} style={{ color: '#8b5cf6' }} />}
+              <span>{isDark ? 'Light Mode' : 'Dark Mode'}</span>
+            </button>
+
+            <button className="nav-item logout-nav-item" onClick={handleLogout}>
+              <LogOut size={18} /> Logout
+            </button>
           </nav>
         </aside>
 
+        {/* ─── Main Content ─── */}
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
+
+          {/* Division Banner */}
+          {currentDivision && (
+            <motion.div
+              className="division-banner"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Shield size={18} /> {currentDivision} Division
+            </motion.div>
+          )}
           {activeTab === 'my-jobs' && (
             <>
-              <h3>My Jobs</h3>
-              <select onChange={(e) => setFilterDivision(e.target.value)} style={{marginBottom: '10px', padding: '5px'}}></select>
 
               <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
                 <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
               </div>
 
-              {jobSubTab === 'approvals' && (
-                <table className="project-table">
-                  <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Date of request</th><th>Allocation</th><th>Approval</th></tr></thead>
-                  <tbody>
-                    {approvalData.filter(j => filterDivision === 'All' || j.division === filterDivision).map((job) => (
-                      <tr key={job.jobNo}>
-                        <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.division}</td><td>{job.jobName}</td><td>{formatDate(job.dateReq)}</td><td>{job.allocation}</td>
-                        <td>
-                          {job.status === 'Pending' ? (
-                            <>
-                              <button className="approve-btn" onClick={() => handleApprove(job.jobNo, 'Approved')}><Check size={16} /></button>
-                              <button className="reject-btn" onClick={() => handleApprove(job.jobNo, 'Rejected')}><X size={16} /></button>
-                            </>
-                          ) : (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              {job.status} 
-                              <button onClick={() => handleUndoApproval(job.jobNo)} title="Reset to Pending" style={{ cursor: 'pointer', background: 'none', border: 'none' }}><Undo size={14}/></button>
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-
-              {jobSubTab === 'tracking' && (
-                <>
-                  <table className="project-table">
-                    <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr></thead>
-                    <tbody>
-                      {jobTrackingData.map((job) => (
-                        <tr key={job.jobNo}>
-                          <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.division}</td><td>{job.jobName}</td><td>{job.allocation}</td>
-                          <td>
-                              <select value={job.assignee || ''} onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}>
-                                  <option value="">Select Assignee</option>
-                                  {allSystemUsers.map(user => (
-                                      <option key={user.employeeId} value={user.firstName}>{user.firstName}</option>
-                                  ))}
-                              </select>
-                          </td>
-                          <td>
-                            <button className="edit-btn" onClick={() => startEdit(job)}><Edit3 size={16} /> Edit</button>
-                            <button className="delete-btn" onClick={() => handleDelete(job.jobNo)}><Trash2 size={16} color="red" /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {editingJob && (
-                    <div className="edit-section" style={{ marginTop: '20px', padding: '20px', background: '#f8fafc', borderRadius: '12px' }}>
-                      <h3>Update Job: {editForm.jobNo}</h3>
-                      <input value={editForm.jobName} onChange={(e) => setEditForm({...editForm, jobName: e.target.value})} placeholder="Job Name" />
-                      <input value={editForm.allocation} onChange={(e) => setEditForm({...editForm, allocation: e.target.value})} placeholder="Allocation" />
-                      <button className="confirm-btn" onClick={handleUpdate}><Save size={16} /> Update Changes</button>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
-
-          {activeTab === 'add-user' && (
-             <div className="profile-section" style={{ padding: '30px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'left', width: '500px' }}>
-               <h3>Add User Into System</h3>
-               <form className="profile-form" onSubmit={handleSaveUser}>
-                  <label>EMPLOYEE ID *</label><input name="employeeId" value={userFormData.employeeId} onChange={handleUserFormChange} />
-                  <label>FIRST NAME *</label><input name="firstName" value={userFormData.firstName} onChange={handleUserFormChange} />
-                  <label>EMAIL ADDRESS *</label><input type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} />
-                  <label>PASSWORD *</label><input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} />
-                  <label>DIVISION</label><input name="division" value={userFormData.division} onChange={handleUserFormChange} />
-                  <div className="action-buttons">
-                    <button type="submit" className="confirm-btn">Save User</button>
-                    <button type="button" className="cancel-btn" onClick={() => setActiveTab('my-jobs')}>Cancel</button>
+          {/* ─── Stat Cards ─── */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', marginBottom: '28px' }}
+          >
+            {statCards.map((stat) => (
+              <motion.div
+                key={stat.label}
+                variants={cardVariant}
+                className="field-card"
+                style={{ padding: '20px', cursor: 'default' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '10px',
+                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
+                  }}>
+                    <stat.icon size={19} />
                   </div>
-               </form>
+                </div>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.8rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                  {stat.value}
+                </div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                  {stat.label}
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* ─── Tab Content ─── */}
+          <AnimatePresence mode="wait">
+
+            {/* ── Overview Tab ── */}
+            {activeTab === 'overview' && (
+              <motion.div key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+                  
+                  {/* Left Column: Team & Resource Directory */}
+                  <div className="field-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                      <Users size={20} style={{ color: 'var(--accent-primary)' }} />
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Team Resource Summary</h3>
+                    </div>
+                    <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                      <table className="project-table">
+                        <thead>
+                          <tr>
+                            <th>User Name</th>
+                            <th>Role</th>
+                            <th>Division</th>
+                            <th style={{ textAlign: 'center' }}>Active Jobs</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {usersWithJobs.length === 0 ? (
+                            <tr>
+                              <td colSpan={4}>
+                                <div className="placeholder-content" style={{ height: '100px', border: 'none' }}>
+                                  <span>No system users registered.</span>
+                                </div>
+                              </td>
+                            </tr>
+                          ) : (
+                            usersWithJobs.map((user) => (
+                              <tr key={user._id}>
+                                <td className="font-bold">{user.displayName}</td>
+                                <td>
+                                  <span className={`status-badge status-${user.role === 'admin' ? 'rejected' : user.role === 'engineer' ? 'approved' : 'pending'}`}>
+                                    {user.role}
+                                  </span>
+                                </td>
+                                <td>{user.division || 'Head Office'}</td>
+                                <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--accent-primary)' }}>{user.jobCount}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Right Column: AI Suggestions */}
+                  <div className="field-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                      <Lightbulb size={20} style={{ color: '#d97706' }} />
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Allocation suggestions</h3>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {recommendations.map((rec, index) => (
+                        <div
+                          key={index}
+                          className={`alert-banner alert-${rec.type === 'success' ? 'success' : rec.type === 'danger' ? 'error' : rec.type === 'warning' ? 'warning' : 'info'}`}
+                          style={{ margin: 0, padding: '16px', borderRadius: '12px', boxShadow: 'none' }}
+                        >
+                          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                            <span style={{ fontSize: '1.25rem', lineHeight: '1' }}>
+                              {rec.type === 'success' && '🌱'}
+                              {rec.type === 'warning' && '💡'}
+                              {rec.type === 'info' && '⚠️'}
+                              {rec.type === 'danger' && '⏱️'}
+                            </span>
+                            <span style={{ flex: 1, fontSize: '0.86rem', lineHeight: '1.4', fontWeight: 500 }}>
+                              {rec.text}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── My Jobs Tab ── */}
+            {activeTab === 'my-jobs' && (
+              <motion.div key="my-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+
+                {/* Sub-tabs */}
+                <div className="sub-tabs">
+                  <button
+                    className={jobSubTab === 'approvals' ? 'active-sub-tab' : ''}
+                    onClick={() => setJobSubTab('approvals')}
+                    style={jobSubTab === 'approvals' ? { background: 'var(--accent-soft)', color: 'var(--accent-primary)', borderBottom: '3px solid var(--accent-primary)', fontWeight: 700 } : {}}
+                  >
+                    <CheckCircle size={14} style={{ marginRight: '6px' }} /> Approval Requests
+                  </button>
+                  <button
+                    className={jobSubTab === 'tracking' ? 'active-sub-tab' : ''}
+                    onClick={() => setJobSubTab('tracking')}
+                    style={jobSubTab === 'tracking' ? { background: 'var(--accent-soft)', color: 'var(--accent-primary)', borderBottom: '3px solid var(--accent-primary)', fontWeight: 700 } : {}}
+                  >
+                    <Users size={14} style={{ marginRight: '6px' }} /> Assignee
+                  </button>
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {/* Approvals sub-tab */}
+                  {jobSubTab === 'approvals' && (
+                    <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                        <table className="project-table">
+                          <thead>
+                            <tr><th>No</th><th>Job No</th><th>Job Name</th><th>Date of Request</th><th>Allocation</th><th>Approval</th></tr>
+                          </thead>
+                          <tbody>
+                            {approvalData.filter(j => filterDivision === 'All' || j.division === filterDivision).length === 0 ? (
+                              <tr>
+                                <td colSpan={6}>
+                                  <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                    <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                    <span>No approval requests found</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              approvalData.filter(j => filterDivision === 'All' || j.division === filterDivision).map((job) => (
+                                <tr key={job.jobNo}>
+                                  <td>{job.sNo}</td>
+                                  <td className="font-mono">{job.jobNo}</td>
+                                  <td className="font-bold">{job.jobName}</td>
+                                  <td>{formatDate(job.dateReq)}</td>
+                                  <td>{job.allocation}</td>
+                                  <td>
+                                    {job.status === 'Pending' ? (
+                                      <div style={{ display: 'flex', gap: '6px' }}>
+                                        <button className="approve-btn" onClick={() => handleApprove(job.jobNo, 'Approved')} title="Approve">
+                                          <Check size={15} />
+                                        </button>
+                                        <button className="reject-btn" onClick={() => handleApprove(job.jobNo, 'Rejected')} title="Reject">
+                                          <X size={15} />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
+                                          {job.status}
+                                        </span>
+                                        <button className="edit-btn" onClick={() => handleUndoApproval(job.jobNo)} title="Reset" style={{ padding: '4px 8px', minWidth: 'auto' }}>
+                                          <Undo size={13} />
+                                        </button>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Tracking / Assignee sub-tab */}
+                  {jobSubTab === 'tracking' && (
+                    <motion.div key="tracking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                        <table className="project-table">
+                          <thead>
+                            <tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr>
+                          </thead>
+                          <tbody>
+                            {jobTrackingData.length === 0 ? (
+                              <tr>
+                                <td colSpan={7}>
+                                  <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                    <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                    <span>No jobs to track</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              jobTrackingData.map((job) => (
+                                <tr key={job.jobNo}>
+                                  <td>{job.sNo}</td>
+                                  <td className="font-mono">{job.jobNo}</td>
+                                  <td>{job.division}</td>
+                                  <td className="font-bold">{job.jobName}</td>
+                                  <td>{job.allocation}</td>
+                                  <td>
+                                    <select value={job.assignee || ""} onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}>
+                                      <option value="" disabled>Select Assignee</option>
+                                      {allSystemUsers.map((user) => {
+                                        const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
+                                        return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
+                                      })}
+                                    </select>
+                                  </td>
+                                  <td>
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      <button className="edit-btn" onClick={() => startEdit(job)}>
+                                        <Edit3 size={14} /> Edit
+                                      </button>
+                                      <button className="delete-btn" onClick={() => handleDelete(job.jobNo)}>
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+               <h3>System Users</h3>
+               <table className="project-table">
+                 <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Division</th><th>Action</th></tr></thead>
+                 <tbody>
+  {allSystemUsers.map((user, i) => (
+    <tr key={user._id}>
+      <td>{i + 1}</td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.employeeId || ''} 
+            onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.employeeId}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.fullName || ''} 
+            onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.fullName}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.email || ''} 
+            onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.email}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.division || ''} 
+            onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.division}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <button onClick={handleUpdateUser} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+              <Check size={16} />
+            </button>
+            <button onClick={() => setEditingUser(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <button className="edit-btn" onClick={() => startEditUser(user)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+              <Edit3 size={16} />
+            </button>
+            <button className="delete-btn" onClick={() => handleDeleteUser(user._id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
+      </td>
+    </tr>
+  ))}
+</tbody>
+               </table>
              </div>
           )}
 
-          {activeTab === 'profile' && (
-            <div className="profile-section" style={{ padding: '30px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'left', width: '500px' }}>
-              <h3 style={{ fontWeight: '800', textAlign: 'center', marginBottom: '20px' }}>Personal Details</h3>
-              <div className="profile-form" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <label>FULL NAME</label><input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
-                <label>REGISTRATION NUMBER</label><input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
-                <button className="confirm-btn" onClick={handleSaveProfile}>Confirm</button>
-              </div>
-            </div>
-          )}
+            {/* ── All Jobs Board Tab ── */}
+            {activeTab === 'all-jobs' && (
+              <motion.div key="all-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="field-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <Globe size={20} style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>All System Jobs Board</h3>
+                  </div>
 
           {activeTab === 'update-progress' && <div className="placeholder-content"><p>Content for Update Progress coming soon...</p></div>}
           
@@ -248,12 +744,63 @@ const handleUndoApproval = async (jobNo) => {
              <div className="settings-section" style={{ padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
                <h3>System Settings</h3>
                <div className="profile-form"><label>THEME</label><select><option>Light Mode</option><option>Dark Mode</option></select></div>
+
+               <h3 style={{ marginTop: '30px' }}>Change Password</h3>
+               <form className="profile-form" onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+                 <label>CURRENT PASSWORD</label>
+                 <input
+                   type="password"
+                   value={passwordForm.currentPassword}
+                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                 />
+                 <label>NEW PASSWORD</label>
+                 <input
+                   type="password"
+                   value={passwordForm.newPassword}
+                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                 />
+                 <label>CONFIRM NEW PASSWORD</label>
+                 <input
+                   type="password"
+                   value={passwordForm.confirmPassword}
+                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                 />
+                 <button type="submit" className="confirm-btn" disabled={isChangingPassword}>
+                   {isChangingPassword ? 'Updating...' : 'Update Password'}
+                 </button>
+               </form>
              </div>
           )}
         </main>
+      </div>
+
+      {/* ─── Toast Notifications ─── */}
+      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
+        <AnimatePresence>
+          {toasts.map(toast => (
+            <motion.div
+              key={toast.id}
+              initial={{ x: 80, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+              className={`alert-banner alert-${toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : toast.type === 'info' ? 'info' : 'success'}`}
+              style={{ pointerEvents: 'all', minWidth: '280px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
+            >
+              {toast.type === 'success' && <CheckCircle size={18} />}
+              {toast.type === 'error' && <XCircle size={18} />}
+              {toast.type === 'warning' && <AlertTriangle size={18} />}
+              {toast.type === 'info' && <Clock size={18} />}
+              <span style={{ flex: 1, fontSize: '0.85rem' }}>{toast.message}</span>
+              <button onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px', display: 'flex' }}>
+                <X size={14} />
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
 
-export default UserDashboard;
+export default EngineerDashboard;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Landing Portal
 import Portal from './pages/Portal';
@@ -29,11 +30,15 @@ function App() {
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/dashboard" element={
+          <ProtectedRoute>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
         
         {/* Engineer Routes */}
         <Route path="/engineer/login" element={<EngineerLogin />} />
-        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
+        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />      
         
         {/* User Routes */}
         <Route path="/user/login" element={<UserLogin />} />
