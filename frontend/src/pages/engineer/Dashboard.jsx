@@ -207,40 +207,79 @@ const handleSaveUser = async (e) => {
               )}
 
               {jobSubTab === 'tracking' && (
-                <>
-                  <table className="project-table">
-                    <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr></thead>
-                    <tbody>
-                      {jobTrackingData.map((job) => (
-                        <tr key={job.jobNo}>
-                          <td>{job.sNo}</td><td>{job.jobNo}</td><td>{job.division}</td><td>{job.jobName}</td><td>{job.allocation}</td>
-                          <td>
-                              <select style={{ color: 'black', backgroundColor: 'white', padding: '5px' }} value={job.assignee || ""} onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}>
-                                  <option value="" disabled>Select Assignee</option>
-                                  {allSystemUsers.map((user) => {
-                                      const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
-                                      return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
-                                  })}
-                              </select>
-                          </td>
-                          <td>
-                            <button className="edit-btn" onClick={() => startEdit(job)}><Edit3 size={16} /> Edit</button>
-                            <button className="delete-btn" onClick={() => handleDelete(job.jobNo)}><Trash2 size={16} color="red" /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {editingJob && (
-                    <div className="edit-section" style={{ marginTop: '20px', padding: '20px', background: '#f8fafc', borderRadius: '12px' }}>
-                      <h3>Update Job: {editForm.jobNo}</h3>
-                      <input value={editForm.jobName} onChange={(e) => setEditForm({...editForm, jobName: e.target.value})} placeholder="Job Name" />
-                      <input value={editForm.allocation} onChange={(e) => setEditForm({...editForm, allocation: e.target.value})} placeholder="Allocation" />
-                      <button className="confirm-btn" onClick={handleUpdate}><Save size={16} /> Update Changes</button>
-                    </div>
-                  )}
-                </>
-              )}
+  <table className="project-table">
+    <thead><tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr></thead>
+    <tbody>
+      {jobTrackingData.map((job) => (
+        <tr key={job.jobNo}>
+          <td>{job.sNo}</td>
+          <td>{job.jobNo}</td>
+          <td>
+            {editingJob === job.jobNo ? (
+              <input
+                value={editForm.division || ''}
+                onChange={(e) => setEditForm({ ...editForm, division: e.target.value })}
+                style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+            ) : job.division}
+          </td>
+          <td>
+            {editingJob === job.jobNo ? (
+              <input
+                value={editForm.jobName || ''}
+                onChange={(e) => setEditForm({ ...editForm, jobName: e.target.value })}
+                style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+            ) : job.jobName}
+          </td>
+          <td>
+            {editingJob === job.jobNo ? (
+              <input
+                value={editForm.allocation || ''}
+                onChange={(e) => setEditForm({ ...editForm, allocation: e.target.value })}
+                style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              />
+            ) : job.allocation}
+          </td>
+          <td>
+            <select
+              style={{ color: 'black', backgroundColor: 'white', padding: '5px' }}
+              value={job.assignee || ""}
+              onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}
+            >
+              <option value="" disabled>Select Assignee</option>
+              {allSystemUsers.map((user) => {
+                const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
+                return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
+              })}
+            </select>
+          </td>
+          <td>
+            {editingJob === job.jobNo ? (
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button onClick={handleUpdate} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                  <Check size={16} />
+                </button>
+                <button onClick={() => setEditingJob(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button className="edit-btn" onClick={() => startEdit(job)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+                  <Edit3 size={16} />
+                </button>
+                <button className="delete-btn" onClick={() => handleDelete(job.jobNo)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+)}
             </>
           )}
 
