@@ -117,7 +117,7 @@ const UserDashboard = ({ isDark }) => {
     } catch (error) { console.error("Error undoing status:", error); }
   };
 
-  // FIX: Re-fetch project list data cleanly from server after making database updates
+  // FIX: Re-fetch layout data directly after saving assignment updates to ensure refresh persistence works
   const handleAssigneeChange = async (jobNo, newAssignee) => {
     const url = `http://127.0.0.1:5000/api/projects/assign/${jobNo}`;
     try {

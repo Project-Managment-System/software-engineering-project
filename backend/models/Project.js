@@ -18,7 +18,10 @@ const ProjectSchema = new mongoose.Schema({
     allocation: { type: String, required: true }, // Store as string or Number based on preference
     dateReq: { type: Date, required: true },
     ref: { type: String, required: true }, // Request Letter Reference
-    
+    assignee: { 
+        type: String, 
+        default: "" 
+    },
     // System Tracking
     submitDate: { type: Date, default: Date.now },
     status: { 
