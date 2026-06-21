@@ -1,79 +1,31 @@
-const express = require('express');
-const router = express.Router();
-// Assuming you have a User model imported
-const User = require('../models/User'); 
-
-// Ensure you have an async function with await
-router.post('/add', async (req, res) => {
+// Change password for a logged-in user. Requires the current password
+// to be correct before allowing the change.
+router.patch('/:id/password', async (req, res) => {
     try {
-        // Map frontend fields to match your Mongoose Schema
-        const userData = {
-            // FIX: Safely fallback to combined fields if req.body.fullName isn't provided directly
-            fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
-            employeeId: req.body.employeeId,
-            email: req.body.email,
-            password: req.body.password,
-            division: req.body.division,
-            role: 'engineer' // Force a default role if not provided
-        };
+        const { currentPassword, newPassword } = req.body;
 
-        const newUser = new User(userData);
-        await newUser.save();
-        res.status(201).json({ message: "User saved successfully!" });
-    } catch (err) {
-        console.error("DEBUG ERROR:", err.message);
-        res.status(400).json({ error: err.message });
-    }
-});
-
-// Add this to your userRoutes.js file
-router.delete('/:id', async (req, res) => {
-    try {
-        const deletedUser = await User.findByIdAndDelete(req.params.id);
-        if (!deletedUser) {
-            return res.status(404).json({ message: "User not found" });
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: "MISSING_FIELDS" });
         }
-        res.json({ message: "User deleted successfully" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// Add this to your userRoutes.js
-router.get('/', async (req, res) => {
-    try {
-        const users = await User.find(); // Fetches all users from DB
-        res.json(users);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.put('/:id', async (req, res) => {
-    try {
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedUser) {
-            return res.status(404).json({ message: "User not found" });
+        if (newPassword.length < 4) {
+            return res.status(400).json({ error: "PASSWORD_TOO_SHORT" });
         }
-        res.json(updatedUser);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
-// Get a single user by ID, excluding the password field.
-// Used by ProtectedRoute on the frontend to verify a session is real
-// (the user still exists in the DB and actually has the claimed role),
-// rather than trusting a localStorage flag alone.
-router.get('/:id', async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id).select('-password');
+        const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ error: "USER_NOT_FOUND" });
         }
-        res.json(user);
+
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+            return res.status(401).json({ error: "INCORRECT_CURRENT_PASSWORD" });
+        }
+
+        user.password = newPassword; // hashed automatically by the pre('save') hook
+        await user.save();
+
+        res.json({ status: "PASSWORD_UPDATED" });
     } catch (err) {
-        res.status(400).json({ error: "INVALID_USER_ID" });
+        res.status(500).json({ error: err.message });
     }
 });
-module.exports = router;
