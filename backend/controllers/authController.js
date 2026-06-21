@@ -112,6 +112,7 @@ exports.login = async (req, res, next) => {
     res.json({
       status: "LOGIN_SUCCESS",
       role: user.role,
+      division: user.division,
       userId: user._id,
       fullName: user.fullName,
       // Explicitly send true so the frontend allows the session

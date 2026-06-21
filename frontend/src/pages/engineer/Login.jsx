@@ -13,19 +13,19 @@ export default function EngineerLogin() {
     e.preventDefault();
     try {
       const response = await loginUser({ email, password });
-      if (response.data.status === 'LOGIN_SUCCESS') {
+      if (response.data.status === 'LOGIN_SUCCESS' && response.data.role === 'engineer') {
         localStorage.setItem('userId', response.data.userId);
+        localStorage.setItem('userDivision', response.data.division || '');
+        localStorage.setItem('userRole', response.data.role);
         navigate('/engineer/dashboard');
+        return;
       }
+
+      alert('This account is not assigned to the engineer dashboard.');
     } catch (error) {
       alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');
     }
   };
-  // Inside the Engineer check in handleLogin:
-  if (engineerCredentials[username] === password) {
-    localStorage.setItem('userDivision', divisionMap[username]); // Save division
-    navigate('/engineer/dashboard');
-  }
 
   return (
     <motion.div 
