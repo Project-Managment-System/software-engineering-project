@@ -1,17 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User'); 
+const User = require('../models/User');
 
-// Ensure you have an async function with await
+// Allowed roles an engineer can assign to staff they add
+const ALLOWED_STAFF_ROLES = ['division_assistant', 'technical_officer', 'clerk'];
+
+// Add a new staff user (called by engineer dashboard)
 router.post('/add', async (req, res) => {
     try {
+        const role = req.body.role;
+
+        // Prevent engineers from creating engineer or admin accounts
+        if (!ALLOWED_STAFF_ROLES.includes(role)) {
+            return res.status(400).json({
+                error: `Invalid role. Allowed values: ${ALLOWED_STAFF_ROLES.join(', ')}`
+            });
+        }
+
         const userData = {
             fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
             employeeId: req.body.employeeId,
             email: req.body.email,
             password: req.body.password,
             division: req.body.division,
-            role: 'engineer'
+            role: role
         };
 
         const newUser = new User(userData);
@@ -46,9 +58,27 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get users filtered by division (used by engineer dashboard)
+// NOTE: This route must be defined BEFORE '/:id' to avoid conflict
+router.get('/division/:division', async (req, res) => {
+    try {
+        const division = req.params.division;
+        const users = await User.find({ division: { $regex: new RegExp(`^${division}$`, 'i') } }).select('-password');
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Update user details
 router.put('/:id', async (req, res) => {
     try {
+        // Prevent elevating a user to engineer or admin via this route
+        if (req.body.role && !ALLOWED_STAFF_ROLES.includes(req.body.role)) {
+            return res.status(400).json({
+                error: `Invalid role. Allowed values: ${ALLOWED_STAFF_ROLES.join(', ')}`
+            });
+        }
         const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
