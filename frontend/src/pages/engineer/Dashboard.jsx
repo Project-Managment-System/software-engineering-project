@@ -12,7 +12,19 @@ const UserDashboard = ({ isDark }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   
   const [filterDivision, setFilterDivision] = useState('All');
-  const [profileData, setProfileData] = useState({ name: 'John Doe', reg: 'REG/2021/CS/088', email: 'john.doe@example.com', phone: '071-2345678' });
+
+  // Division shown at the top of the dashboard. Starts from localStorage
+  // (set at login) and gets refreshed from the DB once allSystemUsers loads,
+  // in case an admin has changed it since this engineer last logged in.
+  const [currentDivision, setCurrentDivision] = useState(localStorage.getItem('userDivision') || '');
+
+  // Real logged-in user info, set by DivisionLogin.js into localStorage
+  const [profileData, setProfileData] = useState({
+    name: localStorage.getItem('fullName') || 'User',
+    reg: localStorage.getItem('employeeId') || '',
+    email: localStorage.getItem('email') || '',
+    phone: ''
+  });
   const [profileForm, setProfileForm] = useState(profileData);
   const [editingJob, setEditingJob] = useState(null);
   const [editForm, setEditForm] = useState({});
@@ -27,26 +39,39 @@ const UserDashboard = ({ isDark }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [editUserForm, setEditUserForm] = useState({});
 
+  // Fetches the jobs/projects for this engineer's division
   const fetchData = async () => {
     try {
       const division = localStorage.getItem('userDivision');
       const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+
       const data = res.data.map((item, index) => ({
         ...item,
         sNo: index + 1,
-        assignee: item.assignee || '' 
+        assignee: item.assignee || '' // Ensure assignee field exists
       }));
       setApprovalData(data);
       setJobTrackingData(data);
     } catch (err) { console.error("Error fetching data:", err); }
   };
 
+  // Fetches all system users (for the assignee dropdown, Add User table,
+  // and to refresh this engineer's own division from the DB)
   const fetchUsers = async () => {
-      try {
-          const res = await axios.get(`http://127.0.0.1:5000/api/users`);
-          setAllSystemUsers(res.data);
-      } catch (err) { console.error("Error fetching users:", err); }
-  };
+    try {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users`);
+        setAllSystemUsers(res.data);
+
+        // Refresh this engineer's division from the DB (in case it changed
+        // since they last logged in), rather than trusting localStorage alone.
+        const myEmployeeId = localStorage.getItem('employeeId');
+        const me = res.data.find(u => u.employeeId === myEmployeeId);
+        if (me && me.division) {
+            setCurrentDivision(me.division);
+            localStorage.setItem('userDivision', me.division);
+        }
+    } catch (err) { console.error("Error fetching users:", err); }
+};
 
   useEffect(() => { 
     setUserDivision(localStorage.getItem('userDivision') || '');
@@ -59,7 +84,12 @@ const UserDashboard = ({ isDark }) => {
     return new Date(dateString).toISOString().split('T')[0];
   };
 
-  const handleLogout = () => { if (window.confirm("Are you sure you want to log out?")) navigate('/'); };
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      localStorage.clear();
+      navigate('/');
+    }
+  };
   const startEdit = (job) => { setEditingJob(job.jobNo); setEditForm(job); };
   
   const handleUpdate = async () => { 
@@ -172,13 +202,24 @@ const handleSaveUser = async (e) => {
         </aside>
 
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
-          <h2 className="division-page-title" style={{ marginBottom: '20px', fontWeight: '800' }}>
-            {userDivision ? `${userDivision} Division` : 'Division Not Set'}
-          </h2>
-
+          {currentDivision && (
+            <div className="division-banner" style={{
+              marginBottom: '20px',
+              padding: '12px 20px',
+              background: 'transparent',
+              color: '#000',
+              border: '2px solid #d1d5db',
+              borderRadius: '8px',
+              fontWeight: '700',
+              fontSize: '1.1rem'
+            }}>
+              {currentDivision} Division
+            </div>
+          )}
           {activeTab === 'my-jobs' && (
             <>
-                <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
+
+              <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
                 <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
               </div>
@@ -338,7 +379,7 @@ const handleSaveUser = async (e) => {
               <h3 style={{ fontWeight: '800', textAlign: 'center', marginBottom: '20px' }}>Personal Details</h3>
               <div className="profile-form" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <label>FULL NAME</label><input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
-                <label>REGISTRATION NUMBER</label><input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
+                <label>EMPLOYEE ID</label><input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
                 <button className="confirm-btn" onClick={handleSaveProfile}>Confirm</button>
               </div>
             </div>
