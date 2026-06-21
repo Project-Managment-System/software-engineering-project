@@ -89,6 +89,31 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+// Update own profile (any role can update their own name, email, phone, profilePic)
+router.patch('/:id/profile', async (req, res) => {
+    try {
+        const { fullName, email, phoneNo, profilePic } = req.body;
+        const updateFields = {};
+        if (fullName !== undefined) updateFields.fullName = fullName;
+        if (email !== undefined) updateFields.email = email.toLowerCase();
+        if (phoneNo !== undefined) updateFields.phoneNo = phoneNo;
+        if (profilePic !== undefined) updateFields.profilePic = profilePic;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateFields },
+            { new: true, runValidators: false }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'USER_NOT_FOUND' });
+        }
+        res.json(updatedUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Change password for a logged-in user. Requires the current password to be correct.
 router.patch('/:id/password', async (req, res) => {
     try {
