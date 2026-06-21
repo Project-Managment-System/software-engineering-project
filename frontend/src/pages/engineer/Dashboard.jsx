@@ -39,6 +39,10 @@ const UserDashboard = ({ isDark }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [editUserForm, setEditUserForm] = useState({});
 
+  // Change password form state
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   // Fetches the jobs/projects for this engineer's division
   const fetchData = async () => {
     try {
@@ -147,25 +151,61 @@ const UserDashboard = ({ isDark }) => {
     } catch (error) { console.error("Error undoing status:", error); }
   };
 
-  // FIX: Re-fetch layout data directly after saving assignment updates to ensure refresh persistence works
   const handleAssigneeChange = async (jobNo, newAssignee) => {
     const url = `http://127.0.0.1:5000/api/projects/assign/${jobNo}`;
     try {
         await axios.patch(url, { assignee: newAssignee });
-        await fetchData(); 
+        setJobTrackingData(prev => prev.map(j => j.jobNo === jobNo ? { ...j, assignee: newAssignee } : j));
     } catch (error) { console.error("Failed to update:", error); }
   };
 
   const handleSaveProfile = () => { setProfileData(profileForm); alert("Profile Updated!"); };
   const handleUserFormChange = (e) => { setUserFormData({ ...userFormData, [e.target.name]: e.target.value }); };
 
-  const handleSaveUser = async (e) => {
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (isChangingPassword) return;
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert("New password and confirmation don't match.");
+      return;
+    }
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      alert("Please fill in all password fields.");
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      alert("Password updated successfully!");
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      const code = err.response?.data?.error;
+      if (code === 'INCORRECT_CURRENT_PASSWORD') {
+        alert("Current password is incorrect.");
+      } else if (code === 'PASSWORD_TOO_SHORT') {
+        alert("New password is too short.");
+      } else {
+        alert("Failed to update password. Please try again.");
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  // Inside EngineerDashboard.jsx
+const handleSaveUser = async (e) => {
     e.preventDefault();
     const payload = {
-        employeeId: userFormData.employeeId, 
+        employeeId: userFormData.employeeId, // Essential for Login
         fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
         email: userFormData.email,
-        password: userFormData.password,      
+        password: userFormData.password,      // Essential for Login
         division: userFormData.division,
         role: 'engineer'
     };
@@ -173,12 +213,13 @@ const UserDashboard = ({ isDark }) => {
     try {
         await axios.post('http://127.0.0.1:5000/api/users/add', payload);
         alert("User saved! They can now log in using their Employee ID.");
+        // Reset form
         setUserFormData({ employeeId: '', firstName: '', secondName: '', email: '', password: '', division: '' });
         await fetchUsers(); 
     } catch (err) {
         alert("Save failed. Check if all fields are filled.");
     }
-  };
+};
 
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
@@ -217,6 +258,7 @@ const UserDashboard = ({ isDark }) => {
           )}
           {activeTab === 'my-jobs' && (
             <>
+
               <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
                 <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
                 <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
@@ -305,69 +347,69 @@ const UserDashboard = ({ isDark }) => {
                <table className="project-table">
                  <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Division</th><th>Action</th></tr></thead>
                  <tbody>
-                  {allSystemUsers.map((user, i) => (
-                    <tr key={user._id}>
-                      <td>{i + 1}</td>
-                      <td>
-                        {editingUser === user._id ? (
-                          <input 
-                            value={editUserForm.employeeId || ''} 
-                            onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
-                            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                          />
-                        ) : user.employeeId}
-                      </td>
-                      <td>
-                        {editingUser === user._id ? (
-                          <input 
-                            value={editUserForm.fullName || ''} 
-                            onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
-                            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                          />
-                        ) : user.fullName}
-                      </td>
-                      <td>
-                        {editingUser === user._id ? (
-                          <input 
-                            value={editUserForm.email || ''} 
-                            onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
-                            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                          />
-                        ) : user.email}
-                      </td>
-                      <td>
-                        {editingUser === user._id ? (
-                          <input 
-                            value={editUserForm.division || ''} 
-                            onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
-                            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                          />
-                        ) : user.division}
-                      </td>
-                      <td>
-                        {editingUser === user._id ? (
-                          <div style={{ display: 'flex', gap: '5px' }}>
-                            <button onClick={handleUpdateUser} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                              <Check size={16} />
-                            </button>
-                            <button onClick={() => setEditingUser(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', gap: '5px' }}>
-                            <button className="edit-btn" onClick={() => startEditUser(user)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-                              <Edit3 size={16} />
-                            </button>
-                            <button className="delete-btn" onClick={() => handleDeleteUser(user._id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+  {allSystemUsers.map((user, i) => (
+    <tr key={user._id}>
+      <td>{i + 1}</td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.employeeId || ''} 
+            onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.employeeId}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.fullName || ''} 
+            onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.fullName}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.email || ''} 
+            onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.email}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <input 
+            value={editUserForm.division || ''} 
+            onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
+            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+          />
+        ) : user.division}
+      </td>
+      <td>
+        {editingUser === user._id ? (
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <button onClick={handleUpdateUser} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+              <Check size={16} />
+            </button>
+            <button onClick={() => setEditingUser(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '5px' }}>
+            <button className="edit-btn" onClick={() => startEditUser(user)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
+              <Edit3 size={16} />
+            </button>
+            <button className="delete-btn" onClick={() => handleDeleteUser(user._id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
+              <Trash2 size={16} />
+            </button>
+          </div>
+        )}
+      </td>
+    </tr>
+  ))}
+</tbody>
                </table>
              </div>
           )}
@@ -389,6 +431,31 @@ const UserDashboard = ({ isDark }) => {
              <div className="settings-section" style={{ padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
                <h3>System Settings</h3>
                <div className="profile-form"><label>THEME</label><select><option>Light Mode</option><option>Dark Mode</option></select></div>
+
+               <h3 style={{ marginTop: '30px' }}>Change Password</h3>
+               <form className="profile-form" onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+                 <label>CURRENT PASSWORD</label>
+                 <input
+                   type="password"
+                   value={passwordForm.currentPassword}
+                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                 />
+                 <label>NEW PASSWORD</label>
+                 <input
+                   type="password"
+                   value={passwordForm.newPassword}
+                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                 />
+                 <label>CONFIRM NEW PASSWORD</label>
+                 <input
+                   type="password"
+                   value={passwordForm.confirmPassword}
+                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                 />
+                 <button type="submit" className="confirm-btn" disabled={isChangingPassword}>
+                   {isChangingPassword ? 'Updating...' : 'Update Password'}
+                 </button>
+               </form>
              </div>
           )}
         </main>
