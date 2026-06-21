@@ -58,11 +58,25 @@ const EngineerDashboard = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [editUserForm, setEditUserForm] = useState({});
 
-  // Change password form state
+  /* ─── Change password state ─── */
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Fetches the jobs/projects for this engineer's division
+  /* ─── Toast system ─── */
+  const [toasts, setToasts] = useState([]);
+  const addToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  };
+
+  const toggleDarkMode = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    addToast(`${nextDark ? 'Dark' : 'Light'} theme activated`, 'info');
+  };
+
   const fetchData = async () => {
     try {
       const division = localStorage.getItem('userDivision');
@@ -195,8 +209,10 @@ const EngineerDashboard = () => {
 
   const handleAssigneeChange = async (jobNo, newAssignee) => {
     try {
-        await axios.patch(url, { assignee: newAssignee });
-        setJobTrackingData(prev => prev.map(j => j.jobNo === jobNo ? { ...j, assignee: newAssignee } : j));
+      await axios.patch(`http://127.0.0.1:5000/api/projects/assign/${jobNo}`, { assignee: newAssignee });
+      await fetchData();
+      await fetchAllProjects();
+      addToast(`Assigned to ${newAssignee}`, 'success');
     } catch (error) { console.error("Failed to update:", error); }
   };
 
@@ -209,16 +225,36 @@ const EngineerDashboard = () => {
     setUserFormData({ ...userFormData, [e.target.name]: e.target.value });
   };
 
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    const payload = {
+      employeeId: userFormData.employeeId,
+      fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
+      email: userFormData.email,
+      password: userFormData.password,
+      division: userFormData.division,
+      role: 'engineer'
+    };
+    try {
+      await axios.post('http://127.0.0.1:5000/api/users/add', payload);
+      addToast('User saved! They can now log in.', 'success');
+      setUserFormData({ employeeId: '', firstName: '', secondName: '', email: '', password: '', division: '' });
+      await fetchUsers();
+    } catch (err) {
+      addToast('Save failed. Check if all fields are filled.', 'error');
+    }
+  };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (isChangingPassword) return;
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert("New password and confirmation don't match.");
+      addToast("New password and confirmation don't match.", 'warning');
       return;
     }
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
-      alert("Please fill in all password fields.");
+      addToast("Please fill in all password fields.", 'warning');
       return;
     }
 
@@ -229,43 +265,21 @@ const EngineerDashboard = () => {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
-      alert("Password updated successfully!");
+      addToast("Password updated successfully!", 'success');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
       const code = err.response?.data?.error;
       if (code === 'INCORRECT_CURRENT_PASSWORD') {
-        alert("Current password is incorrect.");
+        addToast("Current password is incorrect.", 'error');
       } else if (code === 'PASSWORD_TOO_SHORT') {
-        alert("New password is too short.");
+        addToast("New password is too short.", 'error');
       } else {
-        alert("Failed to update password. Please try again.");
+        addToast("Failed to update password. Please try again.", 'error');
       }
     } finally {
       setIsChangingPassword(false);
     }
   };
-
-  // Inside EngineerDashboard.jsx
-const handleSaveUser = async (e) => {
-    e.preventDefault();
-    const payload = {
-        employeeId: userFormData.employeeId, // Essential for Login
-        fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
-        email: userFormData.email,
-        password: userFormData.password,      // Essential for Login
-        division: userFormData.division,
-        role: 'engineer'
-    };
-    try {
-        await axios.post('http://127.0.0.1:5000/api/users/add', payload);
-        alert("User saved! They can now log in using their Employee ID.");
-        // Reset form
-        setUserFormData({ employeeId: '', firstName: '', secondName: '', email: '', password: '', division: '' });
-        await fetchUsers(); 
-    } catch (err) {
-      addToast('Save failed. Check if all fields are filled.', 'error');
-    }
-};
 
   /* ─── Computed stats ─── */
   const totalDivisionJobs = approvalData.length;
@@ -283,7 +297,6 @@ const handleSaveUser = async (e) => {
   /* ─── Compute Smart Suggestions & Recommendations ─── */
   const usersWithJobs = allSystemUsers.map(user => {
     const name = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
-    // Count active (non-completed) jobs across all projects assigned to this user
     const jobCount = allProjects.filter(job => job.assignee === name && job.status !== 'Approved' && job.status !== 'Rejected').length;
     return {
       ...user,
@@ -296,7 +309,6 @@ const handleSaveUser = async (e) => {
     const recs = [];
     const engineers = usersWithJobs.filter(u => u.role === 'engineer');
 
-    // 1. Workload Imbalance check
     if (engineers.length > 1) {
       const sortedByJobs = [...engineers].sort((a, b) => b.jobCount - a.jobCount);
       const busiest = sortedByJobs[0];
@@ -310,7 +322,6 @@ const handleSaveUser = async (e) => {
       }
     }
 
-    // 2. Unassigned jobs check
     const divisionUnassigned = approvalData.filter(job => !job.assignee);
     if (divisionUnassigned.length > 0) {
       recs.push({
@@ -319,7 +330,6 @@ const handleSaveUser = async (e) => {
       });
     }
 
-    // 3. Pending approvals review check
     if (pendingApprovals > 0) {
       recs.push({
         type: 'danger',
@@ -327,7 +337,6 @@ const handleSaveUser = async (e) => {
       });
     }
 
-    // 4. Default if empty
     if (recs.length === 0) {
       recs.push({
         type: 'success',
@@ -401,13 +410,6 @@ const handleSaveUser = async (e) => {
               <Shield size={18} /> {currentDivision} Division
             </motion.div>
           )}
-          {activeTab === 'my-jobs' && (
-            <>
-
-              <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
-                <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
-                <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
-              </div>
 
           {/* ─── Stat Cards ─── */}
           <motion.div
@@ -658,76 +660,35 @@ const handleSaveUser = async (e) => {
                         </table>
                       </div>
 
-               <h3>System Users</h3>
-               <table className="project-table">
-                 <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Division</th><th>Action</th></tr></thead>
-                 <tbody>
-  {allSystemUsers.map((user, i) => (
-    <tr key={user._id}>
-      <td>{i + 1}</td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.employeeId || ''} 
-            onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.employeeId}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.fullName || ''} 
-            onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.fullName}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.email || ''} 
-            onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.email}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.division || ''} 
-            onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.division}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button onClick={handleUpdateUser} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              <Check size={16} />
-            </button>
-            <button onClick={() => setEditingUser(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              <X size={16} />
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button className="edit-btn" onClick={() => startEditUser(user)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-              <Edit3 size={16} />
-            </button>
-            <button className="delete-btn" onClick={() => handleDeleteUser(user._id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
-               </table>
-             </div>
-          )}
+                      {/* Inline Edit Section */}
+                      <AnimatePresence>
+                        {editingJob && (
+                          <motion.div
+                            className="edit-section"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.25 }}
+                          >
+                            <h3>Update Job: {editForm.jobNo}</h3>
+                            <div className="profile-form">
+                              <label>Job Name</label>
+                              <input value={editForm.jobName} onChange={(e) => setEditForm({...editForm, jobName: e.target.value})} placeholder="Job Name" />
+                              <label>Allocation</label>
+                              <input value={editForm.allocation} onChange={(e) => setEditForm({...editForm, allocation: e.target.value})} placeholder="Allocation" />
+                            </div>
+                            <div className="action-buttons">
+                              <button className="confirm-btn" onClick={handleUpdate}><Save size={14} /> Update Changes</button>
+                              <button className="cancel-btn" onClick={() => setEditingJob(null)}><X size={14} /> Cancel</button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
 
             {/* ── All Jobs Board Tab ── */}
             {activeTab === 'all-jobs' && (
@@ -738,39 +699,265 @@ const handleSaveUser = async (e) => {
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>All System Jobs Board</h3>
                   </div>
 
-          {activeTab === 'update-progress' && <div className="placeholder-content"><p>Content for Update Progress coming soon...</p></div>}
-          
-          {activeTab === 'settings' && (
-             <div className="settings-section" style={{ padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-               <h3>System Settings</h3>
-               <div className="profile-form"><label>THEME</label><select><option>Light Mode</option><option>Dark Mode</option></select></div>
+                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Job No</th>
+                          <th>Job Name</th>
+                          <th>Division</th>
+                          <th>Ministry</th>
+                          <th>Department</th>
+                          <th>Assignee</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allProjects.length === 0 ? (
+                          <tr>
+                            <td colSpan={7}>
+                              <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                <span>No system projects found.</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          allProjects.map((job) => (
+                            <tr key={job.jobNo}>
+                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-bold">{job.jobName}</td>
+                              <td>{job.division}</td>
+                              <td>{job.ministry}</td>
+                              <td>{job.department}</td>
+                              <td>
+                                {job.assignee ? (
+                                  <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>{job.assignee}</span>
+                                ) : (
+                                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
+                                )}
+                              </td>
+                              <td>
+                                <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
+                                  {job.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-               <h3 style={{ marginTop: '30px' }}>Change Password</h3>
-               <form className="profile-form" onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
-                 <label>CURRENT PASSWORD</label>
-                 <input
-                   type="password"
-                   value={passwordForm.currentPassword}
-                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                 />
-                 <label>NEW PASSWORD</label>
-                 <input
-                   type="password"
-                   value={passwordForm.newPassword}
-                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                 />
-                 <label>CONFIRM NEW PASSWORD</label>
-                 <input
-                   type="password"
-                   value={passwordForm.confirmPassword}
-                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                 />
-                 <button type="submit" className="confirm-btn" disabled={isChangingPassword}>
-                   {isChangingPassword ? 'Updating...' : 'Update Password'}
-                 </button>
-               </form>
-             </div>
-          )}
+            {/* ── Add User Tab ── */}
+            {activeTab === 'add-user' && (
+              <motion.div key="add-user" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+
+                <div className="profile-section">
+                  <h3><UserPlus size={18} /> Add User Into System</h3>
+                  <form className="profile-form" onSubmit={handleSaveUser}>
+                    <label>Employee ID *</label>
+                    <input name="employeeId" value={userFormData.employeeId} onChange={handleUserFormChange} />
+                    <label>First Name *</label>
+                    <input name="firstName" value={userFormData.firstName} onChange={handleUserFormChange} />
+                    <label>Second Name</label>
+                    <input name="secondName" value={userFormData.secondName} onChange={handleUserFormChange} />
+                    <label>Email Address *</label>
+                    <input type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} />
+                    <label>Password *</label>
+                    <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} />
+                    <label>Division</label>
+                    <input name="division" value={userFormData.division} onChange={handleUserFormChange} />
+                    <div className="action-buttons">
+                      <button type="submit" className="confirm-btn"><Save size={14} /> Save User</button>
+                      <button type="button" className="cancel-btn" onClick={() => setActiveTab('my-jobs')}><X size={14} /> Cancel</button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* System Users Table */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  style={{ marginTop: '28px' }}
+                >
+                  <h3 className="recent-jobs-title" style={{ marginBottom: '14px' }}>
+                    <Users size={18} /> System Users
+                  </h3>
+                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                    <table className="project-table">
+                      <thead>
+                        <tr><th>#</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Division</th><th>Action</th></tr>
+                      </thead>
+                      <tbody>
+                        {allSystemUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={6}>
+                              <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
+                                <Users size={24} style={{ opacity: 0.35 }} />
+                                <span>No users in system yet</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          allSystemUsers.map((user, i) => (
+                            <tr key={user._id}>
+                              <td>{i + 1}</td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.employeeId || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
+                                    className="input-field"
+                                  />
+                                ) : <span className="font-mono">{user.employeeId}</span>}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.fullName || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
+                                    className="input-field"
+                                  />
+                                ) : <span className="font-bold">{user.fullName}</span>}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.email || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
+                                    className="input-field"
+                                  />
+                                ) : user.email}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.division || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
+                                    className="input-field"
+                                  />
+                                ) : user.division}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <div style={{ display: 'flex', gap: '5px' }}>
+                                    <button className="approve-btn" onClick={handleUpdateUser} title="Save">
+                                      <Check size={15} />
+                                    </button>
+                                    <button className="reject-btn" onClick={() => setEditingUser(null)} title="Cancel">
+                                      <X size={15} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', gap: '5px' }}>
+                                    <button className="edit-btn" onClick={() => startEditUser(user)} style={{ padding: '5px 8px' }}>
+                                      <Edit3 size={14} />
+                                    </button>
+                                    <button className="delete-btn" onClick={() => handleDeleteUser(user._id)}>
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* ── Profile Tab ── */}
+            {activeTab === 'profile' && (
+              <motion.div key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="profile-section">
+                  <h3><Edit3 size={18} /> Personal Details</h3>
+                  <div className="profile-form">
+                    <label>Full Name</label>
+                    <input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
+                    <label>Employee ID</label>
+                    <input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
+                    <label>Email</label>
+                    <input value={profileForm.email || ''} onChange={(e) => setProfileForm({...profileForm, email: e.target.value})} />
+                    <label>Phone</label>
+                    <input value={profileForm.phone || ''} onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})} />
+                  </div>
+                  <div className="action-buttons">
+                    <button className="confirm-btn" onClick={handleSaveProfile}><Save size={14} /> Confirm</button>
+                    <button className="cancel-btn" onClick={() => setActiveTab('my-jobs')}><X size={14} /> Cancel</button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Update Progress Tab ── */}
+            {activeTab === 'update-progress' && (
+              <motion.div key="update-progress" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="placeholder-content">
+                <BarChart3 size={36} style={{ opacity: 0.35 }} />
+                <p>Update Progress — coming soon</p>
+              </motion.div>
+            )}
+
+            {/* ── Settings Tab ── */}
+            {activeTab === 'settings' && (
+              <motion.div key="settings" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="settings-section">
+                  <h3><Settings size={18} /> System Settings</h3>
+                  <div className="profile-form">
+                    <label>Theme Preferences</label>
+                    <select
+                      value={isDark ? 'Dark Mode' : 'Light Mode'}
+                      onChange={(e) => {
+                        const nextDark = e.target.value === 'Dark Mode';
+                        setIsDark(nextDark);
+                        localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                      }}
+                      className="job-select-dropdown"
+                    >
+                      <option value="Light Mode">Light Mode</option>
+                      <option value="Dark Mode">Dark Mode</option>
+                    </select>
+
+                    <h3 style={{ marginTop: '30px', borderTop: '1px solid var(--border-base)', paddingTop: '20px' }}>Change Password</h3>
+                    <form className="profile-form" onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+                      <label>CURRENT PASSWORD</label>
+                      <input
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                        className="input-field"
+                      />
+                      <label>NEW PASSWORD</label>
+                      <input
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                        className="input-field"
+                      />
+                      <label>CONFIRM NEW PASSWORD</label>
+                      <input
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        className="input-field"
+                      />
+                      <button type="submit" className="confirm-btn" disabled={isChangingPassword} style={{ marginTop: '10px' }}>
+                        {isChangingPassword ? 'Updating...' : 'Update Password'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
         </main>
       </div>
 
