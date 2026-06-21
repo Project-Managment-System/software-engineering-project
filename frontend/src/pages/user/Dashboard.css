@@ -1,508 +1,923 @@
+/* ============================================================
+   USER DASHBOARD — CIVILPRO MAX
+   Theme: Activity · Tracking · Project Visibility
+   Palette: Deep Indigo + Purple-Violet Accents + Lavender
+   Root: #cems-user-dashboard.light-mode / .dark-mode
+   ============================================================ */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
 
-/* Import Inter for professional typography */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap');
-
-:root {
-  --primary-purple: #9333ea;
-  --bg-slate: #f8fafc;
-  --text-main: #0f172a;
-  --light-purple-bg: #f5f3ff;
-  --purple-border: #ddd6fe;
-  /* Updated colors for refined professional look */
-  --input-bg: #ffffff;
-  --input-bg-tint: #fcfaff; /* Soft purple-tinted white for inputs */
-  --input-border: #e2e8f0;
-  --text-muted: #64748b;
+/* ============================================================
+   1. CSS TOKENS — Light Mode
+   ============================================================ */
+#cems-user-dashboard.light-mode {
+  --bg-root:         #f5f4ff;
+  --bg-sidebar:      #ffffff;
+  --bg-card:         #ffffff;
+  --bg-card-hover:   #faf9ff;
+  --bg-input:        #f8f8ff;
+  --bg-table-header: #f4f3ff;
+  --bg-table-alt:    #faf9ff;
+  --bg-table-hover:  #efeeff;
+  --border-base:     #e2dff7;
+  --border-light:    #eeecff;
+  --text-primary:    #0d0a1f;
+  --text-secondary:  #2d2b4a;
+  --text-muted:      #6e6b94;
+  --text-label:      #9896b8;
+  --accent-primary:  #7c3aed;
+  --accent-dark:     #5b21b6;
+  --accent-glow:     rgba(124,58,237,0.15);
+  --accent-soft:     #f5f3ff;
+  --accent-2:        #a855f7;
+  --accent-3:        #818cf8;
+  --success:         #059669;
+  --success-soft:    #d1fae5;
+  --warning:         #d97706;
+  --warning-soft:    #fef3c7;
+  --danger:          #dc2626;
+  --danger-soft:     #fee2e2;
+  --info:            #0284c7;
+  --info-soft:       #e0f2fe;
+  --shadow-card:     0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(124,58,237,0.06);
+  --shadow-hover:    0 8px 32px rgba(124,58,237,0.14), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn:      0 4px 16px rgba(124,58,237,0.3);
+  --radius-card:     16px;
+  --radius-btn:      10px;
+  --radius-input:    9px;
 }
 
+/* ============================================================
+   2. CSS TOKENS — Dark Mode
+   ============================================================ */
+#cems-user-dashboard.dark-mode {
+  --bg-root:         #07041a;
+  --bg-sidebar:      #0d0a24;
+  --bg-card:         #100d28;
+  --bg-card-hover:   #14103a;
+  --bg-input:        #0a0720;
+  --bg-table-header: #0a0720;
+  --bg-table-alt:    #0c0921;
+  --bg-table-hover:  #14103a;
+  --border-base:     rgba(124,58,237,0.18);
+  --border-light:    rgba(124,58,237,0.08);
+  --text-primary:    #ede9fe;
+  --text-secondary:  #c4b5fd;
+  --text-muted:      #6d6c9e;
+  --text-label:      #4a4880;
+  --accent-primary:  #8b5cf6;
+  --accent-dark:     #7c3aed;
+  --accent-glow:     rgba(139,92,246,0.22);
+  --accent-soft:     rgba(139,92,246,0.08);
+  --accent-2:        #a78bfa;
+  --accent-3:        #818cf8;
+  --success:         #10b981;
+  --success-soft:    rgba(16,185,129,0.12);
+  --warning:         #f59e0b;
+  --warning-soft:    rgba(245,158,11,0.12);
+  --danger:          #ef4444;
+  --danger-soft:     rgba(239,68,68,0.12);
+  --info:            #38bdf8;
+  --info-soft:       rgba(56,189,248,0.12);
+  --shadow-card:     0 2px 8px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-hover:    0 12px 48px rgba(139,92,246,0.2), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn:      0 4px 20px rgba(139,92,246,0.4);
+  --radius-card:     16px;
+  --radius-btn:      10px;
+  --radius-input:    9px;
+}
+
+/* ============================================================
+   3. ROOT ELEMENT
+   ============================================================ */
 #cems-user-dashboard {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--bg-slate);
   min-height: 100vh;
-}
-
-.dashboard-container {
-  display: flex;
-  height: 100vh;
-}
-
-/* --- Sidebar Styling --- */
-.sidebar {
-  width: 280px;
-  background: white;
-  border-right: 1px solid var(--input-border);
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.profile-box {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.profile-photo {
-  width: 80px;
-  height: 80px;
-  background: var(--light-purple-bg);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  color: var(--primary-purple);
-}
-
-.sidebar-nav .nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 1rem;
-  border-radius: 16px;
-  border: none;
-  background: transparent;
-  font-weight: 700;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.sidebar-nav .nav-item.active {
-  background: var(--light-purple-bg);
-  color: var(--primary-purple);
-}
-
-/* --- Main Content Area --- */
-.dashboard-content {
-  flex: 1;
-  padding: 2rem 3rem;
-  overflow-y: auto;
-}
-
-.content-header {
-  margin-bottom: 2rem;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.back-arrow-icon {
-  background: white;
-  border: 1px solid var(--input-border);
-  padding: 10px;
-  border-radius: 12px;
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-/* --- Table Card Design --- */
-.project-table {
-  width: 100%;
-  background: white;
-  border-radius: 2rem;
-  border-collapse: separate;
-  border-spacing: 0;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-}
-
-.project-table th {
-  background: var(--bg-slate);
-  padding: 1.5rem;
-  text-align: left;
-  font-weight: 900;
-  color: var(--text-main);
-}
-
-.project-table td {
-  padding: 1.5rem;
-  border-top: 1px solid var(--input-border);
-}
-
-/* --- Update Progress Cards & Inputs --- */
-.form-rectangles {
-  display: grid;
-  gap: 2rem;
-  max-width: 600px;
-}
-
-.info-rectangle, .input-rectangle {
-  background: white;
-  padding: 2rem;
-  border-radius: 1.5rem;
-  border: 1px solid var(--input-border);
-}
-
-/* Updated Select Dropdown */
-.job-select-dropdown {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--purple-border);
-  background-color: #ffffff !important;
-  color: var(--text-main) !important;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-}
-
-/* Updated Input Fields with Forced Visibility */
-.hybrid-date-input, 
-.input-group input[type="number"],
-.input-group input[type="text"],
-.input-group input[type="date"],
-.input-field {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--purple-border) !important;
-  background-color: #ffffff !important;
-  color: var(--text-main) !important;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  display: block;
-}
-
-/* Neutralize Browser Autofill Black Background */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
-  -webkit-text-fill-color: var(--text-main) !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-.hidden-date {
-  opacity: 0 !important;
-  position: absolute !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-}
-/* Focused state: Stronger purple border */
-.hybrid-date-input:focus, 
-.input-group input:focus,
-.input-field:focus {
-  border-color: var(--primary-purple) !important;
-  background-color: #ffffff !important;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
-}
-
-.input-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-send {
-  background: var(--primary-purple);
-  color: white;
-  padding: 0.8rem 2rem;
-  border-radius: 12px;
-  border: none;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.btn-send:hover {
-  opacity: 0.9;
-}
-
-/* --- Professional Colorful Button Styling --- */
-
-/* Style for Save Changes button */
-.save-btn {
-  background-color: var(--primary-purple) !important;
-  color: white !important;
-  padding: 12px 24px !important;
-  border-radius: 12px !important;
-  border: none !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.save-btn:hover {
-  background-color: #7e22ce !important; /* Darker purple */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(147, 51, 234, 0.3);
-}
-
-/* Style for Submit Estimate button */
-.send-btn {
-  background-color: #10b981 !important; /* Emerald Green */
-  color: white !important;
-  padding: 12px 24px !important;
-  border-radius: 12px !important;
-  border: none !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  transition: all 0.3s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-}
-
-.send-btn:hover {
-  background-color: #059669 !important; /* Darker green */
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
-}
-/* --- Centering Instruction Text --- */
-.instruction-text {
-  text-align: center;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: var(--text-main);
-}
-
-/* --- Layout for Two Boxes --- */
-.form-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 600px;
-}
-
-.field-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 1.5rem;
-  border: 1px solid var(--input-border);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-/* --- Colorful Buttons --- */
-.save-btn {
-  background-color: var(--primary-purple) !important;
-  color: white !important;
-  padding: 12px 24px !important;
-  border-radius: 12px !important;
-  border: none !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  width: 100% !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.send-btn {
-  background-color: #10b981 !important;
-  color: white !important;
-  padding: 12px 24px !important;
-  border-radius: 12px !important;
-  border: none !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  width: 100% !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* Bold all field labels */
-.input-group label {
-  font-weight: 900 !important;
-  color: var(--text-main) !important;
-}
-
-/* Targeted bolding for specific field labels */
-.field-card label {
-  font-weight: 900 !important;
-  color: #0f172a !important;
-}
-
-.selection-area {
-  margin-bottom: 30px; /* Add this line */
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* Keeps the label and dropdown spaced nicely */
-}
-
-/* --- Profile Section Styling --- */
-.profile-view .form-container {
-  max-width: 500px;
-}
-
-.profile-photo-edit {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: var(--light-purple-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-purple);
-  margin-bottom: 20px;
-  border: 2px solid var(--purple-border);
-}
-
-.camera-btn {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: var(--primary-purple);
-  color: white;
-  border-radius: 50%;
-  padding: 8px;
-  border: 2px solid white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s;
-}
-
-.camera-btn:hover {
-  transform: scale(1.1);
-}
-
-.input-row-group {
-  margin-bottom: 1.5rem;
-}
-
-.input-row-group label {
-  display: block;
-  font-size: 11px;
-  font-weight: 900;
-  color: var(--text-main);
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  height: 100%; /* Ensures the container takes full height */
-}
-
-.logout-nav-item:hover {
-  background-color: #fee2e2;
-}
-
-/* --- Hybrid Date Wrapper with Calendar Button --- */
-.hybrid-date-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  position: relative;
-}
-
-.hybrid-date-wrapper .input-field {
-  flex: 1;
-  border-radius: 12px 0 0 12px;
-  margin: 0;
-}
-
-.cal-btn {
-  padding: 12px 16px;
-  background-color: white;
-  border: 1px solid var(--purple-border);
-  border-left: none;
-  border-radius: 0 12px 12px 0;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-weight: 600;
-}
-
-.cal-btn:hover {
-  background-color: var(--light-purple-bg);
-  color: var(--primary-purple);
-}
-
-/* ========================================================
-   ADDITIVE: Collapsible Sidebar Toggle
-   ======================================================== */
-
-.dashboard-container {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-root);
+  color: var(--text-primary);
+  transition: background 0.4s ease, color 0.4s ease;
   position: relative;
   overflow-x: hidden;
 }
 
-.sidebar {
-  width: 280px;
+/* Ambient background for light mode */
+#cems-user-dashboard.light-mode {
+  background-image:
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(124,58,237,0.05) 0%, transparent 60%),
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 36px,
+      rgba(124,58,237,0.012) 36px,
+      rgba(124,58,237,0.012) 37px
+    );
+}
+
+/* Ambient glow blobs for dark mode */
+#cems-user-dashboard.dark-mode::before {
+  content: '';
+  position: fixed;
+  top: -20%;
+  right: -10%;
+  width: 70vw;
+  height: 70vh;
+  background: radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#cems-user-dashboard.dark-mode::after {
+  content: '';
+  position: fixed;
+  bottom: -20%;
+  left: -10%;
+  width: 60vw;
+  height: 60vh;
+  background: radial-gradient(ellipse, rgba(99,102,241,0.05) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   4. LAYOUT CONTAINERS
+   ============================================================ */
+#cems-user-dashboard .user-dashboard-layout,
+#cems-user-dashboard .dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   5. SIDEBAR — User / Purple Theme
+   ============================================================ */
+#cems-user-dashboard .sidebar {
+  width: 255px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-base);
+  display: flex;
+  flex-direction: column;
   height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 100;
+  z-index: 200;
+  padding: 24px 14px 24px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overflow-x: hidden;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar.sidebar-open {
-  transform: translateX(0);
+#cems-user-dashboard.dark-mode .sidebar {
+  background: rgba(255,255,255,0.025);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(139,92,246,0.12);
+  box-shadow: 2px 0 24px rgba(0,0,0,0.3);
 }
 
-.sidebar.sidebar-closed {
-  transform: translateX(-100%);
+/* Purple gradient left stripe */
+#cems-user-dashboard .sidebar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-2) 60%, var(--accent-3) 100%);
+  border-radius: 0 2px 2px 0;
 }
 
-.dashboard-content {
-  margin-left: 0;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
-  box-sizing: border-box;
+#cems-user-dashboard .sidebar.sidebar-open  { transform: translateX(0); }
+#cems-user-dashboard .sidebar.sidebar-closed { transform: translateX(-100%); }
+
+#cems-user-dashboard .sidebar::-webkit-scrollbar { width: 4px; }
+#cems-user-dashboard .sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
 }
 
-.dashboard-content.content-shifted-open {
-  margin-left: 280px;
+/* — Profile Box — */
+#cems-user-dashboard .profile-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 26px;
+  padding: 22px 10px 20px;
+  background: var(--accent-soft);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-card);
+  position: relative;
+  overflow: hidden;
 }
 
-.dashboard-content.content-shifted-closed {
-  padding-left: 80px;
+#cems-user-dashboard .profile-box::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none;
 }
 
-.sidebar-toggle-menu-btn {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 110;
-  background: #ffffff;
-  border: 1px solid var(--input-border);
-  padding: 10px;
-  border-radius: 12px;
-  cursor: pointer;
+#cems-user-dashboard .profile-photo {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-2));
+  color: #fff;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 auto 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 0 3px var(--bg-sidebar),
+    0 0 0 5px var(--accent-primary),
+    var(--shadow-btn);
+}
+
+#cems-user-dashboard .profile-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#cems-user-dashboard .profile-info h3,
+#cems-user-dashboard .profile-box > h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.93rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+#cems-user-dashboard .reg-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.73rem;
+  color: var(--accent-primary);
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+/* — Sidebar Nav — */
+#cems-user-dashboard .sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+#cems-user-dashboard .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 14px;
+  border-radius: 11px;
+  font-size: 0.86rem;
+  font-weight: 600;
   color: var(--text-muted);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: none;
+  width: 100%;
+  text-align: left;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+#cems-user-dashboard .nav-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: var(--border-light);
+}
+
+#cems-user-dashboard .nav-item.active {
+  background: linear-gradient(135deg, var(--accent-soft), transparent);
+  color: var(--accent-primary);
+  border-color: var(--accent-glow);
+  font-weight: 700;
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
+#cems-user-dashboard .nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-2));
+  border-radius: 0 3px 3px 0;
+}
+
+/* — Logout Nav — */
+#cems-user-dashboard .nav-item.logout-nav-item {
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
+  border-color: transparent !important;
+  margin-top: 12px;
+  font-weight: 700;
+}
+
+#cems-user-dashboard .nav-item.logout-nav-item:hover {
+  background: var(--danger) !important;
+  color: white !important;
+  box-shadow: 0 4px 14px rgba(239,68,68,0.3) !important;
+}
+
+/* ============================================================
+   6. HAMBURGER MENU BUTTON
+   ============================================================ */
+#cems-user-dashboard .sidebar-toggle-menu-btn {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 300;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: 11px;
+  padding: 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  box-shadow: var(--shadow-card);
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.sidebar-toggle-menu-btn:hover {
-  background: var(--light-purple-bg);
-  color: var(--primary-purple);
+#cems-user-dashboard .sidebar-toggle-menu-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: var(--accent-glow);
+  transform: scale(1.05);
 }
 
+/* ============================================================
+   7. MAIN CONTENT
+   ============================================================ */
+#cems-user-dashboard .dashboard-content {
+  flex: 1;
+  padding: 32px 32px 48px;
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+#cems-user-dashboard .dashboard-content.content-shifted-open  { margin-left: 255px; }
+#cems-user-dashboard .dashboard-content.content-shifted-closed { padding-left: 72px; }
+
+#cems-user-dashboard .content-header {
+  margin-bottom: 24px;
+  min-height: 32px;
+}
+
+/* Division Banner */
+#cems-user-dashboard .division-banner {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+  border: 2px solid var(--border-base) !important;
+  border-radius: 12px !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 1rem !important;
+  padding: 12px 20px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.02em;
+}
+
+/* Sub-tabs row */
+#cems-user-dashboard .sub-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--border-base) !important;
+  margin-bottom: 20px;
+  padding-bottom: 0;
+}
+
+#cems-user-dashboard .sub-tabs button {
+  padding: 10px 18px !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-bottom: -2px !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+#cems-user-dashboard .sub-tabs button:hover {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* Active sub-tab (background: #ddd is applied inline — override) */
+#cems-user-dashboard .sub-tabs button[style*="background: rgb(221, 221, 221)"],
+#cems-user-dashboard .sub-tabs button[style*="background: #ddd"] {
+  background: var(--accent-soft) !important;
+  color: var(--accent-primary) !important;
+  border-bottom: 3px solid var(--accent-primary) !important;
+  font-weight: 700 !important;
+}
+
+/* ============================================================
+   8. FIELD CARDS — User
+   ============================================================ */
+#cems-user-dashboard .field-card {
+  background: var(--bg-card);
+  padding: 26px 28px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-base);
+  box-shadow: var(--shadow-card);
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+  transition: box-shadow 0.25s ease;
+}
+
+#cems-user-dashboard .field-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-2) 50%, transparent 100%);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+}
+
+#cems-user-dashboard .field-card:hover { box-shadow: var(--shadow-hover); }
+
+/* ============================================================
+   9. FORM ELEMENTS
+   ============================================================ */
+#cems-user-dashboard .input-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+#cems-user-dashboard .input-row-group label,
+#cems-user-dashboard .selection-area label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+#cems-user-dashboard .input-field,
+#cems-user-dashboard .job-select-dropdown,
+#cems-user-dashboard select.job-select-dropdown {
+  padding: 10px 14px;
+  border: 1.5px solid var(--border-base);
+  border-radius: var(--radius-input);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  appearance: auto;
+  -webkit-appearance: auto;
+}
+
+#cems-user-dashboard .input-field:focus,
+#cems-user-dashboard .job-select-dropdown:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: var(--bg-card);
+}
+
+#cems-user-dashboard .input-field:hover,
+#cems-user-dashboard .job-select-dropdown:hover {
+  border-color: var(--accent-primary);
+}
+
+#cems-user-dashboard .input-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-table-alt);
+}
+
+#cems-user-dashboard .input-field::placeholder { color: var(--text-muted); }
+
+#cems-user-dashboard .job-select-dropdown option,
+#cems-user-dashboard select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* Calendar/Date hybrid wrapper */
+#cems-user-dashboard .hybrid-date-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#cems-user-dashboard .cal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border-base);
+  border-radius: var(--radius-input);
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+#cems-user-dashboard .cal-btn:hover {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+/* ============================================================
+   10. TABLE — User (project-table)
+   ============================================================ */
+#cems-user-dashboard .project-table-section {
+  width: 100%;
+}
+
+#cems-user-dashboard .project-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-card);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-base);
+}
+
+#cems-user-dashboard .project-table thead tr {
+  background: var(--bg-table-header);
+}
+
+#cems-user-dashboard .project-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  border-bottom: 2px solid var(--border-base);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+#cems-user-dashboard .project-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.845rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+#cems-user-dashboard .project-table tbody tr {
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+#cems-user-dashboard .project-table tbody tr:nth-child(even) {
+  background: var(--bg-table-alt);
+}
+
+#cems-user-dashboard .project-table tbody tr:hover {
+  background: var(--bg-table-hover);
+  box-shadow: inset 3px 0 0 var(--accent-primary);
+}
+
+#cems-user-dashboard .project-table tbody tr:last-child td { border-bottom: none; }
+
+/* Mono job-no cells */
+#cems-user-dashboard .project-table td.font-mono,
+#cems-user-dashboard .project-table .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+#cems-user-dashboard .project-table .font-bold {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Deadline tag */
+#cems-user-dashboard .deadline-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid rgba(217,119,6,0.18);
+}
+
+/* ============================================================
+   11. STATUS BADGES — User
+   ============================================================ */
+#cems-user-dashboard .status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  font-family: 'Outfit', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+#cems-user-dashboard .status-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+#cems-user-dashboard .status-badge.status-pending {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-color: rgba(217,119,6,0.2);
+}
+#cems-user-dashboard .status-badge.status-pending::before {
+  background: var(--warning);
+  animation: pulse-dot 1.6s infinite;
+}
+
+#cems-user-dashboard .status-badge.status-approved {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: rgba(5,150,105,0.2);
+}
+#cems-user-dashboard .status-badge.status-approved::before { background: var(--success); }
+
+#cems-user-dashboard .status-badge.status-rejected {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: rgba(220,38,38,0.2);
+}
+#cems-user-dashboard .status-badge.status-rejected::before { background: var(--danger); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* ============================================================
+   12. APPROVE / REJECT ACTION BUTTONS (table)
+   ============================================================ */
+#cems-user-dashboard .approve-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid rgba(5,150,105,0.2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-right: 6px;
+}
+
+#cems-user-dashboard .approve-btn:hover {
+  background: var(--success);
+  color: white;
+  transform: scale(1.08);
+}
+
+#cems-user-dashboard .reject-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid rgba(220,38,38,0.2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+#cems-user-dashboard .reject-btn:hover {
+  background: var(--danger);
+  color: white;
+  transform: scale(1.08);
+}
+
+/* ============================================================
+   13. BUTTONS — Save / Send / Cancel
+   ============================================================ */
+#cems-user-dashboard .save-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 22px !important;
+  font-size: 0.845rem !important;
+  font-weight: 700 !important;
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: 0.02em !important;
+  border-radius: var(--radius-btn) !important;
+  border: none !important;
+  cursor: pointer !important;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark)) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-btn) !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  min-height: 40px !important;
+  margin-top: 16px !important;
+}
+
+#cems-user-dashboard .save-btn:hover:not(:disabled) {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 28px rgba(139,92,246,0.45) !important;
+  filter: brightness(1.08) !important;
+}
+
+#cems-user-dashboard .save-btn:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Send button — teal accent for submitting estimates */
+#cems-user-dashboard .send-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 10px 22px !important;
+  font-size: 0.845rem !important;
+  font-weight: 700 !important;
+  font-family: 'Outfit', sans-serif !important;
+  letter-spacing: 0.02em !important;
+  border-radius: var(--radius-btn) !important;
+  border: none !important;
+  cursor: pointer !important;
+  background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 16px rgba(14,165,233,0.3) !important;
+  transition: all 0.22s ease !important;
+  min-height: 40px !important;
+  margin-top: 16px !important;
+}
+
+#cems-user-dashboard .send-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(14,165,233,0.4) !important;
+}
+
+/* ============================================================
+   14. PROFILE SECTION
+   ============================================================ */
+#cems-user-dashboard .profile-view {
+  max-width: 600px;
+}
+
+#cems-user-dashboard .profile-view .field-card {
+  max-width: 100%;
+}
+
+#cems-user-dashboard .form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Camera edit overlay button */
+#cems-user-dashboard label[style*="cursor: pointer"][style*="background"] {
+  border-radius: 50% !important;
+  transition: transform 0.2s ease !important;
+}
+
+#cems-user-dashboard label[style*="cursor: pointer"]:hover {
+  transform: scale(1.08) !important;
+}
+
+/* Instruction text */
+#cems-user-dashboard .instruction-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   15. ESTIMATE TABLE (submitted estimates)
+   ============================================================ */
+#cems-user-dashboard .estimate-table-section {
+  margin-top: 2rem;
+}
+
+#cems-user-dashboard .estimate-table-section h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cems-user-dashboard .estimate-table-section h3::before {
+  content: '';
+  display: block;
+  width: 3px;
+  height: 18px;
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-2));
+  border-radius: 2px;
+}
+
+/* ============================================================
+   16. UPDATE PROGRESS VIEW
+   ============================================================ */
+#cems-user-dashboard .update-progress-view {
+  width: 100%;
+}
+
+#cems-user-dashboard .selection-area {
+  margin-bottom: 24px;
+}
+
+#cems-user-dashboard .selection-area label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+/* ============================================================
+   17. SETTINGS TAB
+   ============================================================ */
+#cems-user-dashboard .settings-view {
+  max-width: 520px;
+}
+
+/* ============================================================
+   18. CUSTOM SCROLLBAR
+   ============================================================ */
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar { width: 8px; }
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar-track { background: transparent; }
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
+}
+#cems-user-dashboard .dashboard-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* ============================================================
+   19. RESPONSIVE
+   ============================================================ */
 @media (max-width: 768px) {
-  .dashboard-content.content-shifted-open {
+  #cems-user-dashboard .dashboard-content {
+    padding: 80px 16px 32px !important;
+  }
+
+  #cems-user-dashboard .dashboard-content.content-shifted-open {
     margin-left: 0 !important;
+  }
+
+  #cems-user-dashboard .hybrid-date-wrapper {
+    flex-direction: column;
   }
 }
