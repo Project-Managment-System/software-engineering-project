@@ -507,7 +507,10 @@ const AdminDashboard = ({ isDark }) => {
                         </tr>
                       ) : (
                         filteredJobs.map((j) => (
-                          <tr key={j._id}>
+                        <tr
+                          key={j._id}
+                          style={j.status === 'Rejected' ? { backgroundColor: '#fee2e2' } : undefined}
+                        >
                             <td className="font-mono text-cyan-500">{j.jobNo}</td>
                             <td>{j.division}</td>
                             <td className="font-bold">{j.jobName}</td>
