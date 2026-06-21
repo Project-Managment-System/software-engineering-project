@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, User, ShieldAlert } from 'lucide-react';
 import { motion } from 'framer-motion';
-
+import { loginUser } from '../api/api';
 // Component animation frames
 const formContainerVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.98 },
@@ -65,40 +65,62 @@ export default function DivisionLogin() {
     'enhi1': 'Higurakgoda'
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    const prefix = username.substring(0, 2).toLowerCase();
+  const handleLogin = async (e) => {
+  e.preventDefault();
+  const trimmedUsername = (username || '').trim();
+  if (!trimmedUsername) {
+    alert('Please enter a username.');
+    return;
+  }
+  const prefix = trimmedUsername.substring(0, 2).toLowerCase();
 
-    // 1. Admin Check
-    if (prefix === 'cl') {
-      if (username === 'cl0001' && password === 'cl1') {
-        localStorage.setItem('isAdmin', 'true');
-        navigate('/admin/dashboard');
+  // 1. Admin Check
+  if (prefix === 'cl') {
+    if (username === 'cl0001' && password === 'cl1') {
+      localStorage.setItem('isAdmin', 'true');
+      navigate('/admin/dashboard');
+    } else {
+      alert('Invalid Admin credentials. Access Denied.');
+    }
+    return;
+  }
+
+  // 2. Engineer Check (Strict Validation)
+  if (prefix === 'en') {
+    if (engineerCredentials[username] === password) {
+      localStorage.setItem('userDivision', divisionMap[username]); // Save division
+      navigate('/engineer/dashboard');
+    } else {
+      alert('Invalid Engineering credentials. Access Denied.');
+    }
+    return;
+  }
+
+  // 3. User Check — validate against backend (employeeId assigned by engineer)
+  if (prefix === 'us') {
+    try {
+      const response = await loginUser({ employeeId: username, password });
+      if (response.data.status === 'LOGIN_SUCCESS') {
+        localStorage.setItem('userId', response.data.userId);
+        localStorage.setItem('employeeId', username);
+        localStorage.setItem('userDivision', response.data.division || '');
+        navigate('/user/dashboard');
       } else {
-        alert('Invalid Admin credentials. Access Denied.');
+        alert('Invalid User credentials. Access Denied.');
       }
-      return;
+    } catch (error) {
+      alert(error.response?.data?.message || error.response?.data?.error || 'Invalid User credentials. Access Denied.');
     }
+    return;
+  }
 
-    // 2. Engineer Check (Strict Validation fixed to execute safely without double execution loop)
-    if (prefix === 'en') {
-      if (engineerCredentials[username] === password) {
-        localStorage.setItem('userDivision', divisionMap[username]); // Save division
-        navigate('/engineer/dashboard');
-      } else {
-        alert('Invalid Engineering credentials. Access Denied.');
-      }
-      return;
-    }
-
-    // 3. Other Portals
-    switch(prefix) {
-      case 'us': navigate('/user/dashboard'); break;
-      case 'da': alert('Divisional Assistant portal is under future development.'); break;
-      case 'sa': alert('SuperAdmin portal is under future development.'); break;
-      default: alert('Invalid username or credentials. Please check your input.');
-    }
-  };
+  // 4. Other Portals
+  switch (prefix) {
+    case 'da': alert('Divisional Assistant portal is under future development.'); break;
+    case 'sa': alert('SuperAdmin portal is under future development.'); break;
+    default: alert('Invalid username or credentials. Please check your input.');
+  }
+};
 
   const pageTitle = "DIVISION LOGIN";
 
