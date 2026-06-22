@@ -122,7 +122,17 @@ const AdminDashboard = () => {
   };
 
   const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFilters((prev) => {
+      const nextFilters = { ...prev, [name]: value };
+      if (name === 'ministry') {
+        const allowedDepts = MINISTRY_DEPARTMENTS[value] || [];
+        if (value && prev.department && !allowedDepts.includes(prev.department)) {
+          nextFilters.department = '';
+        }
+      }
+      return nextFilters;
+    });
   };
 
   const fetchData = async () => {
@@ -319,9 +329,32 @@ const AdminDashboard = () => {
     return [...new Set(values)].sort();
   };
 
-  const departmentOptions = getUniqueValues('department');
-  const ministryOptions = getUniqueValues('ministry');
-  const divisionOptions = getUniqueValues('division');
+  const ministryOptions = [...new Set([
+    ...Object.keys(MINISTRY_DEPARTMENTS),
+    ...getUniqueValues('ministry')
+  ])].sort();
+
+  const divisionOptions = [...new Set([
+    'Anuradhapura-East',
+    'Anuradhapura-West',
+    'Medawachchiya',
+    'Mihinthale',
+    'Kekirawa',
+    'Thabuththegama',
+    'Polonnaruwa',
+    'Higurakgoda',
+    ...getUniqueValues('division')
+  ])].sort();
+
+  const departmentOptions = filters.ministry
+    ? [...new Set([
+        ...(MINISTRY_DEPARTMENTS[filters.ministry] || []),
+        ...jobs.filter(j => j.ministry === filters.ministry).map(j => j.department).filter(Boolean)
+      ])].sort()
+    : [...new Set([
+        ...Object.values(MINISTRY_DEPARTMENTS).flat(),
+        ...getUniqueValues('department')
+      ])].sort();
 
   const filteredJobs = jobs.filter((j) => {
     if (filters.department && j.department !== filters.department) return false;
@@ -635,21 +668,21 @@ const AdminDashboard = () => {
 
                   <div className="table-filters-row">
                     <div className="input-row-group">
-                      <label><Filter size={12} /> Filter by Department</label>
-                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
-                        <option value="">All Departments</option>
-                        {departmentOptions.map((d) => (
-                          <option key={d} value={d}>{d}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Ministry</label>
                       <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
                         <option value="">All Ministries</option>
                         {ministryOptions.map((m) => (
                           <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Department</label>
+                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Departments</option>
+                        {departmentOptions.map((d) => (
+                          <option key={d} value={d}>{d}</option>
                         ))}
                       </select>
                     </div>
