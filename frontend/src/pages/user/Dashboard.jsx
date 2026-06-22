@@ -191,11 +191,14 @@ const UserDashboard = () => {
     setActiveTab('my-jobs');
   };
 
-  const selectedJob = jobData.find(job => job.jobNo === selectedJobId);
+  // Only show jobs specifically assigned to this logged-in user
+  const myJobs = jobData.filter(job => job.assignee && job.assignee === profileName);
+
+  const selectedJob = myJobs.find(job => job.jobNo === selectedJobId);
 
   const handleSelectionChange = (id) => {
     setSelectedJobId(id);
-    const foundJob = jobData.find(j => j.jobNo === id);
+    const foundJob = myJobs.find(j => j.jobNo === id);
     if (foundJob) {
       setEditableJobName(foundJob.jobName);
       setEditableAllocation(foundJob.allocation);
@@ -286,12 +289,12 @@ const UserDashboard = () => {
   };
 
   /* ─── Computed stats ─── */
-  const totalDivisionJobs = jobData.length;
+  const totalMyJobs = myJobs.length;
   const totalSubmittedEstimates = submittedEstimates.length;
-  const pendingApprovalsCount = jobData.filter(j => !j.status || j.status === 'Pending').length;
+  const pendingApprovalsCount = myJobs.filter(j => !j.status || j.status === 'Pending').length;
 
   const statCards = [
-    { label: 'Division Jobs',      value: totalDivisionJobs,       icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'My Jobs',            value: totalMyJobs,             icon: Briefcase, color: 'var(--accent-primary)' },
     { label: 'Estimates Sent',     value: totalSubmittedEstimates, icon: Send,      color: 'var(--accent-2)' },
     { label: 'Pending Approvals',  value: pendingApprovalsCount,   icon: Clock,     color: 'var(--warning)' },
   ];
@@ -412,19 +415,19 @@ const UserDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {jobData.length === 0 ? (
+                        {myJobs.length === 0 ? (
                           <tr>
                             <td colSpan={6}>
                               <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
                                 <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                <span>No allocated division jobs found.</span>
+                                <span>No jobs assigned to you yet.</span>
                               </div>
                             </td>
                           </tr>
                         ) : (
-                          jobData.map((job) => (
+                          myJobs.map((job, index) => (
                             <tr key={job.jobNo}>
-                              <td>{job.sNo}</td>
+                              <td>{index + 1}</td>
                               <td className="font-mono">{job.jobNo}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.allocation}</td>
@@ -521,7 +524,7 @@ const UserDashboard = () => {
                         onChange={(e) => handleSelectionChange(e.target.value)}
                       >
                         <option value="">-- Choose Job ID --</option>
-                        {jobData.map(job => (
+                        {myJobs.map(job => (
                           <option key={job.jobNo} value={job.jobNo}>{job.jobNo} - {job.jobName}</option>
                         ))}
                       </select>
