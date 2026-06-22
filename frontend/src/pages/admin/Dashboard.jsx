@@ -7,6 +7,10 @@ import {
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
+} from 'recharts';
 import './Dashboard.css';
 
 /* ─── Ministry → Department mapping ─── */
@@ -51,9 +55,9 @@ const MINISTRY_DEPARTMENTS = {
 
 /* ─── Animation variants ─── */
 const pageVariants = {
-  hidden:  { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
-  exit:    { opacity: 0, y: -12, transition: { duration: 0.2 } }
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
 };
 
 const staggerContainer = {
@@ -61,8 +65,28 @@ const staggerContainer = {
 };
 
 const cardVariant = {
-  hidden:  { opacity: 0, y: 16, scale: 0.97 },
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
+};
+
+/* ─── Custom Chart Tooltip ─── */
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-base)',
+        padding: '12px 16px', borderRadius: '8px', boxShadow: 'var(--shadow-card)',
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{data.name}</p>
+        <p style={{ margin: '4px 0 0', fontWeight: 900, color: data.payload.color || 'var(--accent-primary)', fontSize: '1.25rem' }}>
+          {data.value}
+        </p>
+      </div>
+    );
+  }
+  return null;
 };
 
 /* ─────────────────────────────────────── */
@@ -76,7 +100,8 @@ const AdminDashboard = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
-    allocation: '', dateReq: '', ref: '', institute: ''
+    allocation: '', dateReq: '', ref: '', institute: '',
+    deptIdNo: '', source: ''
   });
 
   const [filters, setFilters] = useState({ department: '', ministry: '', division: '' });
@@ -109,13 +134,41 @@ const AdminDashboard = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const user = res.data;
+        if (user) {
+          setProfileName(user.fullName || 'User');
+          setRegNo(user.employeeId || '');
+          setEmail(user.email || '');
+          setPhoneNo(user.phoneNo || '');
+          setProfilePic(user.profilePic || null);
+
+          localStorage.setItem('fullName', user.fullName || '');
+          localStorage.setItem('employeeId', user.employeeId || '');
+          localStorage.setItem('email', user.email || '');
+          localStorage.setItem('phoneNo', user.phoneNo || '');
+          localStorage.setItem('profilePic', user.profilePic || '');
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching admin profile:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    fetchUserProfile();
+  }, []);
 
   const [profileName, setProfileName] = useState(localStorage.getItem('fullName') || 'John Doe');
   const [regNo, setRegNo] = useState(localStorage.getItem('employeeId') || 'REG/2021/CS/088');
   const [email, setEmail] = useState(localStorage.getItem('email') || 'john.doe@example.com');
-  const [phoneNo, setPhoneNo] = useState('071-2345678');
-  const [profilePic, setProfilePic] = useState(null);
+  const [phoneNo, setPhoneNo] = useState(localStorage.getItem('phoneNo') || '071-2345678');
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -138,17 +191,36 @@ const AdminDashboard = () => {
     setPhoneNo(phoneNo);
   };
 
-  const handleUserFormChange = (e) => {
-  const { name, value } = e.target;
-    setUserFormData({ ...userFormData, [name]: value });
-  };
+  const handleConfirmProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        addToast("User session not found", "error");
+        return;
+      }
+      const payload = {
+        fullName: editProfileName,
+        email: editEmail,
+        phoneNo: editPhoneNo
+      };
+      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      if (res.data) {
+        setProfileName(editProfileName);
+        setRegNo(editRegNo);
+        setEmail(editEmail);
+        setPhoneNo(editPhoneNo);
 
-  const handleConfirmProfile = () => {
-    setProfileName(editProfileName);
-    setRegNo(editRegNo);
-    setEmail(editEmail);
-    setPhoneNo(editPhoneNo);
-    addToast('Profile saved successfully!', 'success');
+        localStorage.setItem('fullName', editProfileName);
+        localStorage.setItem('employeeId', editRegNo);
+        localStorage.setItem('email', editEmail);
+        localStorage.setItem('phoneNo', editPhoneNo);
+
+        addToast("Profile saved successfully!", "success");
+      }
+    } catch (err) {
+      console.error("Error updating admin profile:", err);
+      addToast(err.response?.data?.error || "Failed to update profile", "error");
+    }
   };
 
   const handleCancelProfile = () => {
@@ -211,7 +283,8 @@ const AdminDashboard = () => {
     setEditingId(null);
     setFormData({
       jobName: '', ministry: '', department: '', division: '',
-      allocation: '', dateReq: '', ref: '', institute: ''
+      allocation: '', dateReq: '', ref: '', institute: '',
+      deptIdNo: '', source: ''
     });
   };
 
@@ -219,7 +292,24 @@ const AdminDashboard = () => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setProfilePic(reader.result);
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        setProfilePic(base64Data);
+        localStorage.setItem('profilePic', base64Data);
+
+        try {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+              profilePic: base64Data
+            });
+            addToast("Profile photo updated successfully!", "success");
+          }
+        } catch (err) {
+          console.error("Error saving admin profile photo to backend:", err);
+          addToast("Failed to sync photo to database", "error");
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -252,11 +342,17 @@ const AdminDashboard = () => {
   const approvedJobs = jobs.filter(j => j.status === 'Approved').length;
   const rejectedJobs = jobs.filter(j => j.status === 'Rejected').length;
 
+  /* ─── Computed filtered stats (for charts) ─── */
+  const totalFilteredJobs = filteredJobs.length;
+  const pendingFilteredJobs = filteredJobs.filter(j => !j.status || j.status === 'Pending').length;
+  const approvedFilteredJobs = filteredJobs.filter(j => j.status === 'Approved').length;
+  const rejectedFilteredJobs = filteredJobs.filter(j => j.status === 'Rejected').length;
+
   const statCards = [
-    { label: 'Total Jobs',  value: totalJobs,   icon: Briefcase,   color: 'var(--accent-primary)' },
-    { label: 'Pending',     value: pendingJobs,  icon: Clock,       color: 'var(--warning)' },
-    { label: 'Approved',    value: approvedJobs, icon: CheckCircle, color: 'var(--success)' },
-    { label: 'Rejected',    value: rejectedJobs, icon: XCircle,     color: 'var(--danger)' },
+    { label: 'Total Jobs', value: totalJobs, icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Pending', value: pendingJobs, icon: Clock, color: 'var(--warning)' },
+    { label: 'Approved', value: approvedJobs, icon: CheckCircle, color: 'var(--success)' },
+    { label: 'Rejected', value: rejectedJobs, icon: XCircle, color: 'var(--danger)' },
   ];
 
   return (
@@ -288,10 +384,10 @@ const AdminDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
-              { id: 'New Job',         icon: Plus,      label: 'New Job' },
+              { id: 'New Job', icon: Plus, label: 'New Job' },
               { id: 'Update Progress', icon: RefreshCw, label: 'Update Progress' },
-              { id: 'Profile',         icon: Edit3,     label: 'Profile' },
-              { id: 'Settings',        icon: Settings,  label: 'Settings' },
+              { id: 'Profile', icon: Edit3, label: 'Profile' },
+              { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
               <button
                 key={item.id}
@@ -400,7 +496,7 @@ const AdminDashboard = () => {
 
                     <div className="form-row">
                       <div className="input-row-group">
-                        <label>Job Name <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
+                        <label>Activity <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                         <input
                           name="jobName"
                           value={formData.jobName}
@@ -473,7 +569,7 @@ const AdminDashboard = () => {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   }),
-                                  },
+                                },
                               });
                             }
                           }}
@@ -490,6 +586,30 @@ const AdminDashboard = () => {
                       <div className="input-row-group">
                         <label>Request Letter Reference <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                         <input name="ref" value={formData.ref} onChange={handleInputChange} className="input-field" required />
+                      </div>
+                    </div>
+
+                    {/* ── New fields ── */}
+                    <div className="form-row">
+                      <div className="input-row-group">
+                        <label>Department ID No</label>
+                        <input
+                          name="deptIdNo"
+                          value={formData.deptIdNo || ''}
+                          onChange={handleInputChange}
+                          className="input-field"
+                          placeholder="e.g. DPT-001"
+                        />
+                      </div>
+                      <div className="input-row-group">
+                        <label>Source</label>
+                        <input
+                          name="source"
+                          value={formData.source || ''}
+                          onChange={handleInputChange}
+                          className="input-field"
+                          placeholder="e.g. Central Fund"
+                        />
                       </div>
                     </div>
                   </div>
@@ -555,13 +675,13 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Job No</th><th>Division</th><th>Job Name</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
+                          <th>Est. No</th><th>Job No</th><th>Division</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={12}>
+                            <td colSpan={15}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{jobs.length === 0 ? 'No jobs added yet.' : 'No jobs match the selected filters.'}</span>
@@ -569,14 +689,27 @@ const AdminDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredJobs.map((j) => (
+                          filteredJobs.map((j) => {
+                            // Compute Estimation No: rank within same ministry, by creation order
+                            const ministryJobs = [...jobs]
+                              .sort((a, b) => new Date(a.createdAt || a.submitDate) - new Date(b.createdAt || b.submitDate))
+                              .filter(jj => jj.ministry === j.ministry);
+                            const estIdx = ministryJobs.findIndex(jj => jj._id === j._id) + 1;
+                            const prefix = j.ministry
+                              ? j.ministry.split(' ').map(w => w[0]).join('').replace(/[^A-Z]/gi, '').slice(0, 3).toUpperCase()
+                              : 'JB';
+                            const estNo = `${prefix}-${String(estIdx).padStart(3, '0')}`;
+                            return (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                              <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
                               <td className="font-mono">{j.jobNo}</td>
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
                               <td>{j.department}</td>
                               <td>{j.institute}</td>
+                              <td>{j.deptIdNo || '—'}</td>
+                              <td>{j.source || '—'}</td>
                               <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
                               <td className="font-bold">{j.allocation}</td>
                               <td>{j.remark}</td>
@@ -597,7 +730,8 @@ const AdminDashboard = () => {
                                 </span>
                               </td>
                             </tr>
-                          ))
+                          );
+                          })
                         )}
                       </tbody>
                     </table>
@@ -669,18 +803,144 @@ const AdminDashboard = () => {
             )}
 
             {activeTab === 'Update Progress' && (
-              <motion.div
+              <motion.section
                 key="update-progress"
                 variants={pageVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
-                className="placeholder-content"
+                className="project-table-section"
               >
-                <BarChart3 size={36} style={{ opacity: 0.35 }} />
-                <p>Update Progress — coming soon</p>
-              </motion.div>
+                {/* ── Filters Card ── */}
+                <div className="recent-jobs-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Analytics Filters</h3>
+                    {(filters.department || filters.ministry || filters.division) && (
+                      <button className="cancel-btn" onClick={handleClearFilters} style={{ minHeight: '32px', padding: '6px 16px' }}>
+                        <X size={12} /> Clear Filters
+                      </button>
+                    )}
+                  </div>
+                  <div className="table-filters-row" style={{ marginBottom: 0 }}>
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Department</label>
+                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Departments</option>
+                        {departmentOptions.map((d) => (<option key={d} value={d}>{d}</option>))}
+                      </select>
+                    </div>
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Ministry</label>
+                      <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Ministries</option>
+                        {ministryOptions.map((m) => (<option key={m} value={m}>{m}</option>))}
+                      </select>
+                    </div>
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Division</label>
+                      <select name="division" value={filters.division} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Divisions</option>
+                        {divisionOptions.map((dv) => (<option key={dv} value={dv}>{dv}</option>))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Charts ── */}
+                {totalFilteredJobs === 0 ? (
+                  <div className="placeholder-content" style={{ height: '300px' }}>
+                    <AlertTriangle size={36} style={{ opacity: 0.35 }} />
+                    <span>No data available for the selected filters.</span>
+                  </div>
+                ) : (
+                  <div className="analytics-dashboard-grid">
+
+                    {/* Donut Chart */}
+                    <div className="field-card" style={{ padding: '24px 26px 28px' }}>
+                      <h3 className="recent-jobs-title">Status Breakdown</h3>
+                      <div style={{ position: 'relative', width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: 'Approved', value: approvedFilteredJobs, color: 'var(--success)' },
+                                { name: 'Pending',  value: pendingFilteredJobs,  color: 'var(--warning)' },
+                                { name: 'Rejected', value: rejectedFilteredJobs, color: 'var(--danger)'  },
+                              ].filter(d => d.value > 0)}
+                              cx="50%" cy="50%"
+                              innerRadius={65} outerRadius={95}
+                              paddingAngle={4} dataKey="value"
+                            >
+                              {[
+                                { name: 'Approved', value: approvedFilteredJobs, color: 'var(--success)' },
+                                { name: 'Pending',  value: pendingFilteredJobs,  color: 'var(--warning)' },
+                                { name: 'Rejected', value: rejectedFilteredJobs, color: 'var(--danger)'  },
+                              ].filter(d => d.value > 0).map((entry, i) => (
+                                <Cell key={`cell-${i}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <RechartsTooltip content={<CustomTooltip />} />
+                            <Legend verticalAlign="bottom" height={36}
+                              formatter={(value) => (
+                                <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem' }}>{value}</span>
+                              )}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        {/* Centre label */}
+                        <div style={{
+                          position: 'absolute', top: '44%', left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          textAlign: 'center', pointerEvents: 'none'
+                        }}>
+                          <div style={{ fontSize: '2.4rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
+                            {totalFilteredJobs}
+                          </div>
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                            Total Jobs
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bar Chart */}
+                    <div className="field-card" style={{ padding: '24px 26px 28px' }}>
+                      <h3 className="recent-jobs-title">Job Counts Comparison</h3>
+                      <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={[
+                              { name: 'Total Jobs', count: totalFilteredJobs,   color: 'var(--accent-primary)' },
+                              { name: 'Pending',    count: pendingFilteredJobs,  color: 'var(--warning)'        },
+                              { name: 'Approved',   count: approvedFilteredJobs, color: 'var(--success)'        },
+                              { name: 'Rejected',   count: rejectedFilteredJobs, color: 'var(--danger)'         },
+                            ]}
+                            margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+                            <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 11, fontWeight: 600 }} />
+                            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
+                            <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                            <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                              {[
+                                { name: 'Total Jobs', count: totalFilteredJobs,   color: 'var(--accent-primary)' },
+                                { name: 'Pending',    count: pendingFilteredJobs,  color: 'var(--warning)'        },
+                                { name: 'Approved',   count: approvedFilteredJobs, color: 'var(--success)'        },
+                                { name: 'Rejected',   count: rejectedFilteredJobs, color: 'var(--danger)'         },
+                              ].map((entry, i) => (
+                                <Cell key={`bar-${i}`} fill={entry.color} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </motion.section>
             )}
+
 
             {activeTab === 'Settings' && (
               <motion.section
