@@ -412,13 +412,13 @@ const EngineerDashboard = () => {
   const totalDivisionJobs = approvalData.length;
   const pendingApprovals = approvalData.filter(j => !j.status || j.status === 'Pending').length;
   const approvedCount = approvalData.filter(j => j.status === 'Approved').length;
-  const totalUsers = allSystemUsers.length;
+  const rejectedCount = approvalData.filter(j => j.status === 'Rejected').length;
 
   const statCards = [
     { label: 'Division Jobs', value: totalDivisionJobs, icon: Briefcase,   color: 'var(--accent-primary)' },
     { label: 'Pending',       value: pendingApprovals,  icon: Clock,       color: 'var(--warning)' },
     { label: 'Approved',      value: approvedCount,     icon: CheckCircle, color: 'var(--success)' },
-    { label: 'System Users',  value: totalUsers,        icon: Users,       color: 'var(--info)' },
+    { label: 'Rejected',      value: rejectedCount,     icon: XCircle,     color: 'var(--danger, #ef4444)' },
   ];
 
   /* ─── Compute Smart Suggestions & Recommendations ─── */
@@ -541,38 +541,40 @@ const EngineerDashboard = () => {
             </motion.div>
           )}
 
-          {/* ─── Stat Cards ─── */}
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', marginBottom: '28px' }}
-          >
-            {statCards.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={cardVariant}
-                className="field-card"
-                style={{ padding: '20px', cursor: 'default' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '36px', height: '36px', borderRadius: '10px',
-                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                  }}>
-                    <stat.icon size={19} />
+          {/* ─── Stat Cards (Overview & My Jobs only) ─── */}
+          {(activeTab === 'overview' || activeTab === 'my-jobs') && (
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', marginBottom: '28px' }}
+            >
+              {statCards.map((stat) => (
+                <motion.div
+                  key={stat.label}
+                  variants={cardVariant}
+                  className="field-card"
+                  style={{ padding: '20px', cursor: 'default' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
+                    }}>
+                      <stat.icon size={19} />
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.8rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.8rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
 
           {/* ─── Tab Content ─── */}
           <AnimatePresence mode="wait">
