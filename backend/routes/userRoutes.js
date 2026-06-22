@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 
 // Allowed roles an engineer can assign to staff they add
-const ALLOWED_STAFF_ROLES = ['division_assistant', 'technical_officer', 'clerk'];
+const ALLOWED_STAFF_ROLES = ['division_assistant', 'user', 'clerk'];
 
 // Add a new staff user (called by engineer dashboard)
 router.post('/add', async (req, res) => {
