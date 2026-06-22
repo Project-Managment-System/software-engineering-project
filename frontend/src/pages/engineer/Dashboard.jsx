@@ -119,7 +119,15 @@ const EngineerDashboard = () => {
         assignee: item.assignee || ''
       }));
       setApprovalData(data);
-      setJobTrackingData(data);
+      
+      const approvedJobs = res.data
+        .filter(item => item.status === 'Approved')
+        .map((item, index) => ({
+          ...item,
+          sNo: index + 1,
+          assignee: item.assignee || ''
+        }));
+      setJobTrackingData(approvedJobs);
     } catch (err) { console.error("Error fetching data:", err); }
   };
 
