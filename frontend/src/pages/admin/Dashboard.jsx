@@ -101,7 +101,7 @@ const AdminDashboard = () => {
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
     allocation: '', dateReq: '', ref: '', institute: '',
-    deptIdNo: '', source: ''
+    deptIdNo: '', source: '', dsDivision: ''
   });
 
   const [filters, setFilters] = useState({ department: '', ministry: '', division: '' });
@@ -294,7 +294,7 @@ const AdminDashboard = () => {
     setFormData({
       jobName: '', ministry: '', department: '', division: '',
       allocation: '', dateReq: '', ref: '', institute: '',
-      deptIdNo: '', source: ''
+      deptIdNo: '', source: '', dsDivision: ''
     });
   };
 
@@ -620,6 +620,16 @@ const AdminDashboard = () => {
                         <label>Request Letter Reference <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                         <input name="ref" value={formData.ref} onChange={handleInputChange} className="input-field" required />
                       </div>
+                      <div className="input-row-group">
+                        <label>DS Division</label>
+                        <input
+                          name="dsDivision"
+                          value={formData.dsDivision || ''}
+                          onChange={handleInputChange}
+                          className="input-field"
+                          placeholder="e.g. Anuradhapura-East"
+                        />
+                      </div>
                     </div>
 
                     {/* ── New fields ── */}
@@ -708,7 +718,7 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Est. No</th><th>Job No</th><th>Division</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
+                          <th>Est. No</th><th>Job No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -736,13 +746,13 @@ const AdminDashboard = () => {
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
                               <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
                               <td className="font-mono">{j.jobNo}</td>
-                              <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
                               <td>{j.department}</td>
                               <td>{j.institute}</td>
                               <td>{j.deptIdNo || '—'}</td>
                               <td>{j.source || '—'}</td>
+                              <td>{j.dsDivision || '—'}</td>
                               <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
                               <td className="font-bold">{j.allocation}</td>
                               <td>{j.remark}</td>
