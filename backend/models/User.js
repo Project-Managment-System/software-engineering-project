@@ -6,16 +6,36 @@ const UserSchema = new mongoose.Schema({
   employeeId: { type: String, required: true, unique: true, trim: true }, 
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ["admin", "engineer"], default: "engineer", required: true },
-  division: { type: String, required: function() { return this.role === 'engineer'; } },
+  role: {
+    type: String,
+    enum: ["admin", "engineer", "division_assistant", "user", "clerk"],
+    default: "engineer",
+    required: true
+  },
+  division: {
+    type: String,
+    required: function () {
+      return this.role !== 'admin';
+    }
+  },
+  phoneNo: { type: String, default: '' },
+  profilePic: { type: String, default: '' },
 }, { timestamps: true });
 
-// Password Hashing Middleware
-// NOTE: async pre-save hooks do NOT receive a `next` callback in this
-// Mongoose version. Just return normally on success, or throw on error —
-// Mongoose automatically converts a thrown error into the save() rejection.
 UserSchema.pre("save", async function () {
-  // If the password hasn't been changed, skip hashing
+  // Ensure that a division has only one engineer, only when role/division changes or user is new
+  if (this.role === "engineer" && this.division && (this.isNew || this.isModified("role") || this.isModified("division"))) {
+    const existingEngineer = await this.constructor.findOne({
+      role: "engineer",
+      division: this.division,
+      _id: { $ne: this._id }
+    });
+    if (existingEngineer) {
+      throw new Error(`Division "${this.division}" already has an assigned engineer.`);
+    }
+  }
+
+  // Password Hashing Middleware
   if (!this.isModified("password")) return;
 
   const salt = await bcrypt.genSalt(12);

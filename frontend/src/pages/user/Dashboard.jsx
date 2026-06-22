@@ -3,7 +3,7 @@ import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
-  Send, Calendar, Globe, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle
+  Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -56,7 +56,6 @@ const UserDashboard = () => {
 
   const [submittedEstimates, setSubmittedEstimates] = useState([]);
   const [jobData, setJobData] = useState([]);
-  const [allProjects, setAllProjects] = useState([]);
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
@@ -90,12 +89,30 @@ const UserDashboard = () => {
     }
   };
 
-  const fetchAllProjects = async () => {
+
+
+  const fetchUserProfile = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
-      setAllProjects(res.data);
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const user = res.data;
+        if (user) {
+          setProfileName(user.fullName || 'User');
+          setRegNo(user.employeeId || '');
+          setEmail(user.email || '');
+          setPhoneNo(user.phoneNo || '');
+          setProfilePic(user.profilePic || null);
+
+          localStorage.setItem('fullName', user.fullName || '');
+          localStorage.setItem('employeeId', user.employeeId || '');
+          localStorage.setItem('email', user.email || '');
+          localStorage.setItem('phoneNo', user.phoneNo || '');
+          localStorage.setItem('profilePic', user.profilePic || '');
+        }
+      }
     } catch (err) {
-      console.error("Error fetching all projects:", err);
+      console.error("Error fetching user profile:", err);
     }
   };
 
@@ -105,7 +122,7 @@ const UserDashboard = () => {
       navigate('/');
     }
     fetchData();
-    fetchAllProjects();
+    fetchUserProfile();
   }, [navigate]);
 
   const handleCheckEstimate = (estimateNo) => {
@@ -129,23 +146,50 @@ const UserDashboard = () => {
     setEditPhoneNo(phoneNo);
   };
 
-  const handleConfirmProfile = () => {
-    setProfileName(editProfileName);
-    setRegNo(editRegNo);
-    setEmail(editEmail);
-    setPhoneNo(editPhoneNo);
-    addToast("Profile saved successfully!", "success");
+  const handleConfirmProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        addToast("User session not found", "error");
+        return;
+      }
+      const payload = {
+        fullName: editProfileName,
+        email: editEmail,
+        phoneNo: editPhoneNo
+      };
+      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      if (res.data) {
+        setProfileName(editProfileName);
+        setRegNo(editRegNo);
+        setEmail(editEmail);
+        setPhoneNo(editPhoneNo);
+
+        localStorage.setItem('fullName', editProfileName);
+        localStorage.setItem('employeeId', editRegNo);
+        localStorage.setItem('email', editEmail);
+        localStorage.setItem('phoneNo', editPhoneNo);
+
+        addToast("Profile saved successfully!", "success");
+      }
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      addToast(err.response?.data?.error || "Failed to update profile", "error");
+    }
   };
 
   const handleCancelProfile = () => {
     setActiveTab('my-jobs');
   };
 
-  const selectedJob = jobData.find(job => job.jobNo === selectedJobId);
+  // Only show jobs specifically assigned to this logged-in user
+  const myJobs = jobData.filter(job => job.assignee && job.assignee === profileName);
+
+  const selectedJob = myJobs.find(job => job.jobNo === selectedJobId);
 
   const handleSelectionChange = (id) => {
     setSelectedJobId(id);
-    const foundJob = jobData.find(j => j.jobNo === id);
+    const foundJob = myJobs.find(j => j.jobNo === id);
     if (foundJob) {
       setEditableJobName(foundJob.jobName);
       setEditableAllocation(foundJob.allocation);
@@ -162,7 +206,6 @@ const UserDashboard = () => {
       });
       addToast("Job details saved successfully!", "success");
       fetchData();
-      fetchAllProjects();
     } catch (err) {
       addToast("Failed to save changes", "error");
     }
@@ -200,9 +243,23 @@ const UserDashboard = () => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePic(reader.result);
-        localStorage.setItem('profilePic', reader.result);
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        setProfilePic(base64Data);
+        localStorage.setItem('profilePic', base64Data);
+
+        try {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+              profilePic: base64Data
+            });
+            addToast("Profile photo updated successfully!", "success");
+          }
+        } catch (err) {
+          console.error("Error saving profile photo to backend:", err);
+          addToast("Failed to sync photo to database", "error");
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -222,12 +279,12 @@ const UserDashboard = () => {
   };
 
   /* ─── Computed stats ─── */
-  const totalDivisionJobs = jobData.length;
+  const totalMyJobs = myJobs.length;
   const totalSubmittedEstimates = submittedEstimates.length;
-  const pendingApprovalsCount = jobData.filter(j => !j.status || j.status === 'Pending').length;
+  const pendingApprovalsCount = myJobs.filter(j => !j.status || j.status === 'Pending').length;
 
   const statCards = [
-    { label: 'Division Jobs',      value: totalDivisionJobs,       icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'My Jobs',            value: totalMyJobs,             icon: Briefcase, color: 'var(--accent-primary)' },
     { label: 'Estimates Sent',     value: totalSubmittedEstimates, icon: Send,      color: 'var(--accent-2)' },
     { label: 'Pending Approvals',  value: pendingApprovalsCount,   icon: Clock,     color: 'var(--warning)' },
   ];
@@ -258,7 +315,6 @@ const UserDashboard = () => {
           <nav className="sidebar-nav">
             {[
               { id: 'my-jobs',         icon: Briefcase, label: 'My Jobs' },
-              { id: 'public-jobs',     icon: Globe,     label: 'Explore Projects' },
               { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
               { id: 'profile',         icon: Edit3,     label: 'Profile' },
               { id: 'settings',        icon: Settings,  label: 'Settings' },
@@ -348,19 +404,19 @@ const UserDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {jobData.length === 0 ? (
+                        {myJobs.length === 0 ? (
                           <tr>
                             <td colSpan={6}>
                               <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
                                 <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                <span>No allocated division jobs found.</span>
+                                <span>No jobs assigned to you yet.</span>
                               </div>
                             </td>
                           </tr>
                         ) : (
-                          jobData.map((job) => (
+                          myJobs.map((job, index) => (
                             <tr key={job.jobNo}>
-                              <td>{job.sNo}</td>
+                              <td>{index + 1}</td>
                               <td className="font-mono">{job.jobNo}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.allocation}</td>
@@ -378,67 +434,7 @@ const UserDashboard = () => {
               </motion.section>
             )}
 
-            {/* ── Explore Projects (Public Jobs Board) Tab ── */}
-            {activeTab === 'public-jobs' && (
-              <motion.section key="public-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
-                <div className="field-card" style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                    <Globe size={20} style={{ color: 'var(--accent-primary)' }} />
-                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Global Projects Board</h3>
-                  </div>
 
-                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
-                    <table className="project-table">
-                      <thead>
-                        <tr>
-                          <th>Job No</th>
-                          <th>Job Name</th>
-                          <th>Division</th>
-                          <th>Ministry</th>
-                          <th>Department</th>
-                          <th>Assignee</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allProjects.length === 0 ? (
-                          <tr>
-                            <td colSpan={7}>
-                              <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
-                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                <span>No system projects found.</span>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          allProjects.map((job) => (
-                            <tr key={job.jobNo}>
-                              <td className="font-mono">{job.jobNo}</td>
-                              <td className="font-bold">{job.jobName}</td>
-                              <td>{job.division}</td>
-                              <td>{job.ministry}</td>
-                              <td>{job.department}</td>
-                              <td>
-                                {job.assignee ? (
-                                  <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>{job.assignee}</span>
-                                ) : (
-                                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
-                                )}
-                              </td>
-                              <td>
-                                <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
-                                  {job.status || 'Pending'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </motion.section>
-            )}
 
             {/* ── Update Progress Tab ── */}
             {activeTab === 'update-progress' && (
@@ -457,7 +453,7 @@ const UserDashboard = () => {
                         onChange={(e) => handleSelectionChange(e.target.value)}
                       >
                         <option value="">-- Choose Job ID --</option>
-                        {jobData.map(job => (
+                        {myJobs.map(job => (
                           <option key={job.jobNo} value={job.jobNo}>{job.jobNo} - {job.jobName}</option>
                         ))}
                       </select>
