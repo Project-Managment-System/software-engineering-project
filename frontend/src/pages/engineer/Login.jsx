@@ -37,7 +37,10 @@ export default function EngineerLogin() {
         if (division) localStorage.setItem('userDivision', division);
 
         navigate('/engineer/dashboard');
+        return;
       }
+
+      alert('This account is not assigned to the engineer dashboard.');
     } catch (error) {
       alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');
     } finally {

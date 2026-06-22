@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lock, User, ShieldAlert } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-
+import { loginUser } from '../api/api';
 // Component animation frames
 const formContainerVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.98 },
@@ -67,14 +67,15 @@ export default function DivisionLogin() {
       if (division) localStorage.setItem('userDivision', division);
 
       // Route based on the real role from the database
-      if (role === 'admin') {
+      if (role === 'admin' || role === 'clerk') {
         localStorage.setItem('isAdmin', 'true'); // required by ProtectedRoute guard
         navigate('/admin/dashboard');
       } else if (role === 'engineer') {
         navigate('/engineer/dashboard');
+      } else if (role === 'user') {
+        localStorage.setItem('isAuthenticated', 'true'); // required by UserDashboard guard
+        navigate('/user/dashboard');
       } else {
-        // Other roles (e.g. divisional assistant, super admin) aren't
-        // supported by the User schema's role enum yet.
         alert('This portal is not yet available for your account role.');
       }
     } catch (err) {
