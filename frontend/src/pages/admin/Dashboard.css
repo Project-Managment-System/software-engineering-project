@@ -6,6 +6,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
 
+
 /* ============================================================
    1. CSS TOKENS & THEME SYSTEM
    ============================================================ */
@@ -17,98 +18,100 @@
 
 /* — Light Mode Tokens — */
 #cems-user-dashboard.light-mode {
-  --bg-root:         #f0f2f7;
-  --bg-sidebar:      #ffffff;
-  --bg-card:         #ffffff;
-  --bg-card-hover:   #fafbff;
+  --bg-root: #f0f2f7;
+  --bg-sidebar: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #fafbff;
   --bg-table-header: #f4f5fb;
-  --bg-table-alt:    #f9fafc;
-  --bg-table-hover:  #eef0fb;
-  --bg-input:        #f8f9fc;
-  --bg-badge:        #f4f5fb;
+  --bg-table-alt: #f9fafc;
+  --bg-table-hover: #eef0fb;
+  --bg-input: #f8f9fc;
+  --bg-badge: #f4f5fb;
 
-  --border-base:     #e2e6f0;
-  --border-light:    #eff1f8;
-  --border-focus:    #e11d48;
+  --border-base: #e2e6f0;
+  --border-light: #eff1f8;
+  --border-focus: #e11d48;
 
-  --text-primary:    #0d1117;
-  --text-secondary:  #374151;
-  --text-muted:      #6b7280;
-  --text-label:      #9ca3af;
-  --text-inverse:    #ffffff;
+  --text-primary: #0d1117;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --text-label: #9ca3af;
+  --text-inverse: #ffffff;
 
-  --accent-primary:  #e11d48;        /* Crimson Rose */
-  --accent-dark:     #be123c;
-  --accent-glow:     rgba(225, 29, 72, 0.18);
-  --accent-soft:     #fff1f3;
+  --accent-primary: #e11d48;
+  /* Crimson Rose */
+  --accent-dark: #be123c;
+  --accent-glow: rgba(225, 29, 72, 0.18);
+  --accent-soft: #fff1f3;
 
-  --gold:            #d97706;        /* Engineering Gold */
-  --gold-soft:       #fef3c7;
+  --gold: #d97706;
+  /* Engineering Gold */
+  --gold-soft: #fef3c7;
 
-  --success:         #059669;
-  --success-soft:    #d1fae5;
-  --warning:         #d97706;
-  --warning-soft:    #fef3c7;
-  --danger:          #dc2626;
-  --danger-soft:     #fee2e2;
-  --info:            #0284c7;
-  --info-soft:       #e0f2fe;
+  --success: #059669;
+  --success-soft: #d1fae5;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  --info: #0284c7;
+  --info-soft: #e0f2fe;
 
-  --shadow-card:     0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06);
-  --shadow-hover:    0 8px 32px rgba(225,29,72,0.12), 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-btn:      0 4px 14px rgba(225,29,72,0.3);
-  --radius-card:     16px;
-  --radius-btn:      10px;
-  --radius-input:    9px;
-  --radius-badge:    999px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 8px 32px rgba(225, 29, 72, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-btn: 0 4px 14px rgba(225, 29, 72, 0.3);
+  --radius-card: 16px;
+  --radius-btn: 10px;
+  --radius-input: 9px;
+  --radius-badge: 999px;
 }
 
 /* — Dark Mode Tokens — */
 #cems-user-dashboard.dark-mode {
-  --bg-root:         #060a12;
-  --bg-sidebar:      #0c1120;
-  --bg-card:         #111827;
-  --bg-card-hover:   #161f30;
+  --bg-root: #060a12;
+  --bg-sidebar: #0c1120;
+  --bg-card: #111827;
+  --bg-card-hover: #161f30;
   --bg-table-header: #0f172a;
-  --bg-table-alt:    #0d1424;
-  --bg-table-hover:  #162035;
-  --bg-input:        #0c1120;
-  --bg-badge:        rgba(255,255,255,0.04);
+  --bg-table-alt: #0d1424;
+  --bg-table-hover: #162035;
+  --bg-input: #0c1120;
+  --bg-badge: rgba(255, 255, 255, 0.04);
 
-  --border-base:     rgba(255,255,255,0.08);
-  --border-light:    rgba(255,255,255,0.04);
-  --border-focus:    #f43f5e;
+  --border-base: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
+  --border-focus: #f43f5e;
 
-  --text-primary:    #f1f5f9;
-  --text-secondary:  #cbd5e1;
-  --text-muted:      #64748b;
-  --text-label:      #475569;
-  --text-inverse:    #ffffff;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #64748b;
+  --text-label: #475569;
+  --text-inverse: #ffffff;
 
-  --accent-primary:  #f43f5e;
-  --accent-dark:     #e11d48;
-  --accent-glow:     rgba(244,63,94,0.22);
-  --accent-soft:     rgba(244,63,94,0.08);
+  --accent-primary: #f43f5e;
+  --accent-dark: #e11d48;
+  --accent-glow: rgba(244, 63, 94, 0.22);
+  --accent-soft: rgba(244, 63, 94, 0.08);
 
-  --gold:            #fbbf24;
-  --gold-soft:       rgba(251,191,36,0.1);
+  --gold: #fbbf24;
+  --gold-soft: rgba(251, 191, 36, 0.1);
 
-  --success:         #10b981;
-  --success-soft:    rgba(16,185,129,0.12);
-  --warning:         #f59e0b;
-  --warning-soft:    rgba(245,158,11,0.12);
-  --danger:          #ef4444;
-  --danger-soft:     rgba(239,68,68,0.12);
-  --info:            #38bdf8;
-  --info-soft:       rgba(56,189,248,0.12);
+  --success: #10b981;
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --warning: #f59e0b;
+  --warning-soft: rgba(245, 158, 11, 0.12);
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --info: #38bdf8;
+  --info-soft: rgba(56, 189, 248, 0.12);
 
-  --shadow-card:     0 2px 8px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
-  --shadow-hover:    0 12px 40px rgba(244,63,94,0.18), 0 4px 16px rgba(0,0,0,0.5);
-  --shadow-btn:      0 4px 20px rgba(244,63,94,0.35);
-  --radius-card:     16px;
-  --radius-btn:      10px;
-  --radius-input:    9px;
-  --radius-badge:    999px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 12px 40px rgba(244, 63, 94, 0.18), 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-btn: 0 4px 20px rgba(244, 63, 94, 0.35);
+  --radius-card: 16px;
+  --radius-btn: 10px;
+  --radius-input: 9px;
+  --radius-badge: 999px;
 }
 
 /* ============================================================
@@ -126,20 +129,18 @@
 /* Subtle diagonal background pattern */
 #cems-user-dashboard.light-mode .user-dashboard-layout {
   background-image:
-    linear-gradient(135deg, rgba(225,29,72,0.025) 0%, transparent 60%),
-    repeating-linear-gradient(
-      45deg,
+    linear-gradient(135deg, rgba(225, 29, 72, 0.025) 0%, transparent 60%),
+    repeating-linear-gradient(45deg,
       transparent,
       transparent 40px,
-      rgba(225,29,72,0.012) 40px,
-      rgba(225,29,72,0.012) 41px
-    );
+      rgba(225, 29, 72, 0.012) 40px,
+      rgba(225, 29, 72, 0.012) 41px);
 }
 
 #cems-user-dashboard.dark-mode .user-dashboard-layout {
   background-image:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(244,63,94,0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(251,191,36,0.04) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(244, 63, 94, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(251, 191, 36, 0.04) 0%, transparent 50%);
 }
 
 /* ============================================================
@@ -175,13 +176,27 @@
   border-radius: 0 2px 2px 0;
 }
 
-.sidebar.sidebar-open  { transform: translateX(0); }
-.sidebar.sidebar-closed { transform: translateX(-100%); }
+.sidebar.sidebar-open {
+  transform: translateX(0);
+}
+
+.sidebar.sidebar-closed {
+  transform: translateX(-100%);
+}
 
 /* Sidebar scrollbar */
-.sidebar::-webkit-scrollbar { width: 4px; }
-.sidebar::-webkit-scrollbar-track { background: transparent; }
-.sidebar::-webkit-scrollbar-thumb { background: var(--border-base); border-radius: 4px; }
+.sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
+}
 
 /* — Profile Box — */
 .profile-box {
@@ -324,7 +339,7 @@
 .nav-item.logout-nav-item:hover {
   background: var(--danger) !important;
   color: white !important;
-  box-shadow: 0 4px 14px rgba(239,68,68,0.3);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
 /* ============================================================
@@ -369,8 +384,13 @@
   overflow-y: auto;
 }
 
-.dashboard-content.content-shifted-open  { margin-left: 262px; }
-.dashboard-content.content-shifted-closed { padding-left: 72px; }
+.dashboard-content.content-shifted-open {
+  margin-left: 262px;
+}
+
+.dashboard-content.content-shifted-closed {
+  padding-left: 72px;
+}
 
 .content-header {
   margin-bottom: 28px;
@@ -416,7 +436,9 @@
   border-radius: var(--radius-card) var(--radius-card) 0 0;
 }
 
-.field-card:hover { box-shadow: var(--shadow-hover); }
+.field-card:hover {
+  box-shadow: var(--shadow-hover);
+}
 
 /* ============================================================
    8. FORM LAYOUTS
@@ -572,13 +594,13 @@ select.input-field option {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), transparent);
   pointer-events: none;
 }
 
 .save-btn:hover:not(:disabled) {
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(225,29,72,0.4) !important;
+  box-shadow: 0 8px 24px rgba(225, 29, 72, 0.4) !important;
   filter: brightness(1.1) !important;
 }
 
@@ -621,7 +643,7 @@ select.input-field option {
   border-color: var(--danger) !important;
   color: #fff !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(220,38,38,0.35) !important;
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35) !important;
 }
 
 /* ============================================================
@@ -667,16 +689,25 @@ select.input-field option {
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid var(--border-base);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
-.table-scroll-wrapper::-webkit-scrollbar { height: 6px; }
-.table-scroll-wrapper::-webkit-scrollbar-track { background: var(--bg-table-header); }
+.table-scroll-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-table-header);
+}
+
 .table-scroll-wrapper::-webkit-scrollbar-thumb {
   background: var(--border-base);
   border-radius: 4px;
 }
-.table-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
 
 .project-table {
   width: 100%;
@@ -732,7 +763,9 @@ select.input-field option {
   box-shadow: inset 3px 0 0 var(--accent-primary);
 }
 
-.project-table tbody tr:last-child td { border-bottom: none; }
+.project-table tbody tr:last-child td {
+  border-bottom: none;
+}
 
 /* Rejected row highlight override */
 .project-table tbody tr[style*="background: rgb(254, 226, 226)"],
@@ -780,7 +813,7 @@ select.input-field option {
 .project-table td button[style*="background:#fee2e2"] {
   background: var(--danger-soft) !important;
   color: var(--danger) !important;
-  border: 1px solid rgba(220,38,38,0.2) !important;
+  border: 1px solid rgba(220, 38, 38, 0.2) !important;
   border-radius: 7px !important;
   padding: 7px !important;
   cursor: pointer !important;
@@ -826,39 +859,62 @@ select.input-field option {
 .status-badge.status-pending {
   background: var(--warning-soft);
   color: var(--warning);
-  border-color: rgba(217,119,6,0.2);
+  border-color: rgba(217, 119, 6, 0.2);
 }
-.status-badge.status-pending::before { background: var(--warning); animation: pulse-dot 1.6s infinite; }
+
+.status-badge.status-pending::before {
+  background: var(--warning);
+  animation: pulse-dot 1.6s infinite;
+}
 
 .status-badge.status-approved,
 .status-badge.status-success {
   background: var(--success-soft);
   color: var(--success);
-  border-color: rgba(5,150,105,0.2);
+  border-color: rgba(5, 150, 105, 0.2);
 }
+
 .status-badge.status-approved::before,
-.status-badge.status-success::before { background: var(--success); }
+.status-badge.status-success::before {
+  background: var(--success);
+}
 
 .status-badge.status-rejected,
 .status-badge.status-failed {
   background: var(--danger-soft);
   color: var(--danger);
-  border-color: rgba(220,38,38,0.2);
+  border-color: rgba(220, 38, 38, 0.2);
 }
+
 .status-badge.status-rejected::before,
-.status-badge.status-failed::before { background: var(--danger); }
+.status-badge.status-failed::before {
+  background: var(--danger);
+}
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(0.75); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.75);
+  }
 }
 
 /* ============================================================
    15. PROFILE VIEW
    ============================================================ */
-.profile-view { width: 100%; }
+.profile-view {
+  width: 100%;
+}
 
-.profile-view .field-card { max-width: 600px; }
+.profile-view .field-card {
+  max-width: 600px;
+}
 
 .form-container {
   display: flex;
@@ -919,46 +975,114 @@ select.input-field option {
   font-weight: 600;
 }
 
-.alert-banner.alert-info    { background: var(--info-soft);    border-color: var(--info);    color: var(--info); }
-.alert-banner.alert-success { background: var(--success-soft); border-color: var(--success); color: var(--success); }
-.alert-banner.alert-warning { background: var(--warning-soft); border-color: var(--warning); color: var(--warning); }
-.alert-banner.alert-error   { background: var(--danger-soft);  border-color: var(--danger);  color: var(--danger); }
+.alert-banner.alert-info {
+  background: var(--info-soft);
+  border-color: var(--info);
+  color: var(--info);
+}
+
+.alert-banner.alert-success {
+  background: var(--success-soft);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.alert-banner.alert-warning {
+  background: var(--warning-soft);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.alert-banner.alert-error {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+  color: var(--danger);
+}
 
 /* ============================================================
    18. CUSTOM SCROLLBARS
    ============================================================ */
-.dashboard-content::-webkit-scrollbar { width: 8px; }
-.dashboard-content::-webkit-scrollbar-track { background: transparent; }
+.dashboard-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dashboard-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .dashboard-content::-webkit-scrollbar-thumb {
   background: var(--border-base);
   border-radius: 4px;
 }
-.dashboard-content::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+.dashboard-content::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
 
 /* ============================================================
    19. RESPONSIVE BREAKPOINTS
    ============================================================ */
 @media (max-width: 1024px) {
-  .form-row { grid-template-columns: 1fr 1fr; }
+  .form-row {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 900px) {
-  .form-row { grid-template-columns: 1fr; gap: 14px; }
-  .table-filters-row { flex-direction: column; align-items: stretch; }
-  .table-filters-row .input-row-group { min-width: unset; width: 100%; }
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .table-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .table-filters-row .input-row-group {
+    min-width: unset;
+    width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
   .dashboard-content {
     padding: 80px 16px 32px !important;
   }
+
   .dashboard-content.content-shifted-open {
     margin-left: 0 !important;
   }
-  .content-header { padding-left: 52px; }
-  .form-action-row { flex-direction: column; width: 100%; }
-  .save-btn, .cancel-btn {
+
+  .content-header {
+    padding-left: 52px;
+  }
+
+  .form-action-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .save-btn,
+  .cancel-btn {
     width: 100% !important;
     justify-content: center !important;
   }
 }
+
+/* ============================================================
+   20. ANALYTICS / CHARTS LAYOUT
+   ============================================================ */
+.analytics-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .analytics-dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

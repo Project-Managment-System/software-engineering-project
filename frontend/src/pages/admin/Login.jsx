@@ -21,7 +21,7 @@ export default function AdminLogin() {
       if (response.data.status === 'LOGIN_SUCCESS') {
         const { role, userId, fullName, email, division } = response.data;
         
-        if (role !== 'admin') {
+        if (role !== 'admin' && role !== 'clerk') {
           alert("Access Denied: Account is not authorized for Admin login.");
           setIsSubmitting(false);
           return;
