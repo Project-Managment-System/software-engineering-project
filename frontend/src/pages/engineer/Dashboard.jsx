@@ -33,7 +33,7 @@ const formatRoleName = (role) => {
     case 'admin': return 'Admin';
     case 'engineer': return 'Engineer';
     case 'division_assistant': return 'Division Assistant';
-    case 'technical_officer': return 'Technical Officer';
+    case 'user': return 'User';
     case 'clerk': return 'Clerk';
     default: return role;
   }
@@ -45,7 +45,7 @@ const getRoleBadgeClass = (role) => {
     case 'admin': return 'status-rejected';
     case 'engineer': return 'status-approved';
     case 'division_assistant': return 'status-success';
-    case 'technical_officer': return 'status-pending';
+    case 'user': return 'status-pending';
     case 'clerk': return 'status-success';
     default: return 'status-pending';
   }
@@ -897,7 +897,7 @@ const EngineerDashboard = () => {
                     <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
                       <option value="" disabled>Select Position</option>
                       <option value="division_assistant">Division Assistant</option>
-                      <option value="technical_officer">Technical Officer</option>
+                      <option value="user">User</option>
                       <option value="clerk">Clerk</option>
                     </select>
                     <div className="action-buttons">
@@ -989,7 +989,7 @@ const EngineerDashboard = () => {
                                     className="job-select-dropdown"
                                   >
                                     <option value="division_assistant">Division Assistant</option>
-                                    <option value="technical_officer">Technical Officer</option>
+                                    <option value="user">User</option>
                                     <option value="clerk">Clerk</option>
                                   </select>
                                 ) : (
