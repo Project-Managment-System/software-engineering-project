@@ -3,7 +3,7 @@ import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
-  Send, Calendar, Globe, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X
+  Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -56,7 +56,6 @@ const UserDashboard = () => {
 
   const [submittedEstimates, setSubmittedEstimates] = useState([]);
   const [jobData, setJobData] = useState([]);
-  const [allProjects, setAllProjects] = useState([]);
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
@@ -90,14 +89,7 @@ const UserDashboard = () => {
     }
   };
 
-  const fetchAllProjects = async () => {
-    try {
-      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
-      setAllProjects(res.data);
-    } catch (err) {
-      console.error("Error fetching all projects:", err);
-    }
-  };
+
 
   const fetchUserProfile = async () => {
     try {
@@ -130,7 +122,6 @@ const UserDashboard = () => {
       navigate('/');
     }
     fetchData();
-    fetchAllProjects();
     fetchUserProfile();
   }, [navigate]);
 
@@ -215,7 +206,6 @@ const UserDashboard = () => {
       });
       addToast("Job details saved successfully!", "success");
       fetchData();
-      fetchAllProjects();
     } catch (err) {
       addToast("Failed to save changes", "error");
     }
@@ -325,7 +315,6 @@ const UserDashboard = () => {
           <nav className="sidebar-nav">
             {[
               { id: 'my-jobs',         icon: Briefcase, label: 'My Jobs' },
-              { id: 'public-jobs',     icon: Globe,     label: 'Explore Projects' },
               { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
               { id: 'profile',         icon: Edit3,     label: 'Profile' },
               { id: 'settings',        icon: Settings,  label: 'Settings' },
@@ -445,67 +434,7 @@ const UserDashboard = () => {
               </motion.section>
             )}
 
-            {/* ── Explore Projects (Public Jobs Board) Tab ── */}
-            {activeTab === 'public-jobs' && (
-              <motion.section key="public-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
-                <div className="field-card" style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                    <Globe size={20} style={{ color: 'var(--accent-primary)' }} />
-                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Global Projects Board</h3>
-                  </div>
 
-                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
-                    <table className="project-table">
-                      <thead>
-                        <tr>
-                          <th>Job No</th>
-                          <th>Job Name</th>
-                          <th>Division</th>
-                          <th>Ministry</th>
-                          <th>Department</th>
-                          <th>Assignee</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allProjects.length === 0 ? (
-                          <tr>
-                            <td colSpan={7}>
-                              <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
-                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                <span>No system projects found.</span>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          allProjects.map((job) => (
-                            <tr key={job.jobNo}>
-                              <td className="font-mono">{job.jobNo}</td>
-                              <td className="font-bold">{job.jobName}</td>
-                              <td>{job.division}</td>
-                              <td>{job.ministry}</td>
-                              <td>{job.department}</td>
-                              <td>
-                                {job.assignee ? (
-                                  <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>{job.assignee}</span>
-                                ) : (
-                                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
-                                )}
-                              </td>
-                              <td>
-                                <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
-                                  {job.status || 'Pending'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </motion.section>
-            )}
 
             {/* ── Update Progress Tab ── */}
             {activeTab === 'update-progress' && (
