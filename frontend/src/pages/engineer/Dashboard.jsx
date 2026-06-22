@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Edit3, LogOut, Save,
   Check, X, Menu, UserPlus, Undo, Trash2, Shield, Clock,
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3, Wrench, Filter,
-  Globe, Sun, Moon, Lightbulb
+  Globe, Sun, Moon, Lightbulb, Camera
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -26,13 +26,39 @@ const cardVariant = {
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
 };
 
+/* ─── Role Formatting Helpers ─── */
+const formatRoleName = (role) => {
+  if (!role) return 'N/A';
+  switch (role.toLowerCase()) {
+    case 'admin': return 'Admin';
+    case 'engineer': return 'Engineer';
+    case 'division_assistant': return 'Division Assistant';
+    case 'technical_officer': return 'Technical Officer';
+    case 'clerk': return 'Clerk';
+    default: return role;
+  }
+};
+
+const getRoleBadgeClass = (role) => {
+  if (!role) return 'status-pending';
+  switch (role.toLowerCase()) {
+    case 'admin': return 'status-rejected';
+    case 'engineer': return 'status-approved';
+    case 'division_assistant': return 'status-success';
+    case 'technical_officer': return 'status-pending';
+    case 'clerk': return 'status-success';
+    default: return 'status-pending';
+  }
+};
+
 /* ─────────────────────────────────────── */
 const EngineerDashboard = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [activeTab, setActiveTab] = useState('overview');
   const [jobSubTab, setJobSubTab] = useState('approvals');
-  const [profilePic, setProfilePic] = useState(null);
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [filterDivision, setFilterDivision] = useState('All');
@@ -42,7 +68,7 @@ const EngineerDashboard = () => {
     name: localStorage.getItem('fullName') || 'User',
     reg: localStorage.getItem('employeeId') || '',
     email: localStorage.getItem('email') || '',
-    phone: ''
+    phone: localStorage.getItem('phoneNo') || ''
   });
   const [profileForm, setProfileForm] = useState(profileData);
   const [editingJob, setEditingJob] = useState(null);
@@ -52,17 +78,37 @@ const EngineerDashboard = () => {
   const [allProjects, setAllProjects] = useState([]);
   const [allSystemUsers, setAllSystemUsers] = useState([]);
   const [userFormData, setUserFormData] = useState({
-    employeeId: '', firstName: '', secondName: '', email: '', password: '', division: ''
+    employeeId: '',
+    firstName: '',
+    secondName: '',
+    email: '',
+    password: '',
+    division: localStorage.getItem('userDivision') || '',
+    role: ''
   });
   const [userDivision, setUserDivision] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [editUserForm, setEditUserForm] = useState({});
 
-  // Change password form state
+  /* ─── Change password state ─── */
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Fetches the jobs/projects for this engineer's division
+  /* ─── Toast system ─── */
+  const [toasts, setToasts] = useState([]);
+  const addToast = (message, type = 'success') => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  };
+
+  const toggleDarkMode = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    addToast(`${nextDark ? 'Dark' : 'Light'} theme activated`, 'info');
+  };
+
   const fetchData = async () => {
     try {
       const division = localStorage.getItem('userDivision');
@@ -86,15 +132,44 @@ const EngineerDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/users`);
-      setAllSystemUsers(res.data);
-      const myEmployeeId = localStorage.getItem('employeeId');
-      const me = res.data.find(u => u.employeeId === myEmployeeId);
-      if (me && me.division) {
-        setCurrentDivision(me.division);
-        localStorage.setItem('userDivision', me.division);
+      const division = localStorage.getItem('userDivision');
+      if (division) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/division/${division}`);
+        setAllSystemUsers(res.data);
+      } else {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users`);
+        setAllSystemUsers(res.data);
       }
     } catch (err) { console.error("Error fetching users:", err); }
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const user = res.data;
+        if (user) {
+          const fetchedProfile = {
+            name: user.fullName || 'User',
+            reg: user.employeeId || '',
+            email: user.email || '',
+            phone: user.phoneNo || ''
+          };
+          setProfileData(fetchedProfile);
+          setProfileForm(fetchedProfile);
+          setProfilePic(user.profilePic || null);
+
+          localStorage.setItem('fullName', user.fullName || '');
+          localStorage.setItem('employeeId', user.employeeId || '');
+          localStorage.setItem('email', user.email || '');
+          localStorage.setItem('phoneNo', user.phoneNo || '');
+          localStorage.setItem('profilePic', user.profilePic || '');
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching engineer profile:", err);
+    }
   };
 
   useEffect(() => {
@@ -102,6 +177,7 @@ const EngineerDashboard = () => {
     fetchData();
     fetchUsers();
     fetchAllProjects();
+    fetchUserProfile();
   }, []);
 
   const formatDate = (dateString) => {
@@ -195,18 +271,97 @@ const EngineerDashboard = () => {
 
   const handleAssigneeChange = async (jobNo, newAssignee) => {
     try {
-        await axios.patch(url, { assignee: newAssignee });
-        setJobTrackingData(prev => prev.map(j => j.jobNo === jobNo ? { ...j, assignee: newAssignee } : j));
+      await axios.patch(`http://127.0.0.1:5000/api/projects/assign/${jobNo}`, { assignee: newAssignee });
+      await fetchData();
+      await fetchAllProjects();
+      addToast(`Assigned to ${newAssignee}`, 'success');
     } catch (error) { console.error("Failed to update:", error); }
   };
 
-  const handleSaveProfile = () => {
-    setProfileData(profileForm);
-    addToast('Profile updated!', 'success');
+  const handleSaveProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        addToast("User session not found", "error");
+        return;
+      }
+      const payload = {
+        fullName: profileForm.name,
+        email: profileForm.email,
+        phoneNo: profileForm.phone
+      };
+      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      if (res.data) {
+        setProfileData(profileForm);
+        localStorage.setItem('fullName', profileForm.name);
+        localStorage.setItem('employeeId', profileForm.reg);
+        localStorage.setItem('email', profileForm.email);
+        localStorage.setItem('phoneNo', profileForm.phone);
+        addToast('Profile updated!', 'success');
+      }
+    } catch (err) {
+      console.error("Error updating engineer profile:", err);
+      addToast(err.response?.data?.error || "Failed to update profile", "error");
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        setProfilePic(base64Data);
+        localStorage.setItem('profilePic', base64Data);
+
+        try {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+              profilePic: base64Data
+            });
+            addToast("Profile photo updated successfully!", "success");
+          }
+        } catch (err) {
+          console.error("Error saving engineer profile photo to backend:", err);
+          addToast("Failed to sync photo to database", "error");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleUserFormChange = (e) => {
     setUserFormData({ ...userFormData, [e.target.name]: e.target.value });
+  };
+
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    const payload = {
+      employeeId: userFormData.employeeId,
+      fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
+      email: userFormData.email,
+      password: userFormData.password,
+      division: userFormData.division || localStorage.getItem('userDivision') || '',
+      role: userFormData.role
+    };
+    try {
+      await axios.post('http://127.0.0.1:5000/api/users/add', payload);
+      addToast('User saved! They can now log in.', 'success');
+      setUserFormData({
+        employeeId: '',
+        firstName: '',
+        secondName: '',
+        email: '',
+        password: '',
+        division: localStorage.getItem('userDivision') || '',
+        role: ''
+      });
+      await fetchUsers();
+    } catch (err) {
+      const errMsg = err.response?.data?.error || 'Save failed. Check if all fields are filled.';
+      addToast(errMsg, 'error');
+    }
   };
 
   const handleChangePassword = async (e) => {
@@ -214,11 +369,11 @@ const EngineerDashboard = () => {
     if (isChangingPassword) return;
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert("New password and confirmation don't match.");
+      addToast("New password and confirmation don't match.", 'warning');
       return;
     }
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
-      alert("Please fill in all password fields.");
+      addToast("Please fill in all password fields.", 'warning');
       return;
     }
 
@@ -229,43 +384,21 @@ const EngineerDashboard = () => {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
-      alert("Password updated successfully!");
+      addToast("Password updated successfully!", 'success');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
       const code = err.response?.data?.error;
       if (code === 'INCORRECT_CURRENT_PASSWORD') {
-        alert("Current password is incorrect.");
+        addToast("Current password is incorrect.", 'error');
       } else if (code === 'PASSWORD_TOO_SHORT') {
-        alert("New password is too short.");
+        addToast("New password is too short.", 'error');
       } else {
-        alert("Failed to update password. Please try again.");
+        addToast("Failed to update password. Please try again.", 'error');
       }
     } finally {
       setIsChangingPassword(false);
     }
   };
-
-  // Inside EngineerDashboard.jsx
-const handleSaveUser = async (e) => {
-    e.preventDefault();
-    const payload = {
-        employeeId: userFormData.employeeId, // Essential for Login
-        fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
-        email: userFormData.email,
-        password: userFormData.password,      // Essential for Login
-        division: userFormData.division,
-        role: 'engineer'
-    };
-    try {
-        await axios.post('http://127.0.0.1:5000/api/users/add', payload);
-        alert("User saved! They can now log in using their Employee ID.");
-        // Reset form
-        setUserFormData({ employeeId: '', firstName: '', secondName: '', email: '', password: '', division: '' });
-        await fetchUsers(); 
-    } catch (err) {
-      addToast('Save failed. Check if all fields are filled.', 'error');
-    }
-};
 
   /* ─── Computed stats ─── */
   const totalDivisionJobs = approvalData.length;
@@ -283,7 +416,6 @@ const handleSaveUser = async (e) => {
   /* ─── Compute Smart Suggestions & Recommendations ─── */
   const usersWithJobs = allSystemUsers.map(user => {
     const name = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
-    // Count active (non-completed) jobs across all projects assigned to this user
     const jobCount = allProjects.filter(job => job.assignee === name && job.status !== 'Approved' && job.status !== 'Rejected').length;
     return {
       ...user,
@@ -296,7 +428,6 @@ const handleSaveUser = async (e) => {
     const recs = [];
     const engineers = usersWithJobs.filter(u => u.role === 'engineer');
 
-    // 1. Workload Imbalance check
     if (engineers.length > 1) {
       const sortedByJobs = [...engineers].sort((a, b) => b.jobCount - a.jobCount);
       const busiest = sortedByJobs[0];
@@ -310,7 +441,6 @@ const handleSaveUser = async (e) => {
       }
     }
 
-    // 2. Unassigned jobs check
     const divisionUnassigned = approvalData.filter(job => !job.assignee);
     if (divisionUnassigned.length > 0) {
       recs.push({
@@ -319,7 +449,6 @@ const handleSaveUser = async (e) => {
       });
     }
 
-    // 3. Pending approvals review check
     if (pendingApprovals > 0) {
       recs.push({
         type: 'danger',
@@ -327,7 +456,6 @@ const handleSaveUser = async (e) => {
       });
     }
 
-    // 4. Default if empty
     if (recs.length === 0) {
       recs.push({
         type: 'success',
@@ -355,6 +483,9 @@ const handleSaveUser = async (e) => {
             </div>
             <h3>{profileData.name}</h3>
             <p className="reg-number">{profileData.reg}</p>
+            <p className="role-title" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', marginTop: '4px', textTransform: 'uppercase' }}>
+              {formatRoleName(localStorage.getItem('role') || 'engineer')}
+            </p>
           </div>
           <nav className="sidebar-nav">
             {[
@@ -401,13 +532,6 @@ const handleSaveUser = async (e) => {
               <Shield size={18} /> {currentDivision} Division
             </motion.div>
           )}
-          {activeTab === 'my-jobs' && (
-            <>
-
-              <div className="sub-tabs" style={{ marginBottom: '20px', borderBottom: '1px solid #ccc' }}>
-                <button onClick={() => setJobSubTab('approvals')} style={{ padding: '10px', background: jobSubTab === 'approvals' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Approval Requests</button>
-                <button onClick={() => setJobSubTab('tracking')} style={{ padding: '10px', background: jobSubTab === 'tracking' ? '#ddd' : 'transparent', border: 'none', cursor: 'pointer' }}>Assignee</button>
-              </div>
 
           {/* ─── Stat Cards ─── */}
           <motion.div
@@ -461,7 +585,7 @@ const handleSaveUser = async (e) => {
                         <thead>
                           <tr>
                             <th>User Name</th>
-                            <th>Role</th>
+                            <th>Position</th>
                             <th>Division</th>
                             <th style={{ textAlign: 'center' }}>Active Jobs</th>
                           </tr>
@@ -480,8 +604,8 @@ const handleSaveUser = async (e) => {
                               <tr key={user._id}>
                                 <td className="font-bold">{user.displayName}</td>
                                 <td>
-                                  <span className={`status-badge status-${user.role === 'admin' ? 'rejected' : user.role === 'engineer' ? 'approved' : 'pending'}`}>
-                                    {user.role}
+                                  <span className={`status-badge ${getRoleBadgeClass(user.role)}`}>
+                                    {formatRoleName(user.role)}
                                   </span>
                                 </td>
                                 <td>{user.division || 'Head Office'}</td>
@@ -658,76 +782,35 @@ const handleSaveUser = async (e) => {
                         </table>
                       </div>
 
-               <h3>System Users</h3>
-               <table className="project-table">
-                 <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Email</th><th>Division</th><th>Action</th></tr></thead>
-                 <tbody>
-  {allSystemUsers.map((user, i) => (
-    <tr key={user._id}>
-      <td>{i + 1}</td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.employeeId || ''} 
-            onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.employeeId}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.fullName || ''} 
-            onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.fullName}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.email || ''} 
-            onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.email}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <input 
-            value={editUserForm.division || ''} 
-            onChange={e => setEditUserForm({...editUserForm, division: e.target.value})}
-            style={{ display: 'block', width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-          />
-        ) : user.division}
-      </td>
-      <td>
-        {editingUser === user._id ? (
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button onClick={handleUpdateUser} style={{ background: '#28a745', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              <Check size={16} />
-            </button>
-            <button onClick={() => setEditingUser(null)} style={{ background: '#dc3545', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              <X size={16} />
-            </button>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', gap: '5px' }}>
-            <button className="edit-btn" onClick={() => startEditUser(user)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}>
-              <Edit3 size={16} />
-            </button>
-            <button className="delete-btn" onClick={() => handleDeleteUser(user._id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'red' }}>
-              <Trash2 size={16} />
-            </button>
-          </div>
-        )}
-      </td>
-    </tr>
-  ))}
-</tbody>
-               </table>
-             </div>
-          )}
+                      {/* Inline Edit Section */}
+                      <AnimatePresence>
+                        {editingJob && (
+                          <motion.div
+                            className="edit-section"
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.25 }}
+                          >
+                            <h3>Update Job: {editForm.jobNo}</h3>
+                            <div className="profile-form">
+                              <label>Job Name</label>
+                              <input value={editForm.jobName} onChange={(e) => setEditForm({...editForm, jobName: e.target.value})} placeholder="Job Name" />
+                              <label>Allocation</label>
+                              <input value={editForm.allocation} onChange={(e) => setEditForm({...editForm, allocation: e.target.value})} placeholder="Allocation" />
+                            </div>
+                            <div className="action-buttons">
+                              <button className="confirm-btn" onClick={handleUpdate}><Save size={14} /> Update Changes</button>
+                              <button className="cancel-btn" onClick={() => setEditingJob(null)}><X size={14} /> Cancel</button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
 
             {/* ── All Jobs Board Tab ── */}
             {activeTab === 'all-jobs' && (
@@ -738,39 +821,314 @@ const handleSaveUser = async (e) => {
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>All System Jobs Board</h3>
                   </div>
 
-          {activeTab === 'update-progress' && <div className="placeholder-content"><p>Content for Update Progress coming soon...</p></div>}
-          
-          {activeTab === 'settings' && (
-             <div className="settings-section" style={{ padding: '20px', background: 'white', borderRadius: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-               <h3>System Settings</h3>
-               <div className="profile-form"><label>THEME</label><select><option>Light Mode</option><option>Dark Mode</option></select></div>
+                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Job No</th>
+                          <th>Job Name</th>
+                          <th>Division</th>
+                          <th>Ministry</th>
+                          <th>Department</th>
+                          <th>Assignee</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allProjects.length === 0 ? (
+                          <tr>
+                            <td colSpan={7}>
+                              <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                <span>No system projects found.</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          allProjects.map((job) => (
+                            <tr key={job.jobNo}>
+                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-bold">{job.jobName}</td>
+                              <td>{job.division}</td>
+                              <td>{job.ministry}</td>
+                              <td>{job.department}</td>
+                              <td>
+                                {job.assignee ? (
+                                  <span className="font-bold" style={{ color: 'var(--accent-primary)' }}>{job.assignee}</span>
+                                ) : (
+                                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
+                                )}
+                              </td>
+                              <td>
+                                <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
+                                  {job.status || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
-               <h3 style={{ marginTop: '30px' }}>Change Password</h3>
-               <form className="profile-form" onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
-                 <label>CURRENT PASSWORD</label>
-                 <input
-                   type="password"
-                   value={passwordForm.currentPassword}
-                   onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                 />
-                 <label>NEW PASSWORD</label>
-                 <input
-                   type="password"
-                   value={passwordForm.newPassword}
-                   onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                 />
-                 <label>CONFIRM NEW PASSWORD</label>
-                 <input
-                   type="password"
-                   value={passwordForm.confirmPassword}
-                   onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                 />
-                 <button type="submit" className="confirm-btn" disabled={isChangingPassword}>
-                   {isChangingPassword ? 'Updating...' : 'Update Password'}
-                 </button>
-               </form>
-             </div>
-          )}
+            {/* ── Add User Tab ── */}
+            {activeTab === 'add-user' && (
+              <motion.div key="add-user" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+
+                <div className="profile-section">
+                  <h3><UserPlus size={18} /> Add User Into System</h3>
+                  <form className="profile-form" onSubmit={handleSaveUser}>
+                    <label>Employee ID *</label>
+                    <input name="employeeId" value={userFormData.employeeId} onChange={handleUserFormChange} required />
+                    <label>First Name *</label>
+                    <input name="firstName" value={userFormData.firstName} onChange={handleUserFormChange} required />
+                    <label>Second Name</label>
+                    <input name="secondName" value={userFormData.secondName} onChange={handleUserFormChange} />
+                    <label>Email Address *</label>
+                    <input type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required />
+                    <label>Password *</label>
+                    <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} required />
+                    <label>Division *</label>
+                    <input name="division" value={userFormData.division} disabled className="input-field" style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                    <label>Position *</label>
+                    <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
+                      <option value="" disabled>Select Position</option>
+                      <option value="division_assistant">Division Assistant</option>
+                      <option value="technical_officer">Technical Officer</option>
+                      <option value="clerk">Clerk</option>
+                    </select>
+                    <div className="action-buttons">
+                      <button type="submit" className="confirm-btn"><Save size={14} /> Save User</button>
+                      <button type="button" className="cancel-btn" onClick={() => setActiveTab('my-jobs')}><X size={14} /> Cancel</button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* System Users Table */}
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  style={{ marginTop: '28px' }}
+                >
+                  <h3 className="recent-jobs-title" style={{ marginBottom: '14px' }}>
+                    <Users size={18} /> System Users
+                  </h3>
+                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Employee ID</th>
+                          <th>Name</th>
+                          <th>Email</th>
+                          <th>Division</th>
+                          <th>Position</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allSystemUsers.length === 0 ? (
+                          <tr>
+                            <td colSpan={7}>
+                              <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
+                                <Users size={24} style={{ opacity: 0.35 }} />
+                                <span>No users in system yet</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          allSystemUsers.map((user, i) => (
+                            <tr key={user._id}>
+                              <td>{i + 1}</td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.employeeId || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
+                                    className="input-field"
+                                  />
+                                ) : <span className="font-mono">{user.employeeId}</span>}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.fullName || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
+                                    className="input-field"
+                                  />
+                                ) : <span className="font-bold">{user.fullName}</span>}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.email || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
+                                    className="input-field"
+                                  />
+                                ) : user.email}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <input
+                                    value={editUserForm.division || ''}
+                                    disabled
+                                    className="input-field"
+                                    style={{ opacity: 0.7, cursor: 'not-allowed' }}
+                                  />
+                                ) : user.division}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <select
+                                    value={editUserForm.role || ''}
+                                    onChange={e => setEditUserForm({...editUserForm, role: e.target.value})}
+                                    className="job-select-dropdown"
+                                  >
+                                    <option value="division_assistant">Division Assistant</option>
+                                    <option value="technical_officer">Technical Officer</option>
+                                    <option value="clerk">Clerk</option>
+                                  </select>
+                                ) : (
+                                  <span className={`status-badge ${getRoleBadgeClass(user.role)}`}>
+                                    {formatRoleName(user.role)}
+                                  </span>
+                                )}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <div style={{ display: 'flex', gap: '5px' }}>
+                                    <button className="approve-btn" onClick={handleUpdateUser} title="Save">
+                                      <Check size={15} />
+                                    </button>
+                                    <button className="reject-btn" onClick={() => setEditingUser(null)} title="Cancel">
+                                      <X size={15} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div style={{ display: 'flex', gap: '5px' }}>
+                                    <button className="edit-btn" onClick={() => startEditUser(user)} style={{ padding: '5px 8px' }}>
+                                      <Edit3 size={14} />
+                                    </button>
+                                    <button className="delete-btn" onClick={() => handleDeleteUser(user._id)}>
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+
+            {/* ── Profile Tab ── */}
+            {activeTab === 'profile' && (
+              <motion.div key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="profile-section">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
+                    <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative', margin: '0' }}>
+                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={40} />}
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
+                      <button 
+                        onClick={() => fileInputRef.current.click()} 
+                        className="approve-btn"
+                        style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <Camera size={14}/>
+                      </button>
+                    </div>
+                    <div>
+                      <h3 style={{ margin: 0 }}><Edit3 size={18} /> Personal Details</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your user credentials</p>
+                    </div>
+                  </div>
+                  <div className="profile-form">
+                    <label>Full Name</label>
+                    <input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
+                    <label>Employee ID</label>
+                    <input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
+                    <label>Email</label>
+                    <input value={profileForm.email || ''} onChange={(e) => setProfileForm({...profileForm, email: e.target.value})} />
+                    <label>Phone</label>
+                    <input value={profileForm.phone || ''} onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})} />
+                  </div>
+                  <div className="action-buttons">
+                    <button className="confirm-btn" onClick={handleSaveProfile}><Save size={14} /> Confirm</button>
+                    <button className="cancel-btn" onClick={() => setActiveTab('my-jobs')}><X size={14} /> Cancel</button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Update Progress Tab ── */}
+            {activeTab === 'update-progress' && (
+              <motion.div key="update-progress" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="placeholder-content">
+                <BarChart3 size={36} style={{ opacity: 0.35 }} />
+                <p>Update Progress — coming soon</p>
+              </motion.div>
+            )}
+
+            {/* ── Settings Tab ── */}
+            {activeTab === 'settings' && (
+              <motion.div key="settings" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="settings-section">
+                  <h3><Settings size={18} /> System Settings</h3>
+                  <div className="profile-form">
+                    <label>Theme Preferences</label>
+                    <select
+                      value={isDark ? 'Dark Mode' : 'Light Mode'}
+                      onChange={(e) => {
+                        const nextDark = e.target.value === 'Dark Mode';
+                        setIsDark(nextDark);
+                        localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                      }}
+                      className="job-select-dropdown"
+                    >
+                      <option value="Light Mode">Light Mode</option>
+                      <option value="Dark Mode">Dark Mode</option>
+                    </select>
+
+                    <h3 style={{ marginTop: '30px', borderTop: '1px solid var(--border-base)', paddingTop: '20px' }}>Change Password</h3>
+                    <form className="profile-form" onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+                      <label>CURRENT PASSWORD</label>
+                      <input
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                        className="input-field"
+                      />
+                      <label>NEW PASSWORD</label>
+                      <input
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                        className="input-field"
+                      />
+                      <label>CONFIRM NEW PASSWORD</label>
+                      <input
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        className="input-field"
+                      />
+                      <button type="submit" className="confirm-btn" disabled={isChangingPassword} style={{ marginTop: '10px' }}>
+                        {isChangingPassword ? 'Updating...' : 'Update Password'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
         </main>
       </div>
 

@@ -2,10 +2,14 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 
+// Components
+import Footer from './components/Footer/Footer.jsx'; 
+import './App.css';
+
 // Landing Portal
 import Portal from './pages/Portal';
 import DivisionLogin from './pages/DivisionLogin';
-import HeadOfficeLogin from './pages/HeadOfficeLogin'; // Added Head Office Login
+import HeadOfficeLogin from './pages/HeadOfficeLogin';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -22,27 +26,36 @@ import UserLogin from './pages/user/Login';
 function App() {
   return (
     <BrowserRouter>
+      {/* Routes define the content that changes based on the URL */}
       <Routes>
         {/* Main Entry Points */}
-        <Route path="/" element={<Portal />} />
+        <Route path="/" element={<><Portal /><Footer /></>} />
         <Route path="/division/login" element={<DivisionLogin />} />
-        <Route path="/headoffice/login" element={<HeadOfficeLogin />} /> {/* Added Route */}
+        <Route path="/headoffice/login" element={<HeadOfficeLogin />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin']}>
             <AdminDashboard />
           </ProtectedRoute>
         } />
         
         {/* Engineer Routes */}
         <Route path="/engineer/login" element={<EngineerLogin />} />
-        <Route path="/engineer/dashboard" element={<EngineerDashboard />} />      
+        <Route path="/engineer/dashboard" element={
+          <ProtectedRoute allowedRoles={['engineer']}>
+            <EngineerDashboard />
+          </ProtectedRoute>
+        } /> 
         
         {/* User Routes */}
         <Route path="/user/login" element={<UserLogin />} />
-        <Route path="/user/dashboard" element={<UserDashboard />} />
+        <Route path="/user/dashboard" element={
+          <ProtectedRoute allowedRoles={['admin', 'engineer']}>
+            <UserDashboard />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   );

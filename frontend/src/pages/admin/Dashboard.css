@@ -607,20 +607,21 @@ select.input-field option {
   font-family: 'Outfit', sans-serif !important;
   letter-spacing: 0.02em !important;
   border-radius: var(--radius-btn) !important;
-  border: 1.5px solid var(--border-base) !important;
+  border: 1.5px solid var(--danger) !important;
   cursor: pointer !important;
-  background: var(--bg-input) !important;
-  color: var(--text-secondary) !important;
+  background: var(--danger-soft) !important;
+  color: var(--danger) !important;
   transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
   width: auto !important;
   min-height: 40px !important;
 }
 
 .cancel-btn:hover {
-  background: var(--danger-soft) !important;
+  background: var(--danger) !important;
   border-color: var(--danger) !important;
-  color: var(--danger) !important;
+  color: #fff !important;
   transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(220,38,38,0.35) !important;
 }
 
 /* ============================================================

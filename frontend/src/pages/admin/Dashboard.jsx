@@ -109,13 +109,41 @@ const AdminDashboard = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const user = res.data;
+        if (user) {
+          setProfileName(user.fullName || 'User');
+          setRegNo(user.employeeId || '');
+          setEmail(user.email || '');
+          setPhoneNo(user.phoneNo || '');
+          setProfilePic(user.profilePic || null);
+
+          localStorage.setItem('fullName', user.fullName || '');
+          localStorage.setItem('employeeId', user.employeeId || '');
+          localStorage.setItem('email', user.email || '');
+          localStorage.setItem('phoneNo', user.phoneNo || '');
+          localStorage.setItem('profilePic', user.profilePic || '');
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching admin profile:", err);
+    }
+  };
+
+  useEffect(() => { 
+    fetchData(); 
+    fetchUserProfile();
+  }, []);
 
   const [profileName, setProfileName] = useState(localStorage.getItem('fullName') || 'John Doe');
   const [regNo, setRegNo] = useState(localStorage.getItem('employeeId') || 'REG/2021/CS/088');
   const [email, setEmail] = useState(localStorage.getItem('email') || 'john.doe@example.com');
-  const [phoneNo, setPhoneNo] = useState('071-2345678');
-  const [profilePic, setProfilePic] = useState(null);
+  const [phoneNo, setPhoneNo] = useState(localStorage.getItem('phoneNo') || '071-2345678');
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -138,12 +166,36 @@ const AdminDashboard = () => {
     setPhoneNo(phoneNo);
   };
 
-  const handleConfirmProfile = () => {
-    setProfileName(editProfileName);
-    setRegNo(editRegNo);
-    setEmail(editEmail);
-    setPhoneNo(editPhoneNo);
-    addToast('Profile saved successfully!', 'success');
+  const handleConfirmProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        addToast("User session not found", "error");
+        return;
+      }
+      const payload = {
+        fullName: editProfileName,
+        email: editEmail,
+        phoneNo: editPhoneNo
+      };
+      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      if (res.data) {
+        setProfileName(editProfileName);
+        setRegNo(editRegNo);
+        setEmail(editEmail);
+        setPhoneNo(editPhoneNo);
+
+        localStorage.setItem('fullName', editProfileName);
+        localStorage.setItem('employeeId', editRegNo);
+        localStorage.setItem('email', editEmail);
+        localStorage.setItem('phoneNo', editPhoneNo);
+
+        addToast("Profile saved successfully!", "success");
+      }
+    } catch (err) {
+      console.error("Error updating admin profile:", err);
+      addToast(err.response?.data?.error || "Failed to update profile", "error");
+    }
   };
 
   const handleCancelProfile = () => {
@@ -214,7 +266,24 @@ const AdminDashboard = () => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setProfilePic(reader.result);
+      reader.onloadend = async () => {
+        const base64Data = reader.result;
+        setProfilePic(base64Data);
+        localStorage.setItem('profilePic', base64Data);
+
+        try {
+          const userId = localStorage.getItem('userId');
+          if (userId) {
+            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+              profilePic: base64Data
+            });
+            addToast("Profile photo updated successfully!", "success");
+          }
+        } catch (err) {
+          console.error("Error saving admin profile photo to backend:", err);
+          addToast("Failed to sync photo to database", "error");
+        }
+      };
       reader.readAsDataURL(file);
     }
   };

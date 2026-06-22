@@ -1,5 +1,120 @@
-// Change password for a logged-in user. Requires the current password
-// to be correct before allowing the change.
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+
+// Allowed roles an engineer can assign to staff they add
+const ALLOWED_STAFF_ROLES = ['division_assistant', 'technical_officer', 'clerk'];
+
+// Add a new staff user (called by engineer dashboard)
+router.post('/add', async (req, res) => {
+    try {
+        const role = req.body.role;
+
+        // Prevent engineers from creating engineer or admin accounts
+        if (!ALLOWED_STAFF_ROLES.includes(role)) {
+            return res.status(400).json({
+                error: `Invalid role. Allowed values: ${ALLOWED_STAFF_ROLES.join(', ')}`
+            });
+        }
+
+        const userData = {
+            fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
+            employeeId: req.body.employeeId,
+            email: req.body.email,
+            password: req.body.password,
+            division: req.body.division,
+            role: role
+        };
+
+        const newUser = new User(userData);
+        await newUser.save();
+        res.status(201).json({ message: "User saved successfully!" });
+    } catch (err) {
+        console.error("DEBUG ERROR:", err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Delete user
+router.delete('/:id', async (req, res) => {
+    try {
+        const deletedUser = await User.findByIdAndDelete(req.params.id);
+        if (!deletedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.json({ message: "User deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get all users
+router.get('/', async (req, res) => {
+    try {
+        const users = await User.find();
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get users filtered by division (used by engineer dashboard)
+// NOTE: This route must be defined BEFORE '/:id' to avoid conflict
+router.get('/division/:division', async (req, res) => {
+    try {
+        const division = req.params.division;
+        const users = await User.find({ division: { $regex: new RegExp(`^${division}$`, 'i') } }).select('-password');
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update user details
+router.put('/:id', async (req, res) => {
+    try {
+        // Prevent elevating a user to engineer or admin via this route
+        if (req.body.role && !ALLOWED_STAFF_ROLES.includes(req.body.role)) {
+            return res.status(400).json({
+                error: `Invalid role. Allowed values: ${ALLOWED_STAFF_ROLES.join(', ')}`
+            });
+        }
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.json(updatedUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Update own profile (any role can update their own name, email, phone, profilePic)
+router.patch('/:id/profile', async (req, res) => {
+    try {
+        const { fullName, email, phoneNo, profilePic } = req.body;
+        const updateFields = {};
+        if (fullName !== undefined) updateFields.fullName = fullName;
+        if (email !== undefined) updateFields.email = email.toLowerCase();
+        if (phoneNo !== undefined) updateFields.phoneNo = phoneNo;
+        if (profilePic !== undefined) updateFields.profilePic = profilePic;
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateFields },
+            { new: true, runValidators: false }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'USER_NOT_FOUND' });
+        }
+        res.json(updatedUser);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Change password for a logged-in user. Requires the current password to be correct.
 router.patch('/:id/password', async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
@@ -21,7 +136,7 @@ router.patch('/:id/password', async (req, res) => {
             return res.status(401).json({ error: "INCORRECT_CURRENT_PASSWORD" });
         }
 
-        user.password = newPassword; // hashed automatically by the pre('save') hook
+        user.password = newPassword; // pre('save') hook hashes it
         await user.save();
 
         res.json({ status: "PASSWORD_UPDATED" });
@@ -29,3 +144,18 @@ router.patch('/:id/password', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Get single user details by ID
+router.get('/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: "USER_NOT_FOUND" });
+        }
+        res.json(user);
+    } catch (err) {
+        res.status(400).json({ error: "INVALID_USER_ID" });
+    }
+});
+
+module.exports = router;
