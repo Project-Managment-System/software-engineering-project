@@ -561,6 +561,32 @@
   width: 100%;
 }
 
+#cems-user-dashboard .table-scroll-wrapper {
+  width: 100%;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-base);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-table-header);
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
 #cems-user-dashboard .project-table {
   width: 100%;
   border-collapse: collapse;

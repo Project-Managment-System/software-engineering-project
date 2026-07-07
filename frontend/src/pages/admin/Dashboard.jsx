@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Save, Briefcase, RefreshCw, User, Settings, X, Edit, Trash2,
+  Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon
 } from 'lucide-react';
@@ -94,7 +94,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [activeTab, setActiveTab] = useState('New Job');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [jobs, setJobs] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -417,8 +417,8 @@ const AdminDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
+              { id: 'Overview', icon: BarChart3, label: 'Overview' },
               { id: 'New Job', icon: Plus, label: 'New Job' },
-              { id: 'Update Progress', icon: RefreshCw, label: 'Update Progress' },
               { id: 'Profile', icon: Edit3, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
@@ -845,15 +845,28 @@ const AdminDashboard = () => {
               </motion.section>
             )}
 
-            {activeTab === 'Update Progress' && (
+            {activeTab === 'Overview' && (
               <motion.section
-                key="update-progress"
+                key="overview"
                 variants={pageVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 className="project-table-section"
               >
+                {/* ── Overview Header ── */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <BarChart3 size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>System Overview</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Analytics and job status breakdown across all divisions</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* ── Filters Card ── */}
                 <div className="recent-jobs-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>

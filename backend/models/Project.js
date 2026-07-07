@@ -30,6 +30,12 @@ const ProjectSchema = new mongoose.Schema({
         default: 'Pending' 
     },
     
+    // Additional admin-entered fields
+    deptIdNo:   { type: String, default: '' },
+    source:     { type: String, default: '' },
+    dsDivision: { type: String, default: '' },
+    remark:     { type: String, default: '' },
+
     // Optional: Keep track of who assigned it if needed, 
     // though the system handles this via division
     assignedBy: { 

@@ -391,7 +391,7 @@ const UserDashboard = () => {
                     <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Division Allocated Jobs</h3>
                   </div>
-                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                  <div className="table-scroll-wrapper">
                     <table className="project-table">
                       <thead>
                         <tr>
@@ -531,7 +531,7 @@ const UserDashboard = () => {
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: '30px' }}>
                     <div className="field-card" style={{ padding: '24px' }}>
                       <h3 className="recent-jobs-title" style={{ marginBottom: '20px' }}>Submitted Structural Estimates</h3>
-                      <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                      <div className="table-scroll-wrapper">
                         <table className="project-table">
                           <thead>
                             <tr>
