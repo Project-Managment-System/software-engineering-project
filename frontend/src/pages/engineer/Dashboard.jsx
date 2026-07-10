@@ -12,9 +12,9 @@ import axios from 'axios';
 
 /* ─── Animation variants ─── */
 const pageVariants = {
-  hidden:  { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
-  exit:    { opacity: 0, y: -12, transition: { duration: 0.2 } }
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
 };
 
 const staggerContainer = {
@@ -22,7 +22,7 @@ const staggerContainer = {
 };
 
 const cardVariant = {
-  hidden:  { opacity: 0, y: 16, scale: 0.97 },
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
 };
 
@@ -33,7 +33,7 @@ const formatRoleName = (role) => {
     case 'admin': return 'Admin';
     case 'engineer': return 'Engineer';
     case 'division_assistant': return 'Division Assistant';
-    case 'user': return 'User';
+    case 'technical_officer': return 'Technical Officer';
     case 'clerk': return 'Clerk';
     default: return role;
   }
@@ -45,7 +45,7 @@ const getRoleBadgeClass = (role) => {
     case 'admin': return 'status-rejected';
     case 'engineer': return 'status-approved';
     case 'division_assistant': return 'status-success';
-    case 'user': return 'status-pending';
+    case 'technical_officer': return 'status-pending';
     case 'clerk': return 'status-success';
     default: return 'status-pending';
   }
@@ -119,15 +119,7 @@ const EngineerDashboard = () => {
         assignee: item.assignee || ''
       }));
       setApprovalData(data);
-      
-      const approvedJobs = res.data
-        .filter(item => item.status === 'Approved')
-        .map((item, index) => ({
-          ...item,
-          sNo: index + 1,
-          assignee: item.assignee || ''
-        }));
-      setJobTrackingData(approvedJobs);
+      setJobTrackingData(data);
     } catch (err) { console.error("Error fetching data:", err); }
   };
 
@@ -415,10 +407,10 @@ const EngineerDashboard = () => {
   const rejectedCount = approvalData.filter(j => j.status === 'Rejected').length;
 
   const statCards = [
-    { label: 'Division Jobs', value: totalDivisionJobs, icon: Briefcase,   color: 'var(--accent-primary)' },
-    { label: 'Pending',       value: pendingApprovals,  icon: Clock,       color: 'var(--warning)' },
-    { label: 'Approved',      value: approvedCount,     icon: CheckCircle, color: 'var(--success)' },
-    { label: 'Rejected',      value: rejectedCount,     icon: XCircle,     color: 'var(--danger, #ef4444)' },
+    { label: 'Division Jobs', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Pending', value: pendingApprovals, icon: Clock, color: 'var(--warning)' },
+    { label: 'Approved', value: approvedCount, icon: CheckCircle, color: 'var(--success)' },
+    { label: 'Rejected', value: rejectedCount, icon: XCircle, color: 'var(--danger)' },
   ];
 
   /* ─── Compute Smart Suggestions & Recommendations ─── */
@@ -440,7 +432,7 @@ const EngineerDashboard = () => {
       const sortedByJobs = [...engineers].sort((a, b) => b.jobCount - a.jobCount);
       const busiest = sortedByJobs[0];
       const leastBusy = sortedByJobs[sortedByJobs.length - 1];
-      
+
       if (busiest.jobCount >= 2 && leastBusy.jobCount === 0) {
         recs.push({
           type: 'warning',
@@ -497,13 +489,13 @@ const EngineerDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
-              { id: 'overview',        icon: BarChart3, label: 'Overview' },
-              { id: 'my-jobs',         icon: Briefcase, label: 'My Jobs' },
-              { id: 'all-jobs',        icon: Globe,     label: 'All Jobs' },
-              { id: 'add-user',        icon: UserPlus,  label: 'Add User' },
+              { id: 'overview', icon: BarChart3, label: 'Overview' },
+              { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
+              { id: 'all-jobs', icon: Globe, label: 'All Jobs' },
+              { id: 'add-user', icon: UserPlus, label: 'Add User' },
               { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
-              { id: 'profile',         icon: Edit3,     label: 'Profile' },
-              { id: 'settings',        icon: Settings,  label: 'Settings' },
+              { id: 'profile', icon: Edit3, label: 'Profile' },
+              { id: 'settings', icon: Settings, label: 'Settings' },
             ].map(item => (
               <button
                 key={item.id}
@@ -583,7 +575,7 @@ const EngineerDashboard = () => {
             {activeTab === 'overview' && (
               <motion.div key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-                  
+
                   {/* Left Column: Team & Resource Directory */}
                   <div className="field-card" style={{ padding: '24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
@@ -805,9 +797,9 @@ const EngineerDashboard = () => {
                             <h3>Update Job: {editForm.jobNo}</h3>
                             <div className="profile-form">
                               <label>Job Name</label>
-                              <input value={editForm.jobName} onChange={(e) => setEditForm({...editForm, jobName: e.target.value})} placeholder="Job Name" />
+                              <input value={editForm.jobName} onChange={(e) => setEditForm({ ...editForm, jobName: e.target.value })} placeholder="Job Name" />
                               <label>Allocation</label>
-                              <input value={editForm.allocation} onChange={(e) => setEditForm({...editForm, allocation: e.target.value})} placeholder="Allocation" />
+                              <input value={editForm.allocation} onChange={(e) => setEditForm({ ...editForm, allocation: e.target.value })} placeholder="Allocation" />
                             </div>
                             <div className="action-buttons">
                               <button className="confirm-btn" onClick={handleUpdate}><Save size={14} /> Update Changes</button>
@@ -907,7 +899,7 @@ const EngineerDashboard = () => {
                     <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
                       <option value="" disabled>Select Position</option>
                       <option value="division_assistant">Division Assistant</option>
-                      <option value="user">User</option>
+                      <option value="technical_officer">Technical Officer</option>
                       <option value="clerk">Clerk</option>
                     </select>
                     <div className="action-buttons">
@@ -958,7 +950,7 @@ const EngineerDashboard = () => {
                                 {editingUser === user._id ? (
                                   <input
                                     value={editUserForm.employeeId || ''}
-                                    onChange={e => setEditUserForm({...editUserForm, employeeId: e.target.value})}
+                                    onChange={e => setEditUserForm({ ...editUserForm, employeeId: e.target.value })}
                                     className="input-field"
                                   />
                                 ) : <span className="font-mono">{user.employeeId}</span>}
@@ -967,7 +959,7 @@ const EngineerDashboard = () => {
                                 {editingUser === user._id ? (
                                   <input
                                     value={editUserForm.fullName || ''}
-                                    onChange={e => setEditUserForm({...editUserForm, fullName: e.target.value})}
+                                    onChange={e => setEditUserForm({ ...editUserForm, fullName: e.target.value })}
                                     className="input-field"
                                   />
                                 ) : <span className="font-bold">{user.fullName}</span>}
@@ -976,7 +968,7 @@ const EngineerDashboard = () => {
                                 {editingUser === user._id ? (
                                   <input
                                     value={editUserForm.email || ''}
-                                    onChange={e => setEditUserForm({...editUserForm, email: e.target.value})}
+                                    onChange={e => setEditUserForm({ ...editUserForm, email: e.target.value })}
                                     className="input-field"
                                   />
                                 ) : user.email}
@@ -995,11 +987,11 @@ const EngineerDashboard = () => {
                                 {editingUser === user._id ? (
                                   <select
                                     value={editUserForm.role || ''}
-                                    onChange={e => setEditUserForm({...editUserForm, role: e.target.value})}
+                                    onChange={e => setEditUserForm({ ...editUserForm, role: e.target.value })}
                                     className="job-select-dropdown"
                                   >
                                     <option value="division_assistant">Division Assistant</option>
-                                    <option value="user">User</option>
+                                    <option value="technical_officer">Technical Officer</option>
                                     <option value="clerk">Clerk</option>
                                   </select>
                                 ) : (
@@ -1047,12 +1039,12 @@ const EngineerDashboard = () => {
                     <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative', margin: '0' }}>
                       {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={40} />}
                       <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
-                      <button 
-                        onClick={() => fileInputRef.current.click()} 
+                      <button
+                        onClick={() => fileInputRef.current.click()}
                         className="approve-btn"
                         style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        <Camera size={14}/>
+                        <Camera size={14} />
                       </button>
                     </div>
                     <div>
@@ -1062,13 +1054,13 @@ const EngineerDashboard = () => {
                   </div>
                   <div className="profile-form">
                     <label>Full Name</label>
-                    <input value={profileForm.name} onChange={(e) => setProfileForm({...profileForm, name: e.target.value})} />
+                    <input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} />
                     <label>Employee ID</label>
-                    <input value={profileForm.reg} onChange={(e) => setProfileForm({...profileForm, reg: e.target.value})} />
+                    <input value={profileForm.reg} onChange={(e) => setProfileForm({ ...profileForm, reg: e.target.value })} />
                     <label>Email</label>
-                    <input value={profileForm.email || ''} onChange={(e) => setProfileForm({...profileForm, email: e.target.value})} />
+                    <input value={profileForm.email || ''} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} />
                     <label>Phone</label>
-                    <input value={profileForm.phone || ''} onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})} />
+                    <input value={profileForm.phone || ''} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} />
                   </div>
                   <div className="action-buttons">
                     <button className="confirm-btn" onClick={handleSaveProfile}><Save size={14} /> Confirm</button>
