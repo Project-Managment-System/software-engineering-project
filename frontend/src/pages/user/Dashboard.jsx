@@ -604,35 +604,55 @@ const UserDashboard = () => {
               <motion.section key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="profile-view">
                 <div className="field-card" style={{ maxWidth: '600px', padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
-                    <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative' }}>
-                      {profilePic ? (
-                        profilePic.startsWith('data:application/pdf') ? (
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
-                            <FileText size={32} style={{ color: '#ef4444' }} />
-                          </div>
-                        ) : (
-                          <img src={profilePic} alt="Profile" />
-                        )
-                      ) : (
-                        <User size={40} />
-                      )}
-                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
-                      <button 
-                        onClick={() => fileInputRef.current.click()} 
-                        className="approve-btn"
-                        style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', padding: 0 }}
+                    <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>
+                      <div
+                        className="profile-photo"
+                        style={{ width: '100%', height: '100%', margin: 0, position: 'relative' }}
                       >
-                        <Camera size={14}/>
+                        {profilePic ? (
+                          <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <User size={40} />
+                        )}
+                      </div>
+                      <button
+                        onClick={() => fileInputRef.current.click()}
+                        style={{
+                          position: 'absolute',
+                          bottom: '0',
+                          right: '0',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--user-color, #10b981)',
+                          color: '#ffffff',
+                          border: '3px solid var(--bg-card, #100d28)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          padding: 0,
+                          zIndex: 10
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'scale(1.15)';
+                          e.currentTarget.style.backgroundColor = 'var(--user-color-hover, #059669)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.backgroundColor = 'var(--user-color, #10b981)';
+                        }}
+                        title="Change profile photo"
+                      >
+                        <Camera size={14} />
                       </button>
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
                     </div>
                     <div>
                       <h3 className="recent-jobs-title" style={{ margin: 0 }}>Personal Details</h3>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your user credentials</p>
-                      {profilePic && profilePic.startsWith('data:application/pdf') && (
-                        <a href="#" onClick={(e) => { e.preventDefault(); window.open(profilePic, '_blank'); }} style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textDecoration: 'underline', display: 'block', marginTop: '4px' }}>
-                          View PDF Attachment
-                        </a>
-                      )}
                     </div>
                   </div>
                   
