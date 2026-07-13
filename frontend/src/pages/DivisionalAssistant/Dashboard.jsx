@@ -203,24 +203,31 @@ const DivisionalAssistantDashboard = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Data = reader.result;
-        setProfilePic(base64Data);
-        localStorage.setItem('profilePic', base64Data);
-        try {
-          const userId = localStorage.getItem('userId');
-          if (userId) {
-            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, { profilePic: base64Data });
-            addToast('Profile photo updated!', 'success');
-          }
-        } catch (err) {
-          addToast('Failed to sync photo', 'error');
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    // Validate: only image files allowed
+    if (!file.type.startsWith('image/')) {
+      addToast('Only image files are allowed (JPG, PNG, GIF, WebP, etc.)', 'error');
+      e.target.value = ''; // reset input
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = reader.result;
+      setProfilePic(base64Data);
+      localStorage.setItem('profilePic', base64Data);
+      try {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, { profilePic: base64Data });
+          addToast('Profile photo updated!', 'success');
+        }
+      } catch (err) {
+        addToast('Failed to sync photo', 'error');
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   /* ─── Password change ─── */
@@ -764,7 +771,7 @@ const DivisionalAssistantDashboard = () => {
                         ) : (
                           <User size={36} />
                         )}
-                        <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*,application/pdf" style={{ display: 'none' }} />
+                        <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
                         <button
                           className="approve-btn"
                           onClick={() => fileInputRef.current.click()}
