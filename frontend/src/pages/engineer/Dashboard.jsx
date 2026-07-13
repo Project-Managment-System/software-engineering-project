@@ -378,7 +378,9 @@ const EngineerDashboard = () => {
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
+      const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
       localStorage.clear();
+      if (savedTheme) localStorage.setItem('theme', savedTheme);
       navigate('/');
     }
   };
@@ -493,28 +495,35 @@ const EngineerDashboard = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Data = reader.result;
-        setProfilePic(base64Data);
-        localStorage.setItem('profilePic', base64Data);
+    if (!file) return;
 
-        try {
-          const userId = localStorage.getItem('userId');
-          if (userId) {
-            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
-              profilePic: base64Data
-            });
-            addToast("Profile photo updated successfully!", "success");
-          }
-        } catch (err) {
-          console.error("Error saving engineer profile photo to backend:", err);
-          addToast("Failed to sync photo to database", "error");
-        }
-      };
-      reader.readAsDataURL(file);
+    // Validate: only image files allowed
+    if (!file.type.startsWith('image/')) {
+      addToast('Only image files are allowed (JPG, PNG, GIF, WebP, etc.)', 'error');
+      e.target.value = ''; // reset input
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = reader.result;
+      setProfilePic(base64Data);
+      localStorage.setItem('profilePic', base64Data);
+
+      try {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+            profilePic: base64Data
+          });
+          addToast("Profile photo updated successfully!", "success");
+        }
+      } catch (err) {
+        console.error("Error saving engineer profile photo to backend:", err);
+        addToast("Failed to sync photo to database", "error");
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUserFormChange = (e) => {
@@ -1315,7 +1324,7 @@ const EngineerDashboard = () => {
                       ) : (
                         <User size={40} />
                       )}
-                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*,application/pdf" style={{ display: 'none' }} />
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
                       <button
                         onClick={() => fileInputRef.current.click()}
                         className="approve-btn"
