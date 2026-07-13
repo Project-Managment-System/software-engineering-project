@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, RadialBarChart, RadialBar
@@ -241,7 +241,7 @@ const EngineerDashboard = () => {
         doc.setFontSize(8);
         doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()} · Division: ${currentDivision || 'N/A'}`, 14, 21);
         
-        doc.autoTable({
+        autoTable(doc, {
           head: [headers],
           body: rows,
           startY: 25,
@@ -647,7 +647,17 @@ const EngineerDashboard = () => {
         <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
             <div className="profile-photo">
-              {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}
+              {profilePic ? (
+                profilePic.startsWith('data:application/pdf') ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                    <FileText size={24} style={{ color: '#ef4444' }} />
+                  </div>
+                ) : (
+                  <img src={profilePic} alt="Profile" />
+                )
+              ) : (
+                <User size={48} />
+              )}
             </div>
             <h3>{profileData.name}</h3>
             <p className="reg-number">{profileData.reg}</p>
@@ -1247,8 +1257,18 @@ const EngineerDashboard = () => {
                 <div className="profile-section">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
                     <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative', margin: '0' }}>
-                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={40} />}
-                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
+                      {profilePic ? (
+                        profilePic.startsWith('data:application/pdf') ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                            <FileText size={32} style={{ color: '#ef4444' }} />
+                          </div>
+                        ) : (
+                          <img src={profilePic} alt="Profile" />
+                        )
+                      ) : (
+                        <User size={40} />
+                      )}
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*,application/pdf" style={{ display: 'none' }} />
                       <button
                         onClick={() => fileInputRef.current.click()}
                         className="approve-btn"
@@ -1260,6 +1280,11 @@ const EngineerDashboard = () => {
                     <div>
                       <h3 style={{ margin: 0 }}><Edit3 size={18} /> Personal Details</h3>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your user credentials</p>
+                      {profilePic && profilePic.startsWith('data:application/pdf') && (
+                        <a href="#" onClick={(e) => { e.preventDefault(); window.open(profilePic, '_blank'); }} style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textDecoration: 'underline', display: 'block', marginTop: '4px' }}>
+                          View PDF Attachment
+                        </a>
+                      )}
                     </div>
                   </div>
                   <div className="profile-form">
