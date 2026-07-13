@@ -19,7 +19,7 @@ export default function AdminLogin() {
       const response = await loginUser({ employeeId, password });
       
       if (response.data.status === 'LOGIN_SUCCESS') {
-        const { role, userId, fullName, email, division } = response.data;
+        const { role, userId, fullName, email, division, profilePic } = response.data;
         
         if (role !== 'admin' && role !== 'clerk') {
           alert("Access Denied: Account is not authorized for Admin login.");
@@ -33,6 +33,7 @@ export default function AdminLogin() {
         localStorage.setItem('fullName', fullName);
         localStorage.setItem('email', email || '');
         localStorage.setItem('role', role);
+        localStorage.setItem('profilePic', profilePic || '');
         if (division) localStorage.setItem('userDivision', division);
         localStorage.setItem('isAdmin', 'true'); // Required for route guards
 
