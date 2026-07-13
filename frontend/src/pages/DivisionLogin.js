@@ -56,7 +56,7 @@ export default function DivisionLogin() {
         password,
       });
 
-      const { role, userId, employeeId, fullName, email, division } = res.data;
+      const { role, userId, employeeId, fullName, email, division, profilePic } = res.data;
 
       // Store session info for the dashboards to use
       localStorage.setItem('userId', userId);
@@ -64,6 +64,7 @@ export default function DivisionLogin() {
       localStorage.setItem('fullName', fullName);
       localStorage.setItem('email', email || '');
       localStorage.setItem('role', role);
+      localStorage.setItem('profilePic', profilePic || '');
       if (division) localStorage.setItem('userDivision', division);
 
       // Route based on the real role from the database

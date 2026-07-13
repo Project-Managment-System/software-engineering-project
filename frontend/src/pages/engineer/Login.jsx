@@ -20,7 +20,7 @@ export default function EngineerLogin() {
       const response = await loginUser({ employeeId, password });
       
       if (response.data.status === 'LOGIN_SUCCESS') {
-        const { role, userId, fullName, email, division } = response.data;
+        const { role, userId, fullName, email, division, profilePic } = response.data;
         
         if (role !== 'engineer') {
           alert("Access Denied: Account is not authorized for Engineer login.");
@@ -34,6 +34,7 @@ export default function EngineerLogin() {
         localStorage.setItem('fullName', fullName);
         localStorage.setItem('email', email || '');
         localStorage.setItem('role', role);
+        localStorage.setItem('profilePic', profilePic || '');
         if (division) localStorage.setItem('userDivision', division);
 
         navigate('/engineer/dashboard');
