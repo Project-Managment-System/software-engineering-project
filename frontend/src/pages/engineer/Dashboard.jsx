@@ -6,7 +6,7 @@ import {
   Check, X, Menu, UserPlus, Undo, Trash2, Shield, Clock,
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3, Wrench, Filter,
   Globe, Sun, Moon, Lightbulb, Camera, TrendingUp, Activity,
-  FileText, FileSpreadsheet, Printer
+  FileText, FileSpreadsheet, Printer, MessageSquare, Send
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -128,6 +128,12 @@ const EngineerDashboard = () => {
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
+
+  /* ─── Chatbot state ─── */
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatEndRef = useRef(null);
   const addToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -139,6 +145,46 @@ const EngineerDashboard = () => {
     setIsDark(nextDark);
     localStorage.setItem('theme', nextDark ? 'dark' : 'light');
     addToast(`${nextDark ? 'Dark' : 'Light'} theme activated`, 'info');
+  };
+
+  /* ─── Chatbot handlers ─── */
+  const formatChatTime = () => {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const sendChatMessage = async (text) => {
+    const message = (text || chatInput).trim();
+    if (!message || chatLoading) return;
+    const division = localStorage.getItem('userDivision') || currentDivision || '';
+    setChatMessages(prev => [...prev, { role: 'user', text: message, time: formatChatTime() }]);
+    setChatInput('');
+    setChatLoading(true);
+    try {
+      const res = await axios.post('http://127.0.0.1:5000/api/chatbot/query', { message, division });
+      setChatMessages(prev => [...prev, { role: 'ai', text: res.data.response, time: formatChatTime() }]);
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'ai', text: '❌ Sorry, I could not reach the server. Please check your connection and try again.', time: formatChatTime() }]);
+    }
+    setChatLoading(false);
+  };
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, chatLoading]);
+
+  // Format AI markdown-like response to HTML
+  const formatBotMessage = (text) => {
+    return text
+      .split('\n')
+      .map((line, i) => {
+        line = line
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em>$1</em>');
+        return `<p key="${i}" style="margin:0 0 4px">${line || '&nbsp;'}</p>`;
+      })
+      .join('');
   };
 
   const fetchData = async () => {
@@ -676,13 +722,14 @@ const EngineerDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
-              { id: 'overview',        icon: BarChart3,   label: 'Overview' },
-              { id: 'my-jobs',         icon: Briefcase,   label: 'My Jobs' },
-              { id: 'all-jobs',        icon: Globe,       label: 'All Jobs' },
-              { id: 'add-user',        icon: UserPlus,    label: 'Add User' },
-              { id: 'view-progress',   icon: TrendingUp,  label: 'View Progress' },
-              { id: 'profile',         icon: Edit3,       label: 'Profile' },
-              { id: 'settings',        icon: Settings,    label: 'Settings' },
+              { id: 'overview',        icon: BarChart3,      label: 'Overview' },
+              { id: 'my-jobs',         icon: Briefcase,      label: 'My Jobs' },
+              { id: 'all-jobs',        icon: Globe,          label: 'All Jobs' },
+              { id: 'add-user',        icon: UserPlus,       label: 'Add User' },
+              { id: 'view-progress',   icon: TrendingUp,     label: 'View Progress' },
+              { id: 'ai-chatbot',      icon: MessageSquare,  label: 'AI Assistant' },
+              { id: 'profile',         icon: Edit3,          label: 'Profile' },
+              { id: 'settings',        icon: Settings,       label: 'Settings' },
             ].map(item => (
               <button
                 key={item.id}
@@ -1567,6 +1614,124 @@ const EngineerDashboard = () => {
                       </button>
                     </form>
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── AI Chatbot Tab ── */}
+            {activeTab === 'ai-chatbot' && (
+              <motion.div key="ai-chatbot" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="chatbot-wrapper">
+
+                  {/* Header */}
+                  <div className="chatbot-header">
+                    <div className="chatbot-header-icon">
+                      <MessageSquare size={22} />
+                    </div>
+                    <div className="chatbot-header-info" style={{ flex: 1 }}>
+                      <p className="chatbot-header-title">CEMS AI Assistant</p>
+                      <p className="chatbot-header-subtitle">
+                        {currentDivision ? `${currentDivision} Division` : 'Engineer Dashboard'} · Smart Insights
+                      </p>
+                    </div>
+                    <div className="chatbot-status-dot" title="Online" />
+                  </div>
+
+                  {/* Quick Suggestion Chips */}
+                  <div className="chatbot-chips-bar">
+                    {[
+                      { emoji: '📊', label: 'Division Summary' },
+                      { emoji: '📅', label: 'Weekly Progress' },
+                      { emoji: '💡', label: 'Give me ideas' },
+                      { emoji: '🕐', label: 'Pending projects' },
+                      { emoji: '🔧', label: 'Ongoing projects' },
+                      { emoji: '✅', label: 'Completed projects' },
+                      { emoji: '💰', label: 'Allocation report' },
+                      { emoji: '🏛️', label: 'Ministry report' },
+                      { emoji: '👥', label: 'Team report' },
+                    ].map(chip => (
+                      <button
+                        key={chip.label}
+                        className="chatbot-chip"
+                        onClick={() => sendChatMessage(chip.label)}
+                      >
+                        <span>{chip.emoji}</span> {chip.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Messages */}
+                  <div className="chatbot-messages">
+                    {chatMessages.length === 0 ? (
+                      <div className="chatbot-welcome">
+                        <div className="chatbot-welcome-icon">
+                          <MessageSquare size={32} />
+                        </div>
+                        <h3>Hello, Engineer! 👋</h3>
+                        <p>
+                          I'm your AI Assistant powered by live project data from the <strong>{currentDivision || 'your'}</strong> division.
+                          Ask me for summaries, progress reports, recommendations, or use the quick chips above to get started!
+                        </p>
+                      </div>
+                    ) : (
+                      chatMessages.map((msg, idx) => (
+                        <div key={idx} className={`chatbot-msg-row ${msg.role === 'user' ? 'user-row' : ''}`}>
+                          <div className={`chatbot-avatar ${msg.role === 'ai' ? 'ai-avatar' : 'user-avatar'}`}>
+                            {msg.role === 'ai' ? '🤖' : '👤'}
+                          </div>
+                          <div>
+                            <div
+                              className={`chatbot-bubble ${msg.role === 'ai' ? 'ai-bubble' : 'user-bubble'}`}
+                              dangerouslySetInnerHTML={msg.role === 'ai'
+                                ? { __html: formatBotMessage(msg.text) }
+                                : undefined
+                              }
+                            >
+                              {msg.role === 'user' ? msg.text : undefined}
+                            </div>
+                            <div className="chatbot-timestamp">{msg.time}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+
+                    {/* Typing indicator */}
+                    {chatLoading && (
+                      <div className="chatbot-msg-row">
+                        <div className="chatbot-avatar ai-avatar">🤖</div>
+                        <div className="chatbot-typing">
+                          <span /><span /><span />
+                        </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Input area */}
+                  <div className="chatbot-input-area">
+                    <textarea
+                      className="chatbot-input"
+                      placeholder="Ask me about your projects, progress, ideas..."
+                      value={chatInput}
+                      onChange={e => setChatInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          sendChatMessage();
+                        }
+                      }}
+                      rows={1}
+                    />
+                    <button
+                      className="chatbot-send-btn"
+                      onClick={() => sendChatMessage()}
+                      disabled={!chatInput.trim() || chatLoading}
+                      title="Send message"
+                    >
+                      <Send size={18} />
+                    </button>
+                  </div>
+
                 </div>
               </motion.div>
             )}
