@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Save, Briefcase, RefreshCw, User, Settings, X, Edit, Trash2,
+  Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon
 } from 'lucide-react';
@@ -94,14 +94,14 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [activeTab, setActiveTab] = useState('New Job');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [jobs, setJobs] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
     allocation: '', dateReq: '', ref: '', institute: '',
-    deptIdNo: '', source: ''
+    deptIdNo: '', source: '', dsDivision: ''
   });
 
   const [filters, setFilters] = useState({ department: '', ministry: '', division: '' });
@@ -122,7 +122,17 @@ const AdminDashboard = () => {
   };
 
   const handleFilterChange = (e) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFilters((prev) => {
+      const nextFilters = { ...prev, [name]: value };
+      if (name === 'ministry') {
+        const allowedDepts = MINISTRY_DEPARTMENTS[value] || [];
+        if (value && prev.department && !allowedDepts.includes(prev.department)) {
+          nextFilters.department = '';
+        }
+      }
+      return nextFilters;
+    });
   };
 
   const fetchData = async () => {
@@ -284,7 +294,7 @@ const AdminDashboard = () => {
     setFormData({
       jobName: '', ministry: '', department: '', division: '',
       allocation: '', dateReq: '', ref: '', institute: '',
-      deptIdNo: '', source: ''
+      deptIdNo: '', source: '', dsDivision: ''
     });
   };
 
@@ -319,9 +329,32 @@ const AdminDashboard = () => {
     return [...new Set(values)].sort();
   };
 
-  const departmentOptions = getUniqueValues('department');
-  const ministryOptions = getUniqueValues('ministry');
-  const divisionOptions = getUniqueValues('division');
+  const ministryOptions = [...new Set([
+    ...Object.keys(MINISTRY_DEPARTMENTS),
+    ...getUniqueValues('ministry')
+  ])].sort();
+
+  const divisionOptions = [...new Set([
+    'Anuradhapura-East',
+    'Anuradhapura-West',
+    'Medawachchiya',
+    'Mihinthale',
+    'Kekirawa',
+    'Thabuththegama',
+    'Polonnaruwa',
+    'Higurakgoda',
+    ...getUniqueValues('division')
+  ])].sort();
+
+  const departmentOptions = filters.ministry
+    ? [...new Set([
+        ...(MINISTRY_DEPARTMENTS[filters.ministry] || []),
+        ...jobs.filter(j => j.ministry === filters.ministry).map(j => j.department).filter(Boolean)
+      ])].sort()
+    : [...new Set([
+        ...Object.values(MINISTRY_DEPARTMENTS).flat(),
+        ...getUniqueValues('department')
+      ])].sort();
 
   const filteredJobs = jobs.filter((j) => {
     if (filters.department && j.department !== filters.department) return false;
@@ -384,8 +417,8 @@ const AdminDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
+              { id: 'Overview', icon: BarChart3, label: 'Overview' },
               { id: 'New Job', icon: Plus, label: 'New Job' },
-              { id: 'Update Progress', icon: RefreshCw, label: 'Update Progress' },
               { id: 'Profile', icon: Edit3, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
@@ -587,6 +620,16 @@ const AdminDashboard = () => {
                         <label>Request Letter Reference <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                         <input name="ref" value={formData.ref} onChange={handleInputChange} className="input-field" required />
                       </div>
+                      <div className="input-row-group">
+                        <label>DS Division</label>
+                        <input
+                          name="dsDivision"
+                          value={formData.dsDivision || ''}
+                          onChange={handleInputChange}
+                          className="input-field"
+                          placeholder="e.g. Anuradhapura-East"
+                        />
+                      </div>
                     </div>
 
                     {/* ── New fields ── */}
@@ -635,21 +678,21 @@ const AdminDashboard = () => {
 
                   <div className="table-filters-row">
                     <div className="input-row-group">
-                      <label><Filter size={12} /> Filter by Department</label>
-                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
-                        <option value="">All Departments</option>
-                        {departmentOptions.map((d) => (
-                          <option key={d} value={d}>{d}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Ministry</label>
                       <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
                         <option value="">All Ministries</option>
                         {ministryOptions.map((m) => (
                           <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Department</label>
+                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Departments</option>
+                        {departmentOptions.map((d) => (
+                          <option key={d} value={d}>{d}</option>
                         ))}
                       </select>
                     </div>
@@ -675,7 +718,7 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Est. No</th><th>Job No</th><th>Division</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
+                          <th>Est. No</th><th>Job No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -703,13 +746,13 @@ const AdminDashboard = () => {
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
                               <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
                               <td className="font-mono">{j.jobNo}</td>
-                              <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
                               <td>{j.department}</td>
                               <td>{j.institute}</td>
                               <td>{j.deptIdNo || '—'}</td>
                               <td>{j.source || '—'}</td>
+                              <td>{j.dsDivision || '—'}</td>
                               <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
                               <td className="font-bold">{j.allocation}</td>
                               <td>{j.remark}</td>
@@ -802,15 +845,28 @@ const AdminDashboard = () => {
               </motion.section>
             )}
 
-            {activeTab === 'Update Progress' && (
+            {activeTab === 'Overview' && (
               <motion.section
-                key="update-progress"
+                key="overview"
                 variants={pageVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 className="project-table-section"
               >
+                {/* ── Overview Header ── */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <BarChart3 size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>System Overview</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Analytics and job status breakdown across all divisions</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* ── Filters Card ── */}
                 <div className="recent-jobs-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>

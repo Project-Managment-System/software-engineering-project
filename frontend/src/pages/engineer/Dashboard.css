@@ -19,6 +19,7 @@
   --bg-table-header: #eaf7ff;
   --bg-table-alt:    #f5fbff;
   --bg-table-hover:  #e0f4ff;
+  --bg-subtle:       #f0f6fc;
   --border-base:     #d0eaf8;
   --border-light:    #e5f4ff;
   --text-primary:    #050e1f;
@@ -59,6 +60,7 @@
   --bg-table-header: #071020;
   --bg-table-alt:    #081221;
   --bg-table-hover:  #0d1a30;
+  --bg-subtle:       rgba(255,255,255,0.03);
   --border-base:     rgba(6,182,212,0.15);
   --border-light:    rgba(6,182,212,0.07);
   --text-primary:    #e2f8ff;
@@ -423,6 +425,32 @@
 /* ============================================================
    8. TABLE — Engineer (project-table)
    ============================================================ */
+#cems-user-dashboard .table-scroll-wrapper {
+  width: 100%;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-base);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-table-header);
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
+}
+
+#cems-user-dashboard .table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
 #cems-user-dashboard .project-table {
   width: 100%;
   border-collapse: collapse;
@@ -906,3 +934,82 @@
     min-width: 700px;
   }
 }
+
+/* ============================================================
+   18. VIEW PROGRESS — Charts & Analytics
+   ============================================================ */
+#cems-user-dashboard .analytics-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+/* Status success badge */
+#cems-user-dashboard .status-badge.status-success {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: rgba(5,150,105,0.2);
+}
+#cems-user-dashboard .status-badge.status-success::before { background: var(--success); }
+
+/* ============================================================
+   19. TABLE EXPORTS - PDF, Excel, Print
+   ============================================================ */
+#cems-user-dashboard .table-export-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+#cems-user-dashboard .export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#cems-user-dashboard .export-btn.pdf-export {
+  color: #ef4444;
+}
+#cems-user-dashboard .export-btn.pdf-export:hover {
+  background: #fef2f2;
+  border-color: #fee2e2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
+}
+
+#cems-user-dashboard .export-btn.excel-export {
+  color: #10b981;
+}
+#cems-user-dashboard .export-btn.excel-export:hover {
+  background: #ecfdf5;
+  border-color: #d1fae5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+#cems-user-dashboard .export-btn.print-export {
+  color: var(--accent-primary);
+}
+#cems-user-dashboard .export-btn.print-export:hover {
+  background: var(--accent-soft);
+  border-color: rgba(99, 102, 241, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+}
+
+#cems-user-dashboard.dark-mode .export-btn:hover {
+  background: var(--bg-input) !important;
+  border-color: var(--border-base) !important;
+}
+

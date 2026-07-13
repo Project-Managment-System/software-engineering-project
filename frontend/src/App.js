@@ -23,6 +23,9 @@ import EngineerLogin from './pages/engineer/Login';
 import UserDashboard from './pages/user/Dashboard';
 import UserLogin from './pages/user/Login';
 
+// Divisional Assistant Pages
+import DivisionalAssistantDashboard from './pages/DivisionalAssistant/Dashboard';
+
 function App() {
   return (
     <BrowserRouter>
@@ -54,6 +57,13 @@ function App() {
         <Route path="/user/dashboard" element={
           <ProtectedRoute allowedRoles={['user']}>
             <UserDashboard />
+          </ProtectedRoute>
+        } />
+
+        {/* Divisional Assistant Routes */}
+        <Route path="/divisional-assistant/dashboard" element={
+          <ProtectedRoute allowedRoles={['division_assistant']}>
+            <DivisionalAssistantDashboard />
           </ProtectedRoute>
         } />
       </Routes>

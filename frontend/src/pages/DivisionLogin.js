@@ -75,6 +75,9 @@ export default function DivisionLogin() {
       } else if (role === 'user') {
         localStorage.setItem('isAuthenticated', 'true'); // required by UserDashboard guard
         navigate('/user/dashboard');
+      } else if (role === 'division_assistant') {
+        localStorage.setItem('isAuthenticated', 'true');
+        navigate('/divisional-assistant/dashboard');
       } else {
         alert('This portal is not yet available for your account role.');
       }
