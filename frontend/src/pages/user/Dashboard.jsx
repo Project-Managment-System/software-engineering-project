@@ -134,7 +134,9 @@ const UserDashboard = () => {
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
+      const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
       localStorage.clear();
+      if (savedTheme) localStorage.setItem('theme', savedTheme);
       navigate('/');
     }
   };

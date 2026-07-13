@@ -253,7 +253,9 @@ const DivisionalAssistantDashboard = () => {
 
   /* ─── Logout ─── */
   const handleLogout = () => {
+    const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
     localStorage.clear();
+    if (savedTheme) localStorage.setItem('theme', savedTheme);
     navigate('/division/login');
   };
 

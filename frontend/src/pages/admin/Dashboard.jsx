@@ -238,8 +238,10 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
+    const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
     localStorage.removeItem('isAdmin');
     localStorage.clear();
+    if (savedTheme) localStorage.setItem('theme', savedTheme);
     navigate('/');
   };
 
