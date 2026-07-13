@@ -3,7 +3,8 @@ import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
-  Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X
+  Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
+  FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -307,7 +308,17 @@ const UserDashboard = () => {
         <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
             <div className="profile-photo">
-              {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}
+              {profilePic ? (
+                profilePic.startsWith('data:application/pdf') ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                    <FileText size={24} style={{ color: '#ef4444' }} />
+                  </div>
+                ) : (
+                  <img src={profilePic} alt="Profile" />
+                )
+              ) : (
+                <User size={48} />
+              )}
             </div>
             <div className="profile-info">
               <h3>{profileName}</h3>
@@ -587,8 +598,18 @@ const UserDashboard = () => {
                 <div className="field-card" style={{ maxWidth: '600px', padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
                     <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative' }}>
-                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={40} />}
-                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
+                      {profilePic ? (
+                        profilePic.startsWith('data:application/pdf') ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                            <FileText size={32} style={{ color: '#ef4444' }} />
+                          </div>
+                        ) : (
+                          <img src={profilePic} alt="Profile" />
+                        )
+                      ) : (
+                        <User size={40} />
+                      )}
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*,application/pdf" style={{ display: 'none' }} />
                       <button 
                         onClick={() => fileInputRef.current.click()} 
                         className="approve-btn"
@@ -600,6 +621,11 @@ const UserDashboard = () => {
                     <div>
                       <h3 className="recent-jobs-title" style={{ margin: 0 }}>Personal Details</h3>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your user credentials</p>
+                      {profilePic && profilePic.startsWith('data:application/pdf') && (
+                        <a href="#" onClick={(e) => { e.preventDefault(); window.open(profilePic, '_blank'); }} style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textDecoration: 'underline', display: 'block', marginTop: '4px' }}>
+                          View PDF Attachment
+                        </a>
+                      )}
                     </div>
                   </div>
                   

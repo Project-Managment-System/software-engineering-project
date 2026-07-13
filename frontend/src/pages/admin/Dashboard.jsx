@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
-  BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon
+  BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
+  FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -407,7 +408,13 @@ const AdminDashboard = () => {
           <div className="profile-box">
             <div className="profile-photo">
               {profilePic ? (
-                <img src={profilePic} alt="Profile" />
+                profilePic.startsWith('data:application/pdf') ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                    <FileText size={24} style={{ color: '#ef4444' }} />
+                  </div>
+                ) : (
+                  <img src={profilePic} alt="Profile" />
+                )
               ) : (
                 <User size={48} />
               )}
@@ -797,8 +804,18 @@ const AdminDashboard = () => {
                 <div className="field-card" style={{ maxWidth: '600px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
                     <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative' }}>
-                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={36} />}
-                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
+                      {profilePic ? (
+                        profilePic.startsWith('data:application/pdf') ? (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                            <FileText size={32} style={{ color: '#ef4444' }} />
+                          </div>
+                        ) : (
+                          <img src={profilePic} alt="Profile" />
+                        )
+                      ) : (
+                        <User size={36} />
+                      )}
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*,application/pdf" style={{ display: 'none' }} />
                       <button
                         className="approve-btn"
                         onClick={() => fileInputRef.current.click()}
@@ -810,6 +827,11 @@ const AdminDashboard = () => {
                     <div>
                       <h3 className="recent-jobs-title" style={{ margin: 0 }}>Personal Details</h3>
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your profile information</p>
+                      {profilePic && profilePic.startsWith('data:application/pdf') && (
+                        <a href="#" onClick={(e) => { e.preventDefault(); window.open(profilePic, '_blank'); }} style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', textDecoration: 'underline', display: 'block', marginTop: '4px' }}>
+                          View PDF Attachment
+                        </a>
+                      )}
                     </div>
                   </div>
 
