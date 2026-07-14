@@ -6,7 +6,7 @@ import {
   Check, X, Menu, Trash2, Shield, Clock,
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3,
   Sun, Moon, Camera, TrendingUp, Activity,
-  FileText, Globe, Filter
+  FileText, Globe, Filter, MessageSquare, Send
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -14,12 +14,13 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import DivisionChat from '../../components/DivisionChat';
 
 /* ─── Animation variants ─── */
 const pageVariants = {
-  hidden:  { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
-  exit:    { opacity: 0, y: -12, transition: { duration: 0.2 } }
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
 };
 
 const staggerContainer = {
@@ -27,7 +28,7 @@ const staggerContainer = {
 };
 
 const cardVariant = {
-  hidden:  { opacity: 0, y: 16, scale: 0.97 },
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
 };
 
@@ -108,6 +109,7 @@ const DivisionalAssistantDashboard = () => {
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
+  const [totalUnread, setTotalUnread] = useState(0);
   const addToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -182,6 +184,23 @@ const DivisionalAssistantDashboard = () => {
     fetchJobs();
     fetchUserProfile();
     // eslint-disable-next-line
+  }, []);
+
+  // Background polling for unread message badge (all tabs)
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    const pollUnread = async () => {
+      try {
+        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const counts = res.data || {};
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        setTotalUnread(total);
+      } catch (_) { }
+    };
+    pollUnread();
+    const id = setInterval(pollUnread, 4000);
+    return () => clearInterval(id);
   }, []);
 
   /* ─── Profile handlers ─── */
@@ -297,11 +316,11 @@ const DivisionalAssistantDashboard = () => {
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
   const statCards = [
-    { label: 'My Users',    value: totalUsers,    icon: Users,        color: 'var(--accent-primary)' },
-    { label: 'Total Jobs',  value: totalJobs,      icon: Briefcase,    color: '#6366f1' },
-    { label: 'Approved',    value: approvedJobs,   icon: CheckCircle,  color: 'var(--success)' },
-    { label: 'Pending',     value: pendingJobs,    icon: Clock,        color: 'var(--warning)' },
-    { label: 'Rejected',    value: rejectedJobs,   icon: XCircle,      color: 'var(--danger)' },
+    { label: 'My Users', value: totalUsers, icon: Users, color: 'var(--accent-primary)' },
+    { label: 'Total Jobs', value: totalJobs, icon: Briefcase, color: '#6366f1' },
+    { label: 'Approved', value: approvedJobs, icon: CheckCircle, color: 'var(--success)' },
+    { label: 'Pending', value: pendingJobs, icon: Clock, color: 'var(--warning)' },
+    { label: 'Rejected', value: rejectedJobs, icon: XCircle, color: 'var(--danger)' },
   ];
 
   return (
@@ -355,18 +374,25 @@ const DivisionalAssistantDashboard = () => {
 
           <nav className="sidebar-nav">
             {[
-              { id: 'overview',   icon: BarChart3,  label: 'Overview' },
-              { id: 'my-users',   icon: Users,      label: 'My Users' },
-              { id: 'view-jobs',  icon: Briefcase,  label: 'View Jobs' },
-              { id: 'profile',    icon: Edit3,      label: 'Profile' },
-              { id: 'settings',   icon: Settings,   label: 'Settings' },
+              { id: 'overview', icon: BarChart3, label: 'Overview' },
+              { id: 'my-users', icon: Users, label: 'My Users' },
+              { id: 'view-jobs', icon: Briefcase, label: 'View Jobs' },
+              { id: 'messages', icon: MessageSquare, label: 'Messages' },
+              { id: 'profile', icon: Edit3, label: 'Profile' },
+              { id: 'settings', icon: Settings, label: 'Settings' },
             ].map(item => (
               <button
                 key={item.id}
                 className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (item.id === 'messages') setTotalUnread(0);
+                }}
               >
                 <item.icon size={18} /> {item.label}
+                {item.id === 'messages' && totalUnread > 0 && (
+                  <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
               </button>
             ))}
 
@@ -403,39 +429,41 @@ const DivisionalAssistantDashboard = () => {
             </div>
           )}
 
-          {/* ─── Stat Cards ─── */}
-          <motion.div
-            className="stat-cards-grid"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '28px' }}
-          >
-            {statCards.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={cardVariant}
-                className="field-card"
-                style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: '10px',
-                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                  }}>
-                    <stat.icon size={20} />
+          {/* ─── Stat Cards (hidden on messages tab) ─── */}
+          {activeTab !== 'messages' && (
+            <motion.div
+              className="stat-cards-grid"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '28px' }}
+            >
+              {statCards.map((stat) => (
+                <motion.div
+                  key={stat.label}
+                  variants={cardVariant}
+                  className="field-card"
+                  style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{
+                      width: '38px', height: '38px', borderRadius: '10px',
+                      background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
+                    }}>
+                      <stat.icon size={20} />
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
 
           {/* ─── Tab Content ─── */}
           <AnimatePresence mode="wait">
@@ -470,10 +498,10 @@ const DivisionalAssistantDashboard = () => {
                     {/* ── Summary Cards ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
                       {[
-                        { label: 'Total Jobs',  value: totalJobs,     color: '#6366f1', pct: 100 },
-                        { label: 'Approved',    value: approvedJobs,  color: '#10b981', pct: totalJobs > 0 ? Math.round((approvedJobs / totalJobs) * 100) : 0 },
-                        { label: 'Pending',     value: pendingJobs,   color: '#f59e0b', pct: totalJobs > 0 ? Math.round((pendingJobs / totalJobs) * 100) : 0 },
-                        { label: 'Rejected',    value: rejectedJobs,  color: '#ef4444', pct: totalJobs > 0 ? Math.round((rejectedJobs / totalJobs) * 100) : 0 },
+                        { label: 'Total Jobs', value: totalJobs, color: '#6366f1', pct: 100 },
+                        { label: 'Approved', value: approvedJobs, color: '#10b981', pct: totalJobs > 0 ? Math.round((approvedJobs / totalJobs) * 100) : 0 },
+                        { label: 'Pending', value: pendingJobs, color: '#f59e0b', pct: totalJobs > 0 ? Math.round((pendingJobs / totalJobs) * 100) : 0 },
+                        { label: 'Rejected', value: rejectedJobs, color: '#ef4444', pct: totalJobs > 0 ? Math.round((rejectedJobs / totalJobs) * 100) : 0 },
                       ].map(s => (
                         <div key={s.label} className="field-card" style={{ padding: '20px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -505,7 +533,7 @@ const DivisionalAssistantDashboard = () => {
                               <Pie
                                 data={[
                                   { name: 'Approved', value: approvedJobs, color: '#10b981' },
-                                  { name: 'Pending',  value: pendingJobs,  color: '#f59e0b' },
+                                  { name: 'Pending', value: pendingJobs, color: '#f59e0b' },
                                   { name: 'Rejected', value: rejectedJobs, color: '#ef4444' },
                                 ].filter(d => d.value > 0)}
                                 cx="50%" cy="45%"
@@ -514,7 +542,7 @@ const DivisionalAssistantDashboard = () => {
                               >
                                 {[
                                   { name: 'Approved', value: approvedJobs, color: '#10b981' },
-                                  { name: 'Pending',  value: pendingJobs,  color: '#f59e0b' },
+                                  { name: 'Pending', value: pendingJobs, color: '#f59e0b' },
                                   { name: 'Rejected', value: rejectedJobs, color: '#ef4444' },
                                 ].filter(d => d.value > 0).map((entry, i) => (
                                   <Cell key={`cell-${i}`} fill={entry.color} />
@@ -551,7 +579,7 @@ const DivisionalAssistantDashboard = () => {
                               <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 9, fontWeight: 600 }} angle={-35} textAnchor="end" interval={0} />
                               <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
                               <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                              <Bar dataKey="total" name="Total" radius={[4,4,0,0]}>
+                              <Bar dataKey="total" name="Total" radius={[4, 4, 0, 0]}>
                                 {ministryData.map((_, i) => (
                                   <Cell key={`bar-${i}`} fill={COLORS[i % COLORS.length]} />
                                 ))}
@@ -879,6 +907,17 @@ const DivisionalAssistantDashboard = () => {
                   </div>
                 </div>
               </motion.div>
+            )}
+
+            {/* ── Messages Tab ── */}
+            {activeTab === 'messages' && (
+              <motion.section key="messages" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <DivisionChat
+                  myId={localStorage.getItem('userId')}
+                  currentDivision={currentDivision}
+                  myRole="division_assistant"
+                />
+              </motion.section>
             )}
 
           </AnimatePresence>

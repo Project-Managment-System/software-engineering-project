@@ -947,3 +947,68 @@
     flex-direction: column;
   }
 }
+
+/* ─── Nav Unread Badge (Telegram-style) ─── */
+.nav-item {
+  position: relative;
+}
+
+.nav-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-left: auto;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+  animation: badgeBounceIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+@keyframes badgeBounceIn {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+
+/* --- Nav Unread Badge --- */
+#cems-user-dashboard .nav-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+#cems-user-dashboard .nav-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-primary, #7c3aed), var(--accent-2, #a855f7));
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-left: auto;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-primary, #7c3aed) 35%, transparent);
+  animation: badgeBounceIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+@keyframes badgeBounceIn {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}

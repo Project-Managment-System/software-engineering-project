@@ -4,16 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
   Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
-  FileText
+  FileText, MessageSquare
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import DivisionChat from '../../components/DivisionChat';
 
 /* ─── Animation variants ─── */
 const pageVariants = {
-  hidden:  { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
-  exit:    { opacity: 0, y: -12, transition: { duration: 0.2 } }
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
 };
 
 const staggerContainer = {
@@ -21,7 +22,7 @@ const staggerContainer = {
 };
 
 const cardVariant = {
-  hidden:  { opacity: 0, y: 16, scale: 0.97 },
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
 };
 
@@ -34,7 +35,7 @@ const UserDashboard = () => {
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [activeTab, setActiveTab] = useState('my-jobs');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   const [selectedJobId, setSelectedJobId] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [estimateAmount, setEstimateAmount] = useState('');
@@ -60,6 +61,7 @@ const UserDashboard = () => {
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
+  const [totalUnread, setTotalUnread] = useState(0);
   const addToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -126,8 +128,25 @@ const UserDashboard = () => {
     fetchUserProfile();
   }, [navigate]);
 
+  // Background polling for unread message badge (runs on all tabs)
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    const pollUnread = async () => {
+      try {
+        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const counts = res.data || {};
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        setTotalUnread(total);
+      } catch (_) { }
+    };
+    pollUnread();
+    const id = setInterval(pollUnread, 4000);
+    return () => clearInterval(id);
+  }, []);
+
   const handleCheckEstimate = (estimateNo) => {
-    setSubmittedEstimates(submittedEstimates.map(est => 
+    setSubmittedEstimates(submittedEstimates.map(est =>
       est.no === estimateNo ? { ...est, isChecked: !est.isChecked } : est
     ));
     addToast("Estimate status updated!", "info");
@@ -275,6 +294,7 @@ const UserDashboard = () => {
     reader.readAsDataURL(file);
   };
 
+
   const handleEstimateAmountChange = (e) => {
     const value = e.target.value;
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
@@ -294,9 +314,9 @@ const UserDashboard = () => {
   const pendingApprovalsCount = myJobs.filter(j => !j.status || j.status === 'Pending').length;
 
   const statCards = [
-    { label: 'My Jobs',            value: totalMyJobs,             icon: Briefcase, color: 'var(--accent-primary)' },
-    { label: 'Estimates Sent',     value: totalSubmittedEstimates, icon: Send,      color: 'var(--accent-2)' },
-    { label: 'Pending Approvals',  value: pendingApprovalsCount,   icon: Clock,     color: 'var(--warning)' },
+    { label: 'My Jobs', value: totalMyJobs, icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Estimates Sent', value: totalSubmittedEstimates, icon: Send, color: 'var(--accent-2)' },
+    { label: 'Pending Approvals', value: pendingApprovalsCount, icon: Clock, color: 'var(--warning)' },
   ];
 
   return (
@@ -334,20 +354,25 @@ const UserDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
-              { id: 'my-jobs',         icon: Briefcase, label: 'My Jobs' },
+              { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
               { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
-              { id: 'profile',         icon: Edit3,     label: 'Profile' },
-              { id: 'settings',        icon: Settings,  label: 'Settings' },
+              { id: 'messages', icon: MessageSquare, label: 'Messages' },
+              { id: 'profile', icon: Edit3, label: 'Profile' },
+              { id: 'settings', icon: Settings, label: 'Settings' },
             ].map(item => (
-              <button 
+              <button
                 key={item.id}
                 className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
                 onClick={() => {
                   setActiveTab(item.id);
+                  if (item.id === 'messages') setTotalUnread(0);
                   if (item.id === 'profile') handleProfileTabOpen();
                 }}
               >
                 <item.icon size={18} /> {item.label}
+                {item.id === 'messages' && totalUnread > 0 && (
+                  <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
               </button>
             ))}
 
@@ -369,39 +394,41 @@ const UserDashboard = () => {
             <div className="header-left" />
           </header>
 
-          {/* ─── Stat Cards ─── */}
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '28px' }}
-          >
-            {statCards.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={cardVariant}
-                className="field-card"
-                style={{ padding: '20px', cursor: 'default' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '36px', height: '36px', borderRadius: '10px',
-                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                  }}>
-                    <stat.icon size={19} />
+          {/* ─── Stat Cards (hidden on messages tab) ─── */}
+          {activeTab !== 'messages' && (
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '28px' }}
+            >
+              {statCards.map((stat) => (
+                <motion.div
+                  key={stat.label}
+                  variants={cardVariant}
+                  className="field-card"
+                  style={{ padding: '20px', cursor: 'default' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: '10px',
+                      background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
+                    }}>
+                      <stat.icon size={19} />
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
           <AnimatePresence mode="wait">
             {/* ── My Jobs Tab ── */}
             {activeTab === 'my-jobs' && (
@@ -467,9 +494,9 @@ const UserDashboard = () => {
                   <div className="vertical-form">
                     <div className="input-row-group">
                       <label>Job Directory Reference</label>
-                      <select 
-                        className="job-select-dropdown" 
-                        value={selectedJobId} 
+                      <select
+                        className="job-select-dropdown"
+                        value={selectedJobId}
                         onChange={(e) => handleSelectionChange(e.target.value)}
                       >
                         <option value="">-- Choose Job ID --</option>
@@ -483,7 +510,7 @@ const UserDashboard = () => {
 
                 {selectedJob && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-                    
+
                     {/* Column 1: Core Job Specs */}
                     <div className="field-card" style={{ padding: '24px' }}>
                       <p className="instruction-text" style={{ marginTop: '0px', marginBottom: '20px', fontWeight: 600 }}>Update structural specifications:</p>
@@ -528,11 +555,11 @@ const UserDashboard = () => {
                         </div>
                         <div className="input-row-group">
                           <label>Calculated Estimate Value (LKR)</label>
-                          <input 
-                            type="number" 
-                            className="input-field" 
-                            placeholder="0.00" 
-                            value={estimateAmount} 
+                          <input
+                            type="number"
+                            className="input-field"
+                            placeholder="0.00"
+                            value={estimateAmount}
                             onChange={handleEstimateAmountChange}
                             onKeyDown={handleEstimateAmountKeyDown}
                           />
@@ -575,7 +602,7 @@ const UserDashboard = () => {
                                 <td>{estimate.allocation}</td>
                                 <td className="font-bold">{estimate.estimatedAmount}</td>
                                 <td>
-                                  <button 
+                                  <button
                                     onClick={() => handleCheckEstimate(estimate.no)}
                                     className={`status-badge status-${estimate.isChecked ? 'approved' : 'pending'}`}
                                     style={{ border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
@@ -655,7 +682,7 @@ const UserDashboard = () => {
                       <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your user credentials</p>
                     </div>
                   </div>
-                  
+
                   <div className="vertical-form">
                     <div className="input-row-group">
                       <label>Full Name</label>
@@ -673,7 +700,7 @@ const UserDashboard = () => {
                       <label>Phone Contact</label>
                       <input type="text" value={editPhoneNo} onChange={(e) => setEditPhoneNo(e.target.value)} className="input-field" />
                     </div>
-                    
+
                     <div className="form-action-row" style={{ marginTop: '20px' }}>
                       <button className="save-btn" onClick={handleConfirmProfile}>
                         <Save size={14} /> Confirm
@@ -684,6 +711,17 @@ const UserDashboard = () => {
                     </div>
                   </div>
                 </div>
+              </motion.section>
+            )}
+
+            {/* ── Messages Tab ── */}
+            {activeTab === 'messages' && (
+              <motion.section key="messages" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <DivisionChat
+                  myId={localStorage.getItem('userId')}
+                  currentDivision={localStorage.getItem('userDivision')}
+                  myRole={localStorage.getItem('role')}
+                />
               </motion.section>
             )}
 

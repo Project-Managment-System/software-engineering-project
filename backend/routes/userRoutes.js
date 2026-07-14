@@ -63,7 +63,10 @@ router.get('/', async (req, res) => {
 router.get('/division/:division', async (req, res) => {
     try {
         const division = req.params.division;
-        const users = await User.find({ division: { $regex: new RegExp(`^${division}$`, 'i') } }).select('-password');
+        const users = await User.find({ 
+            division: { $regex: new RegExp(`^${division}$`, 'i') },
+            role: { $ne: 'admin' }
+        }).select('-password');
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });

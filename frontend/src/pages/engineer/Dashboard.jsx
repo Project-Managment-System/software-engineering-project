@@ -16,6 +16,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, RadialBarChart, RadialBar
 } from 'recharts';
+import DivisionChat from '../../components/DivisionChat';
 
 
 /* ─── Animation variants ─── */
@@ -81,8 +82,8 @@ const CustomTooltip = ({ active, payload }) => {
 
 /* ─── Ministry colour palette ─── */
 const MINISTRY_COLORS = [
-  '#6366f1','#10b981','#f59e0b','#ef4444','#3b82f6',
-  '#8b5cf6','#ec4899','#14b8a6','#f97316','#06b6d4'
+  '#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6',
+  '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
 ];
 
 /* ─────────────────────────────────────── */
@@ -96,6 +97,7 @@ const EngineerDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [currentDivision, setCurrentDivision] = useState(localStorage.getItem('userDivision') || '');
+  const [totalUnread, setTotalUnread] = useState(0);
 
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem('fullName') || 'User',
@@ -250,6 +252,23 @@ const EngineerDashboard = () => {
     fetchUserProfile();
   }, []);
 
+  // Background polling for unread message badge (all tabs)
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    const pollUnread = async () => {
+      try {
+        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const counts = res.data || {};
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        setTotalUnread(total);
+      } catch (_) { }
+    };
+    pollUnread();
+    const id = setInterval(pollUnread, 4000);
+    return () => clearInterval(id);
+  }, []);
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toISOString().split('T')[0];
@@ -286,7 +305,7 @@ const EngineerDashboard = () => {
         doc.text(title, 14, 15);
         doc.setFontSize(8);
         doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()} · Division: ${currentDivision || 'N/A'}`, 14, 21);
-        
+
         autoTable(doc, {
           head: [headers],
           body: rows,
@@ -597,15 +616,15 @@ const EngineerDashboard = () => {
 
   /* ─── Computed stats (division-scoped) ─── */
   const totalDivisionJobs = approvalData.length;
-  const pendingApprovals  = approvalData.filter(j => !j.status || j.status === 'Pending').length;
-  const approvedCount     = approvalData.filter(j => j.status === 'Approved').length;
-  const rejectedCount     = approvalData.filter(j => j.status === 'Rejected').length;
+  const pendingApprovals = approvalData.filter(j => !j.status || j.status === 'Pending').length;
+  const approvedCount = approvalData.filter(j => j.status === 'Approved').length;
+  const rejectedCount = approvalData.filter(j => j.status === 'Rejected').length;
 
   const statCards = [
-    { label: 'Total Jobs', value: totalDivisionJobs, icon: Briefcase,   color: 'var(--accent-primary)' },
-    { label: 'Pending',    value: pendingApprovals,  icon: Clock,       color: 'var(--warning)' },
-    { label: 'Approved',   value: approvedCount,     icon: CheckCircle, color: 'var(--success)' },
-    { label: 'Rejected',   value: rejectedCount,     icon: XCircle,     color: 'var(--danger)' },
+    { label: 'Total Jobs', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Pending', value: pendingApprovals, icon: Clock, color: 'var(--warning)' },
+    { label: 'Approved', value: approvedCount, icon: CheckCircle, color: 'var(--success)' },
+    { label: 'Rejected', value: rejectedCount, icon: XCircle, color: 'var(--danger)' },
   ];
 
   /* ─── Progress data: per-ministry grouped from division jobs ─── */
@@ -615,14 +634,14 @@ const EngineerDashboard = () => {
       const m = job.ministry || 'Other';
       if (!map[m]) map[m] = { ministry: m, total: 0, approved: 0, pending: 0, rejected: 0, departments: {} };
       map[m].total++;
-      if (job.status === 'Approved')  map[m].approved++;
+      if (job.status === 'Approved') map[m].approved++;
       else if (job.status === 'Rejected') map[m].rejected++;
       else map[m].pending++;
 
       const d = job.department || 'General';
       if (!map[m].departments[d]) map[m].departments[d] = { dept: d, total: 0, approved: 0, pending: 0, rejected: 0 };
       map[m].departments[d].total++;
-      if (job.status === 'Approved')  map[m].departments[d].approved++;
+      if (job.status === 'Approved') map[m].departments[d].approved++;
       else if (job.status === 'Rejected') map[m].departments[d].rejected++;
       else map[m].departments[d].pending++;
     });
@@ -689,7 +708,7 @@ const EngineerDashboard = () => {
   const recommendations = getRecommendations();
 
   /* ─── Tabs that show stat cards ─── */
-  const showStatCards = activeTab === 'overview' || activeTab === 'my-jobs';
+  const showStatCards = activeTab === 'overview' || activeTab === 'my-jobs';  // not on messages
 
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
@@ -722,21 +741,28 @@ const EngineerDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
-              { id: 'overview',        icon: BarChart3,      label: 'Overview' },
-              { id: 'my-jobs',         icon: Briefcase,      label: 'My Jobs' },
-              { id: 'all-jobs',        icon: Globe,          label: 'All Jobs' },
-              { id: 'add-user',        icon: UserPlus,       label: 'Add User' },
-              { id: 'view-progress',   icon: TrendingUp,     label: 'View Progress' },
-              { id: 'ai-chatbot',      icon: MessageSquare,  label: 'AI Assistant' },
-              { id: 'profile',         icon: Edit3,          label: 'Profile' },
-              { id: 'settings',        icon: Settings,       label: 'Settings' },
+              { id: 'overview', icon: BarChart3, label: 'Overview' },
+              { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
+              { id: 'all-jobs', icon: Globe, label: 'All Jobs' },
+              { id: 'add-user', icon: UserPlus, label: 'Add User' },
+              { id: 'view-progress', icon: TrendingUp, label: 'View Progress' },
+              { id: 'ai-chatbot', icon: MessageSquare, label: 'AI Assistant' },
+              { id: 'messages', icon: Send, label: 'Messages' },
+              { id: 'profile', icon: Edit3, label: 'Profile' },
+              { id: 'settings', icon: Settings, label: 'Settings' },
             ].map(item => (
               <button
                 key={item.id}
                 className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (item.id === 'messages') setTotalUnread(0);
+                }}
               >
                 <item.icon size={18} /> {item.label}
+                {item.id === 'messages' && totalUnread > 0 && (
+                  <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
               </button>
             ))}
 
@@ -1412,10 +1438,10 @@ const EngineerDashboard = () => {
                     {/* ── Overall Summary Cards ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
                       {[
-                        { label: 'Total Jobs',  value: totalDivisionJobs, color: '#6366f1', pct: 100 },
-                        { label: 'Approved',    value: approvedCount,     color: '#10b981', pct: totalDivisionJobs > 0 ? Math.round((approvedCount / totalDivisionJobs) * 100) : 0 },
-                        { label: 'Pending',     value: pendingApprovals,  color: '#f59e0b', pct: totalDivisionJobs > 0 ? Math.round((pendingApprovals / totalDivisionJobs) * 100) : 0 },
-                        { label: 'Rejected',    value: rejectedCount,     color: '#ef4444', pct: totalDivisionJobs > 0 ? Math.round((rejectedCount / totalDivisionJobs) * 100) : 0 },
+                        { label: 'Total Jobs', value: totalDivisionJobs, color: '#6366f1', pct: 100 },
+                        { label: 'Approved', value: approvedCount, color: '#10b981', pct: totalDivisionJobs > 0 ? Math.round((approvedCount / totalDivisionJobs) * 100) : 0 },
+                        { label: 'Pending', value: pendingApprovals, color: '#f59e0b', pct: totalDivisionJobs > 0 ? Math.round((pendingApprovals / totalDivisionJobs) * 100) : 0 },
+                        { label: 'Rejected', value: rejectedCount, color: '#ef4444', pct: totalDivisionJobs > 0 ? Math.round((rejectedCount / totalDivisionJobs) * 100) : 0 },
                       ].map(s => (
                         <div key={s.label} className="field-card" style={{ padding: '20px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1447,18 +1473,18 @@ const EngineerDashboard = () => {
                             <PieChart>
                               <Pie
                                 data={[
-                                  { name: 'Approved', value: approvedCount,    color: '#10b981' },
-                                  { name: 'Pending',  value: pendingApprovals, color: '#f59e0b' },
-                                  { name: 'Rejected', value: rejectedCount,    color: '#ef4444' },
+                                  { name: 'Approved', value: approvedCount, color: '#10b981' },
+                                  { name: 'Pending', value: pendingApprovals, color: '#f59e0b' },
+                                  { name: 'Rejected', value: rejectedCount, color: '#ef4444' },
                                 ].filter(d => d.value > 0)}
                                 cx="50%" cy="45%"
                                 innerRadius={60} outerRadius={90}
                                 paddingAngle={4} dataKey="value"
                               >
                                 {[
-                                  { name: 'Approved', value: approvedCount,    color: '#10b981' },
-                                  { name: 'Pending',  value: pendingApprovals, color: '#f59e0b' },
-                                  { name: 'Rejected', value: rejectedCount,    color: '#ef4444' },
+                                  { name: 'Approved', value: approvedCount, color: '#10b981' },
+                                  { name: 'Pending', value: pendingApprovals, color: '#f59e0b' },
+                                  { name: 'Rejected', value: rejectedCount, color: '#ef4444' },
                                 ].filter(d => d.value > 0).map((entry, i) => (
                                   <Cell key={`cell-${i}`} fill={entry.color} />
                                 ))}
@@ -1498,9 +1524,9 @@ const EngineerDashboard = () => {
                               <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 9, fontWeight: 600 }} angle={-35} textAnchor="end" interval={0} />
                               <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
                               <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                              <Bar dataKey="approved" name="Approved" fill="#10b981" radius={[4,4,0,0]} stackId="a" />
-                              <Bar dataKey="pending"  name="Pending"  fill="#f59e0b" radius={[4,4,0,0]} stackId="a" />
-                              <Bar dataKey="rejected" name="Rejected" fill="#ef4444" radius={[4,4,0,0]} stackId="a" />
+                              <Bar dataKey="approved" name="Approved" fill="#10b981" radius={[4, 4, 0, 0]} stackId="a" />
+                              <Bar dataKey="pending" name="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} stackId="a" />
+                              <Bar dataKey="rejected" name="Rejected" fill="#ef4444" radius={[4, 4, 0, 0]} stackId="a" />
                             </BarChart>
                           </ResponsiveContainer>
                         </div>
@@ -1533,10 +1559,10 @@ const EngineerDashboard = () => {
                         {/* Status pills row */}
                         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
                           {[
-                            { label: 'Total',    value: ministry.total,    color: '#6366f1' },
-                            { label: 'Approved', value: ministry.approved,  color: '#10b981' },
-                            { label: 'Pending',  value: ministry.pending,   color: '#f59e0b' },
-                            { label: 'Rejected', value: ministry.rejected,  color: '#ef4444' },
+                            { label: 'Total', value: ministry.total, color: '#6366f1' },
+                            { label: 'Approved', value: ministry.approved, color: '#10b981' },
+                            { label: 'Pending', value: ministry.pending, color: '#f59e0b' },
+                            { label: 'Rejected', value: ministry.rejected, color: '#ef4444' },
                           ].map(pill => (
                             <div key={pill.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '99px', background: `${pill.color}18`, border: `1px solid ${pill.color}30` }}>
                               <span style={{ fontWeight: 900, color: pill.color, fontSize: '0.95rem' }}>{pill.value}</span>
@@ -1563,7 +1589,7 @@ const EngineerDashboard = () => {
                                     {/* Stacked bar */}
                                     <div style={{ display: 'flex', height: '8px', borderRadius: '99px', overflow: 'hidden', background: 'var(--border-base)', marginBottom: '10px' }}>
                                       {dept.approved > 0 && <div style={{ flex: dept.approved, background: '#10b981' }} title={`Approved: ${dept.approved}`} />}
-                                      {dept.pending  > 0 && <div style={{ flex: dept.pending,  background: '#f59e0b' }} title={`Pending: ${dept.pending}`}  />}
+                                      {dept.pending > 0 && <div style={{ flex: dept.pending, background: '#f59e0b' }} title={`Pending: ${dept.pending}`} />}
                                       {dept.rejected > 0 && <div style={{ flex: dept.rejected, background: '#ef4444' }} title={`Rejected: ${dept.rejected}`} />}
                                     </div>
                                     {/* Mini counts */}
@@ -1754,6 +1780,17 @@ const EngineerDashboard = () => {
 
                 </div>
               </motion.div>
+            )}
+
+            {/* ── Messages Tab ── */}
+            {activeTab === 'messages' && (
+              <motion.section key="messages" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <DivisionChat
+                  myId={localStorage.getItem('userId')}
+                  currentDivision={currentDivision}
+                  myRole="engineer"
+                />
+              </motion.section>
             )}
 
           </AnimatePresence>

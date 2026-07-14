@@ -5,13 +5,14 @@ import {
   Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
-  FileText
+  FileText, MessageSquare
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import DivisionChat from '../../components/DivisionChat';
 import './Dashboard.css';
 
 /* ─── Ministry → Department mapping ─── */
@@ -109,6 +110,7 @@ const AdminDashboard = () => {
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
+  const [totalUnread, setTotalUnread] = useState(0);
   const addToast = (message, type = 'success') => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
@@ -173,6 +175,24 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchData();
     fetchUserProfile();
+  }, []);
+
+  // Background polling for unread message badge (clerk only, all tabs)
+  useEffect(() => {
+    if (localStorage.getItem('role') !== 'clerk') return;
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    const pollUnread = async () => {
+      try {
+        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const counts = res.data || {};
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
+        setTotalUnread(total);
+      } catch (_) { }
+    };
+    pollUnread();
+    const id = setInterval(pollUnread, 4000);
+    return () => clearInterval(id);
   }, []);
 
   const [profileName, setProfileName] = useState(localStorage.getItem('fullName') || 'John Doe');
@@ -358,13 +378,13 @@ const AdminDashboard = () => {
 
   const departmentOptions = filters.ministry
     ? [...new Set([
-        ...(MINISTRY_DEPARTMENTS[filters.ministry] || []),
-        ...jobs.filter(j => j.ministry === filters.ministry).map(j => j.department).filter(Boolean)
-      ])].sort()
+      ...(MINISTRY_DEPARTMENTS[filters.ministry] || []),
+      ...jobs.filter(j => j.ministry === filters.ministry).map(j => j.department).filter(Boolean)
+    ])].sort()
     : [...new Set([
-        ...Object.values(MINISTRY_DEPARTMENTS).flat(),
-        ...getUniqueValues('department')
-      ])].sort();
+      ...Object.values(MINISTRY_DEPARTMENTS).flat(),
+      ...getUniqueValues('department')
+    ])].sort();
 
   const filteredJobs = jobs.filter((j) => {
     if (filters.department && j.department !== filters.department) return false;
@@ -437,6 +457,8 @@ const AdminDashboard = () => {
               { id: 'New Job', icon: Plus, label: 'New Job' },
               { id: 'Profile', icon: Edit3, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
+              // Clerks belong to a division and can use the messaging feature
+              ...(localStorage.getItem('role') === 'clerk' ? [{ id: 'Messages', icon: MessageSquare, label: 'Messages' }] : []),
             ].map(item => (
               <button
                 key={item.id}
@@ -444,9 +466,13 @@ const AdminDashboard = () => {
                 onClick={() => {
                   setActiveTab(item.id);
                   if (item.id === 'Profile') handleProfileTabOpen();
+                  if (item.id === 'Messages') setTotalUnread(0);
                 }}
               >
                 <item.icon size={18} /> {item.label}
+                {item.id === 'Messages' && totalUnread > 0 && (
+                  <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
               </button>
             ))}
 
@@ -468,39 +494,41 @@ const AdminDashboard = () => {
             <div className="header-left" />
           </header>
 
-          {/* ─── Stat Cards ─── */}
-          <motion.div
-            className="stat-cards-grid"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '28px' }}
-          >
-            {statCards.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                variants={cardVariant}
-                className="field-card"
-                style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: '10px',
-                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                  }}>
-                    <stat.icon size={20} />
+          {/* ─── Stat Cards (hidden on messages tab) ─── */}
+          {activeTab !== 'Messages' && (
+            <motion.div
+              className="stat-cards-grid"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '28px' }}
+            >
+              {statCards.map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  variants={cardVariant}
+                  className="field-card"
+                  style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{
+                      width: '38px', height: '38px', borderRadius: '10px',
+                      background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
+                    }}>
+                      <stat.icon size={20} />
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
 
           {/* ─── Tab Content ─── */}
           <AnimatePresence mode="wait">
@@ -759,37 +787,37 @@ const AdminDashboard = () => {
                               : 'JB';
                             const estNo = `${prefix}-${String(estIdx).padStart(3, '0')}`;
                             return (
-                            <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                              <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
-                              <td className="font-mono">{j.jobNo}</td>
-                              <td className="font-bold">{j.jobName}</td>
-                              <td>{j.ministry}</td>
-                              <td>{j.department}</td>
-                              <td>{j.institute}</td>
-                              <td>{j.deptIdNo || '—'}</td>
-                              <td>{j.source || '—'}</td>
-                              <td>{j.dsDivision || '—'}</td>
-                              <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
-                              <td className="font-bold">{j.allocation}</td>
-                              <td>{j.remark}</td>
-                              <td>{j.submitDate ? j.submitDate.split('T')[0] : 'N/A'}</td>
-                              <td>
-                                <div style={{ display: 'flex', gap: '6px' }}>
-                                  <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit">
-                                    <Edit size={15} />
-                                  </button>
-                                  <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete">
-                                    <Trash2 size={15} />
-                                  </button>
-                                </div>
-                              </td>
-                              <td>
-                                <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
-                                  {j.status || 'Pending'}
-                                </span>
-                              </td>
-                            </tr>
-                          );
+                              <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                                <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
+                                <td className="font-mono">{j.jobNo}</td>
+                                <td className="font-bold">{j.jobName}</td>
+                                <td>{j.ministry}</td>
+                                <td>{j.department}</td>
+                                <td>{j.institute}</td>
+                                <td>{j.deptIdNo || '—'}</td>
+                                <td>{j.source || '—'}</td>
+                                <td>{j.dsDivision || '—'}</td>
+                                <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
+                                <td className="font-bold">{j.allocation}</td>
+                                <td>{j.remark}</td>
+                                <td>{j.submitDate ? j.submitDate.split('T')[0] : 'N/A'}</td>
+                                <td>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit">
+                                      <Edit size={15} />
+                                    </button>
+                                    <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete">
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </td>
+                                <td>
+                                  <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
+                                    {j.status || 'Pending'}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
                           })
                         )}
                       </tbody>
@@ -971,8 +999,8 @@ const AdminDashboard = () => {
                             <Pie
                               data={[
                                 { name: 'Approved', value: approvedFilteredJobs, color: 'var(--success)' },
-                                { name: 'Pending',  value: pendingFilteredJobs,  color: 'var(--warning)' },
-                                { name: 'Rejected', value: rejectedFilteredJobs, color: 'var(--danger)'  },
+                                { name: 'Pending', value: pendingFilteredJobs, color: 'var(--warning)' },
+                                { name: 'Rejected', value: rejectedFilteredJobs, color: 'var(--danger)' },
                               ].filter(d => d.value > 0)}
                               cx="50%" cy="50%"
                               innerRadius={65} outerRadius={95}
@@ -980,8 +1008,8 @@ const AdminDashboard = () => {
                             >
                               {[
                                 { name: 'Approved', value: approvedFilteredJobs, color: 'var(--success)' },
-                                { name: 'Pending',  value: pendingFilteredJobs,  color: 'var(--warning)' },
-                                { name: 'Rejected', value: rejectedFilteredJobs, color: 'var(--danger)'  },
+                                { name: 'Pending', value: pendingFilteredJobs, color: 'var(--warning)' },
+                                { name: 'Rejected', value: rejectedFilteredJobs, color: 'var(--danger)' },
                               ].filter(d => d.value > 0).map((entry, i) => (
                                 <Cell key={`cell-${i}`} fill={entry.color} />
                               ))}
@@ -1017,10 +1045,10 @@ const AdminDashboard = () => {
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
                             data={[
-                              { name: 'Total Jobs', count: totalFilteredJobs,   color: 'var(--accent-primary)' },
-                              { name: 'Pending',    count: pendingFilteredJobs,  color: 'var(--warning)'        },
-                              { name: 'Approved',   count: approvedFilteredJobs, color: 'var(--success)'        },
-                              { name: 'Rejected',   count: rejectedFilteredJobs, color: 'var(--danger)'         },
+                              { name: 'Total Jobs', count: totalFilteredJobs, color: 'var(--accent-primary)' },
+                              { name: 'Pending', count: pendingFilteredJobs, color: 'var(--warning)' },
+                              { name: 'Approved', count: approvedFilteredJobs, color: 'var(--success)' },
+                              { name: 'Rejected', count: rejectedFilteredJobs, color: 'var(--danger)' },
                             ]}
                             margin={{ top: 20, right: 10, left: -20, bottom: 5 }}
                           >
@@ -1030,10 +1058,10 @@ const AdminDashboard = () => {
                             <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
                             <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                               {[
-                                { name: 'Total Jobs', count: totalFilteredJobs,   color: 'var(--accent-primary)' },
-                                { name: 'Pending',    count: pendingFilteredJobs,  color: 'var(--warning)'        },
-                                { name: 'Approved',   count: approvedFilteredJobs, color: 'var(--success)'        },
-                                { name: 'Rejected',   count: rejectedFilteredJobs, color: 'var(--danger)'         },
+                                { name: 'Total Jobs', count: totalFilteredJobs, color: 'var(--accent-primary)' },
+                                { name: 'Pending', count: pendingFilteredJobs, color: 'var(--warning)' },
+                                { name: 'Approved', count: approvedFilteredJobs, color: 'var(--success)' },
+                                { name: 'Rejected', count: rejectedFilteredJobs, color: 'var(--danger)' },
                               ].map((entry, i) => (
                                 <Cell key={`bar-${i}`} fill={entry.color} />
                               ))}
@@ -1083,6 +1111,18 @@ const AdminDashboard = () => {
                 </div>
               </motion.section>
             )}
+
+            {/* ── Messages Tab (Clerk only) ── */}
+            {activeTab === 'Messages' && localStorage.getItem('role') === 'clerk' && (
+              <motion.section key="messages" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <DivisionChat
+                  myId={localStorage.getItem('userId')}
+                  currentDivision={localStorage.getItem('userDivision')}
+                  myRole="clerk"
+                />
+              </motion.section>
+            )}
+
           </AnimatePresence>
         </main>
       </div>
