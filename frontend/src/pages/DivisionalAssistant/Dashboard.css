@@ -149,10 +149,12 @@
 
 /* ── Profile box ── */
 .profile-box {
-  padding: 28px 20px 16px;
+  padding: 28px 16px 20px;
   text-align: center;
   border-bottom: 1px solid var(--border-base);
   margin-bottom: 12px;
+  overflow: visible;
+  min-height: fit-content;
 }
 
 .profile-photo {
@@ -167,7 +169,15 @@
 }
 .profile-photo img { width: 100%; height: 100%; object-fit: cover; }
 
-.profile-box h3 {
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-box h3,
+.profile-info h3 {
   margin: 0 0 4px;
   font-size: 0.95rem;
   font-weight: 800;
@@ -175,10 +185,11 @@
 }
 
 .reg-number {
-  font-size: 0.72rem;
-  color: var(--text-label);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   font-family: 'JetBrains Mono', monospace;
   margin: 0;
+  letter-spacing: 0.02em;
 }
 
 /* ── Nav ── */
