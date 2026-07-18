@@ -4,11 +4,38 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
   Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
-  FileText, MessageSquare, Bell, RotateCcw, Check, Download, Hash, Layers
+  FileText, MessageSquare, Bell, RotateCcw, Check, Download, Hash, Layers,
+  LayoutDashboard, Activity, BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import {
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
+} from 'recharts';
 import DivisionChat from '../../components/DivisionChat';
+
+/* ─── Custom Tooltip for Charts ─── */
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-base)',
+        padding: '12px 16px', borderRadius: '8px', boxShadow: 'var(--shadow-card)',
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{data.name}</p>
+        <p style={{ margin: '4px 0 0', fontWeight: 900, color: data.payload?.color || 'var(--accent-primary)', fontSize: '1.25rem' }}>
+          {data.value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
 /* ─── Animation variants ─── */
 const pageVariants = {
@@ -45,7 +72,7 @@ const UserDashboard = () => {
   const fileInputRef = useRef(null);
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [activeTab, setActiveTab] = useState('my-jobs');
+  const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [selectedJobId, setSelectedJobId] = useState('');
@@ -415,12 +442,24 @@ const UserDashboard = () => {
   const totalMyJobs = myJobs.length;
   const totalSubmittedEstimates = submittedEstimates.length;
   const pendingApprovalsCount = myJobs.filter(j => !j.status || j.status === 'Pending').length;
+  const approvedJobsCount = myJobs.filter(j => j.status === 'Approved').length;
+  const rejectedJobsCount = myJobs.filter(j => j.status === 'Rejected').length;
+  const drawingsReceivedCount = myJobs.filter(j => j.drawingReceived).length;
 
   const statCards = [
     { label: 'My Jobs', value: totalMyJobs, icon: Briefcase, color: 'var(--accent-primary)' },
     { label: 'Estimates Sent', value: totalSubmittedEstimates, icon: Send, color: 'var(--accent-2)' },
     { label: 'Pending Approvals', value: pendingApprovalsCount, icon: Clock, color: 'var(--warning)' },
   ];
+
+  /* ─── Allocation-wise breakdown (for Overview chart) ─── */
+  const allocationBreakdown = myJobs.reduce((acc, j) => {
+    const a = j.allocation || 'Unassigned';
+    if (!acc[a]) acc[a] = { allocation: a, total: 0 };
+    acc[a].total++;
+    return acc;
+  }, {});
+  const allocationData = Object.values(allocationBreakdown);
 
   return (
     <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
@@ -484,6 +523,7 @@ const UserDashboard = () => {
           </div>
           <nav className="sidebar-nav">
             {[
+              { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
               { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
               { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
               { id: 'notifications', icon: Bell, label: 'Notifications' },
@@ -566,6 +606,161 @@ const UserDashboard = () => {
           )}
 
           <AnimatePresence mode="wait">
+            {/* ── Overview Tab ── */}
+            {activeTab === 'overview' && (
+              <motion.div key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <Activity size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>
+                        Welcome back, {profileName.split(' ')[0]}
+                      </h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Here's a summary of your jobs and estimate activity{userDivision ? ` in ${userDivision}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {totalMyJobs === 0 ? (
+                  <div className="placeholder-content" style={{ height: '300px' }}>
+                    <BarChart3 size={36} style={{ opacity: 0.35 }} />
+                    <span>No jobs assigned to you yet.</span>
+                  </div>
+                ) : (
+                  <>
+                    {/* ── Summary Cards ── */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+                      {[
+                        { label: 'Total Jobs', value: totalMyJobs, color: '#6366f1', pct: 100 },
+                        { label: 'Approved', value: approvedJobsCount, color: '#10b981', pct: totalMyJobs > 0 ? Math.round((approvedJobsCount / totalMyJobs) * 100) : 0 },
+                        { label: 'Pending', value: pendingApprovalsCount, color: '#f59e0b', pct: totalMyJobs > 0 ? Math.round((pendingApprovalsCount / totalMyJobs) * 100) : 0 },
+                        { label: 'Rejected', value: rejectedJobsCount, color: '#ef4444', pct: totalMyJobs > 0 ? Math.round((rejectedJobsCount / totalMyJobs) * 100) : 0 },
+                      ].map(s => (
+                        <div key={s.label} className="field-card" style={{ padding: '20px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div>
+                              <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: s.color, lineHeight: 1 }}>{s.value}</div>
+                              <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>{s.label}</div>
+                            </div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: s.color, opacity: 0.75 }}>{s.pct}%</div>
+                          </div>
+                          <div style={{ marginTop: '14px', height: '5px', borderRadius: '99px', background: 'var(--border-base)' }}>
+                            <div style={{ height: '100%', borderRadius: '99px', background: s.color, width: `${s.pct}%`, transition: 'width 0.6s ease' }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* ── Charts Row ── */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '28px' }}>
+
+                      {/* Donut: Job status breakdown */}
+                      <div className="field-card" style={{ padding: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                          <Activity size={18} style={{ color: 'var(--accent-primary)' }} />
+                          <h3 className="recent-jobs-title" style={{ margin: 0 }}>Job Status Breakdown</h3>
+                        </div>
+                        <div style={{ position: 'relative', width: '100%', height: 280 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: 'Approved', value: approvedJobsCount, color: '#10b981' },
+                                  { name: 'Pending', value: pendingApprovalsCount, color: '#f59e0b' },
+                                  { name: 'Rejected', value: rejectedJobsCount, color: '#ef4444' },
+                                ].filter(d => d.value > 0)}
+                                cx="50%" cy="45%"
+                                innerRadius={60} outerRadius={90}
+                                paddingAngle={4} dataKey="value"
+                              >
+                                {[
+                                  { name: 'Approved', value: approvedJobsCount, color: '#10b981' },
+                                  { name: 'Pending', value: pendingApprovalsCount, color: '#f59e0b' },
+                                  { name: 'Rejected', value: rejectedJobsCount, color: '#ef4444' },
+                                ].filter(d => d.value > 0).map((entry, i) => (
+                                  <Cell key={`cell-${i}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <RechartsTooltip content={<CustomTooltip />} />
+                              <Legend verticalAlign="bottom" height={36}
+                                formatter={(value) => (
+                                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem' }}>{value}</span>
+                                )}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div style={{ position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                            <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>{totalMyJobs}</div>
+                            <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '3px' }}>Total</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bar: Jobs by Allocation */}
+                      <div className="field-card" style={{ padding: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                          <BarChart3 size={18} style={{ color: 'var(--accent-primary)' }} />
+                          <h3 className="recent-jobs-title" style={{ margin: 0 }}>Jobs by Allocation</h3>
+                        </div>
+                        <div style={{ width: '100%', height: 280 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                              data={allocationData.map((a, i) => ({ name: a.allocation, total: a.total, color: COLORS[i % COLORS.length] }))}
+                              margin={{ top: 10, right: 10, left: -20, bottom: 40 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+                              <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 10, fontWeight: 600 }} angle={-25} textAnchor="end" interval={0} />
+                              <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
+                              <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                              <Bar dataKey="total" name="Total" radius={[4, 4, 0, 0]}>
+                                {allocationData.map((_, i) => (
+                                  <Cell key={`bar-${i}`} fill={COLORS[i % COLORS.length]} />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* ── Estimate Pipeline ── */}
+                    <div className="field-card" style={{ padding: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                        <Send size={18} style={{ color: 'var(--accent-primary)' }} />
+                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Estimate Pipeline</h3>
+                      </div>
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        {[
+                          { label: 'Estimates Sent', value: totalSubmittedEstimates, icon: Send },
+                          { label: 'Drawings Received', value: drawingsReceivedCount, icon: CheckCircle },
+                        ].map(item => (
+                          <div key={item.label} style={{
+                            display: 'flex', alignItems: 'center', gap: '10px',
+                            padding: '10px 16px', borderRadius: '10px',
+                            background: 'var(--bg-subtle, rgba(0,0,0,0.03))',
+                            border: '1px solid var(--border-base)'
+                          }}>
+                            <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'color-mix(in srgb, var(--accent-primary) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                              <item.icon size={16} />
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>{item.value}</div>
+                              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{item.label}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            )}
+
             {/* ── My Jobs Tab ── */}
             {activeTab === 'my-jobs' && (
               <motion.section key="my-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
