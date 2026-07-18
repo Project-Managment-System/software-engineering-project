@@ -21,6 +21,7 @@ router.post('/add', async (req, res) => {
             fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
             employeeId: req.body.employeeId,
             email: req.body.email,
+            phoneNo: req.body.phoneNo || '',
             password: req.body.password,
             division: req.body.division,
             role: role

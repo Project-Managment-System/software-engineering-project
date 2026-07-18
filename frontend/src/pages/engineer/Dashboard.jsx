@@ -127,6 +127,7 @@ const EngineerDashboard = () => {
     firstName: '',
     secondName: '',
     email: '',
+    phoneNo: '',
     password: '',
     division: localStorage.getItem('userDivision') || '',
     role: ''
@@ -574,6 +575,7 @@ const EngineerDashboard = () => {
       employeeId: userFormData.employeeId,
       fullName: `${userFormData.firstName} ${userFormData.secondName || ''}`.trim(),
       email: userFormData.email,
+      phoneNo: userFormData.phoneNo,
       password: userFormData.password,
       division: userFormData.division || localStorage.getItem('userDivision') || '',
       role: userFormData.role
@@ -586,6 +588,7 @@ const EngineerDashboard = () => {
         firstName: '',
         secondName: '',
         email: '',
+        phoneNo: '',
         password: '',
         division: localStorage.getItem('userDivision') || '',
         role: ''
@@ -1229,6 +1232,8 @@ const EngineerDashboard = () => {
                     <input name="secondName" value={userFormData.secondName} onChange={handleUserFormChange} />
                     <label>Email Address *</label>
                     <input type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required />
+                    <label>Phone Number</label>
+                    <input type="tel" name="phoneNo" value={userFormData.phoneNo} onChange={handleUserFormChange} />
                     <label>Password *</label>
                     <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} required />
                     <label>Division *</label>

@@ -724,6 +724,25 @@ select.input-field option {
   box-shadow: 0 8px 24px rgba(220, 38, 38, 0.35) !important;
 }
 
+#cems-user-dashboard .inactive-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.02em;
+  border-radius: var(--radius-btn);
+  border: 1.5px solid var(--border-base);
+  background: var(--bg-badge, var(--bg-input));
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
 /* ============================================================
    12. JOBS TABLE CARD
    ============================================================ */
