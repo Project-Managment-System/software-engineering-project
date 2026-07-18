@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Save, Briefcase, RefreshCw, User, Settings, X, Edit, Trash2,
+  Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
-  BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon
+  BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
+  FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -89,12 +90,25 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+/* ─── Role Formatting Helpers ─── */
+const formatRoleName = (role) => {
+  if (!role) return 'N/A';
+  switch (role.toLowerCase()) {
+    case 'admin': return 'Admin';
+    case 'engineer': return 'Engineer';
+    case 'division_assistant': return 'Division Assistant';
+    case 'user': return 'User';
+    case 'clerk': return 'Clerk';
+    default: return role;
+  }
+};
+
 /* ─────────────────────────────────────── */
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [activeTab, setActiveTab] = useState('New Job');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [jobs, setJobs] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -162,6 +176,14 @@ const AdminDashboard = () => {
           localStorage.setItem('email', user.email || '');
           localStorage.setItem('phoneNo', user.phoneNo || '');
           localStorage.setItem('profilePic', user.profilePic || '');
+          if (user.division) {
+            setUserDivision(user.division);
+            localStorage.setItem('userDivision', user.division);
+          }
+          if (user.role) {
+            setUserRole(user.role);
+            localStorage.setItem('role', user.role);
+          }
         }
       }
     } catch (err) {
@@ -179,6 +201,8 @@ const AdminDashboard = () => {
   const [email, setEmail] = useState(localStorage.getItem('email') || 'john.doe@example.com');
   const [phoneNo, setPhoneNo] = useState(localStorage.getItem('phoneNo') || '071-2345678');
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
+  const [userDivision, setUserDivision] = useState(localStorage.getItem('userDivision') || '');
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'admin');
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -238,8 +262,10 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
+    const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
     localStorage.removeItem('isAdmin');
     localStorage.clear();
+    if (savedTheme) localStorage.setItem('theme', savedTheme);
     navigate('/');
   };
 
@@ -300,28 +326,35 @@ const AdminDashboard = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Data = reader.result;
-        setProfilePic(base64Data);
-        localStorage.setItem('profilePic', base64Data);
+    if (!file) return;
 
-        try {
-          const userId = localStorage.getItem('userId');
-          if (userId) {
-            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
-              profilePic: base64Data
-            });
-            addToast("Profile photo updated successfully!", "success");
-          }
-        } catch (err) {
-          console.error("Error saving admin profile photo to backend:", err);
-          addToast("Failed to sync photo to database", "error");
-        }
-      };
-      reader.readAsDataURL(file);
+    // Validate: only image files allowed
+    if (!file.type.startsWith('image/')) {
+      addToast('Only image files are allowed (JPG, PNG, GIF, WebP, etc.)', 'error');
+      e.target.value = ''; // reset input
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = reader.result;
+      setProfilePic(base64Data);
+      localStorage.setItem('profilePic', base64Data);
+
+      try {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+            profilePic: base64Data
+          });
+          addToast("Profile photo updated successfully!", "success");
+        }
+      } catch (err) {
+        console.error("Error saving admin profile photo to backend:", err);
+        addToast("Failed to sync photo to database", "error");
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const getUniqueValues = (key) => {
@@ -405,20 +438,53 @@ const AdminDashboard = () => {
           <div className="profile-box">
             <div className="profile-photo">
               {profilePic ? (
-                <img src={profilePic} alt="Profile" />
+                profilePic.startsWith('data:application/pdf') ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                    <FileText size={24} style={{ color: '#ef4444' }} />
+                  </div>
+                ) : (
+                  <img src={profilePic} alt="Profile" />
+                )
               ) : (
                 <User size={48} />
               )}
             </div>
             <div className="profile-info">
+              {userDivision && (
+                <span className="profile-division" style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--accent-primary)',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '2px',
+                  display: 'block'
+                }}>
+                  {userDivision}
+                </span>
+              )}
               <h3>{profileName}</h3>
               <p className="reg-number">{regNo}</p>
+              <span className="role-title" style={{
+                fontSize: '0.68rem',
+                color: '#ffffff',
+                backgroundColor: 'var(--accent-primary)',
+                fontWeight: '800',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                marginTop: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'inline-block'
+              }}>
+                {formatRoleName(userRole || 'admin')}
+              </span>
             </div>
           </div>
           <nav className="sidebar-nav">
             {[
+              { id: 'Overview', icon: BarChart3, label: 'Overview' },
               { id: 'New Job', icon: Plus, label: 'New Job' },
-              { id: 'Update Progress', icon: RefreshCw, label: 'Update Progress' },
               { id: 'Profile', icon: Edit3, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
@@ -794,16 +860,51 @@ const AdminDashboard = () => {
               >
                 <div className="field-card" style={{ maxWidth: '600px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-                    <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative' }}>
-                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={36} />}
-                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
-                      <button
-                        className="approve-btn"
-                        onClick={() => fileInputRef.current.click()}
-                        style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', padding: 0 }}
+                    <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>
+                      <div
+                        className="profile-photo"
+                        style={{ width: '100%', height: '100%', margin: 0, position: 'relative' }}
                       >
-                        <Camera size={13} />
+                        {profilePic ? (
+                          <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <User size={40} />
+                        )}
+                      </div>
+                      <button
+                        onClick={() => fileInputRef.current.click()}
+                        style={{
+                          position: 'absolute',
+                          bottom: '0',
+                          right: '0',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--admin-color, #f43f5e)',
+                          color: '#ffffff',
+                          border: '3px solid var(--bg-card, #111827)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          padding: 0,
+                          zIndex: 10
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'scale(1.15)';
+                          e.currentTarget.style.backgroundColor = 'var(--admin-color-hover, #e11d48)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.backgroundColor = 'var(--admin-color, #f43f5e)';
+                        }}
+                        title="Change profile photo"
+                      >
+                        <Camera size={14} />
                       </button>
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
                     </div>
                     <div>
                       <h3 className="recent-jobs-title" style={{ margin: 0 }}>Personal Details</h3>
@@ -845,15 +946,28 @@ const AdminDashboard = () => {
               </motion.section>
             )}
 
-            {activeTab === 'Update Progress' && (
+            {activeTab === 'Overview' && (
               <motion.section
-                key="update-progress"
+                key="overview"
                 variants={pageVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
                 className="project-table-section"
               >
+                {/* ── Overview Header ── */}
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <BarChart3 size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>System Overview</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Analytics and job status breakdown across all divisions</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* ── Filters Card ── */}
                 <div className="recent-jobs-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>

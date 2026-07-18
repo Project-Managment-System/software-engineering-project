@@ -6,7 +6,8 @@ const connectDB = require('./config/db');
 const app = express();
 
 // --- CRITICAL: MIDDLEWARE MUST BE AT THE TOP ---
-app.use(express.json()); // This parses your PATCH body
+app.use(express.json({ limit: '50mb' })); // This parses your PATCH body with a 50mb limit for PDF/image uploads
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors());
 
 // --- DATABASE ---
@@ -16,6 +17,7 @@ connectDB();
 app.use('/api/auth', require('./routes/authRoutes')); 
 app.use('/api/projects', require('./routes/projectRoutes')); // This is the ONLY project line
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/chatbot', require('./routes/chatbotRoutes'));
 
 // --- ERROR HANDLING ---
 app.use((err, req, res, next) => {

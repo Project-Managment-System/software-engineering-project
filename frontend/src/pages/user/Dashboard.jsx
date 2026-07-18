@@ -3,7 +3,8 @@ import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
-  Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X
+  Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
+  FileText
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -22,6 +23,19 @@ const staggerContainer = {
 const cardVariant = {
   hidden:  { opacity: 0, y: 16, scale: 0.97 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
+};
+
+/* ─── Role Formatting Helpers ─── */
+const formatRoleName = (role) => {
+  if (!role) return 'N/A';
+  switch (role.toLowerCase()) {
+    case 'admin': return 'Admin';
+    case 'engineer': return 'Engineer';
+    case 'division_assistant': return 'Division Assistant';
+    case 'user': return 'User';
+    case 'clerk': return 'Clerk';
+    default: return role;
+  }
 };
 
 /* ─────────────────────────────────────── */
@@ -43,6 +57,8 @@ const UserDashboard = () => {
   const [email, setEmail] = useState(localStorage.getItem('email') || 'user@cems.local');
   const [phoneNo, setPhoneNo] = useState(localStorage.getItem('phoneNo') || '071-2345678');
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
+  const [userDivision, setUserDivision] = useState(localStorage.getItem('userDivision') || '');
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'user');
 
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
@@ -109,6 +125,14 @@ const UserDashboard = () => {
           localStorage.setItem('email', user.email || '');
           localStorage.setItem('phoneNo', user.phoneNo || '');
           localStorage.setItem('profilePic', user.profilePic || '');
+          if (user.division) {
+            setUserDivision(user.division);
+            localStorage.setItem('userDivision', user.division);
+          }
+          if (user.role) {
+            setUserRole(user.role);
+            localStorage.setItem('role', user.role);
+          }
         }
       }
     } catch (err) {
@@ -134,7 +158,9 @@ const UserDashboard = () => {
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
+      const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
       localStorage.clear();
+      if (savedTheme) localStorage.setItem('theme', savedTheme);
       navigate('/');
     }
   };
@@ -241,28 +267,35 @@ const UserDashboard = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Data = reader.result;
-        setProfilePic(base64Data);
-        localStorage.setItem('profilePic', base64Data);
+    if (!file) return;
 
-        try {
-          const userId = localStorage.getItem('userId');
-          if (userId) {
-            await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
-              profilePic: base64Data
-            });
-            addToast("Profile photo updated successfully!", "success");
-          }
-        } catch (err) {
-          console.error("Error saving profile photo to backend:", err);
-          addToast("Failed to sync photo to database", "error");
-        }
-      };
-      reader.readAsDataURL(file);
+    // Validate: only image files allowed
+    if (!file.type.startsWith('image/')) {
+      addToast('Only image files are allowed (JPG, PNG, GIF, WebP, etc.)', 'error');
+      e.target.value = ''; // reset input
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = reader.result;
+      setProfilePic(base64Data);
+      localStorage.setItem('profilePic', base64Data);
+
+      try {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+            profilePic: base64Data
+          });
+          addToast("Profile photo updated successfully!", "success");
+        }
+      } catch (err) {
+        console.error("Error saving profile photo to backend:", err);
+        addToast("Failed to sync photo to database", "error");
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleEstimateAmountChange = (e) => {
@@ -305,11 +338,48 @@ const UserDashboard = () => {
         <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
             <div className="profile-photo">
-              {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}
+              {profilePic ? (
+                profilePic.startsWith('data:application/pdf') ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', cursor: 'pointer' }} onClick={() => window.open(profilePic, '_blank')} title="View PDF">
+                    <FileText size={24} style={{ color: '#ef4444' }} />
+                  </div>
+                ) : (
+                  <img src={profilePic} alt="Profile" />
+                )
+              ) : (
+                <User size={48} />
+              )}
             </div>
             <div className="profile-info">
+              {userDivision && (
+                <span className="profile-division" style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--accent-primary)',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '2px',
+                  display: 'block'
+                }}>
+                  {userDivision}
+                </span>
+              )}
               <h3>{profileName}</h3>
               <p className="reg-number">{regNo}</p>
+              <span className="role-title" style={{
+                fontSize: '0.68rem',
+                color: '#ffffff',
+                backgroundColor: 'var(--accent-primary)',
+                fontWeight: '800',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                marginTop: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'inline-block'
+              }}>
+                {formatRoleName(userRole || 'user')}
+              </span>
             </div>
           </div>
           <nav className="sidebar-nav">
@@ -391,7 +461,7 @@ const UserDashboard = () => {
                     <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Division Allocated Jobs</h3>
                   </div>
-                  <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                  <div className="table-scroll-wrapper">
                     <table className="project-table">
                       <thead>
                         <tr>
@@ -531,7 +601,7 @@ const UserDashboard = () => {
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: '30px' }}>
                     <div className="field-card" style={{ padding: '24px' }}>
                       <h3 className="recent-jobs-title" style={{ marginBottom: '20px' }}>Submitted Structural Estimates</h3>
-                      <div className="table-scroll-wrapper" style={{ borderRadius: '12px', border: '1px solid var(--border-base)', overflow: 'hidden' }}>
+                      <div className="table-scroll-wrapper">
                         <table className="project-table">
                           <thead>
                             <tr>
@@ -584,16 +654,51 @@ const UserDashboard = () => {
               <motion.section key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="profile-view">
                 <div className="field-card" style={{ maxWidth: '600px', padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '25px' }}>
-                    <div className="profile-photo" style={{ width: '80px', height: '80px', position: 'relative' }}>
-                      {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={40} />}
-                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
-                      <button 
-                        onClick={() => fileInputRef.current.click()} 
-                        className="approve-btn"
-                        style={{ position: 'absolute', bottom: '-4px', right: '-4px', width: '28px', height: '28px', borderRadius: '50%', padding: 0 }}
+                    <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>
+                      <div
+                        className="profile-photo"
+                        style={{ width: '100%', height: '100%', margin: 0, position: 'relative' }}
                       >
-                        <Camera size={14}/>
+                        {profilePic ? (
+                          <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <User size={40} />
+                        )}
+                      </div>
+                      <button
+                        onClick={() => fileInputRef.current.click()}
+                        style={{
+                          position: 'absolute',
+                          bottom: '0',
+                          right: '0',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--user-color, #10b981)',
+                          color: '#ffffff',
+                          border: '3px solid var(--bg-card, #100d28)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          padding: 0,
+                          zIndex: 10
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.transform = 'scale(1.15)';
+                          e.currentTarget.style.backgroundColor = 'var(--user-color-hover, #059669)';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.backgroundColor = 'var(--user-color, #10b981)';
+                        }}
+                        title="Change profile photo"
+                      >
+                        <Camera size={14} />
                       </button>
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
                     </div>
                     <div>
                       <h3 className="recent-jobs-title" style={{ margin: 0 }}>Personal Details</h3>

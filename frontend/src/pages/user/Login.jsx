@@ -20,7 +20,7 @@ export default function UserLogin() {
       const response = await loginUser({ employeeId, password });
       
       if (response.data.status === 'LOGIN_SUCCESS') {
-        const { role, userId, fullName, email, division } = response.data;
+        const { role, userId, fullName, email, division, profilePic } = response.data;
 
         // Store session info
         localStorage.setItem('userId', userId);
@@ -28,6 +28,7 @@ export default function UserLogin() {
         localStorage.setItem('fullName', fullName || 'User');
         localStorage.setItem('email', email || '');
         localStorage.setItem('role', role || 'user');
+        localStorage.setItem('profilePic', profilePic || '');
         localStorage.setItem('isAuthenticated', 'true'); // Key check for UserDashboard
         if (division) localStorage.setItem('userDivision', division);
 

@@ -245,6 +245,13 @@
   object-fit: cover;
 }
 
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .profile-info h3 {
   font-family: 'Outfit', sans-serif;
   font-size: 0.95rem;
@@ -257,7 +264,7 @@
 .reg-number {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin: 0;
   letter-spacing: 0.02em;
 }

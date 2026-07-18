@@ -11,11 +11,12 @@ const generateJobNo = async () => {
 // 1. Create a New Project (Admin)
 exports.createProject = async (req, res) => {
     try {
-        const { jobName, ministry, department, division, allocation, dateReq, ref, institute } = req.body;
+        const { jobName, ministry, department, division, allocation, dateReq, ref, institute, deptIdNo, source, dsDivision, remark } = req.body;
         const jobNo = await generateJobNo();
 
         const newProject = new Project({
             jobNo, jobName, ministry, department, division, allocation, dateReq, ref, institute,
+            deptIdNo: deptIdNo || '', source: source || '', dsDivision: dsDivision || '', remark: remark || '',
             status: 'Pending'
         });
 
