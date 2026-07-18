@@ -13,8 +13,16 @@ const MessageSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: true,
-    trim: true
+    trim: true,
+    default: ""
+  },
+  attachment: {
+    type: {
+      fileName: { type: String },
+      fileType: { type: String },
+      fileData: { type: String }
+    },
+    default: undefined
   },
   read: {
     type: Boolean,

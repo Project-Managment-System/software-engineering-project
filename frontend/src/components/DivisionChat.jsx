@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { User, MessageSquare, Send, Search, CornerUpLeft, X } from "lucide-react";
+import { User, MessageSquare, Send, Search, CornerUpLeft, X, Trash2, Paperclip, FileText, Download } from "lucide-react";
 import "./DivisionChat.css";
+
+const MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024; // 5MB — keeps base64-in-Mongo doc size sane
 
 export default function DivisionChat({ myId, currentDivision, myRole }) {
   const [chatUsers, setChatUsers] = useState([]);
@@ -10,8 +12,12 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [conversations, setConversations] = useState({});
   const [replyingTo, setReplyingTo] = useState(null);
+  const [pendingAttachment, setPendingAttachment] = useState(null);
+  const [attachmentError, setAttachmentError] = useState("");
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Fetch users in the same division
   const fetchChatUsers = async () => {
@@ -37,6 +43,17 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
     }
   };
 
+  // Fetch last message + timestamp per conversation partner (for inbox previews)
+  const fetchConversations = async () => {
+    if (!myId) return;
+    try {
+      const res = await axios.get(`http://127.0.0.1:5000/api/messages/conversations/${myId}`);
+      setConversations(res.data || {});
+    } catch (err) {
+      console.error("Error fetching conversation previews:", err);
+    }
+  };
+
   // Fetch messages with the selected user
   const fetchChatMessages = async (targetUserId) => {
     if (!myId || !targetUserId) return;
@@ -59,15 +76,16 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
     }
   };
 
-  // Send message
+  // Send message (text and/or attachment)
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
-    if (!chatInput.trim() || !selectedUser || !myId) return;
+    if ((!chatInput.trim() && !pendingAttachment) || !selectedUser || !myId) return;
 
     const payload = {
       sender: myId,
       recipient: selectedUser._id,
       content: chatInput.trim(),
+      attachment: pendingAttachment || undefined,
       replyTo: replyingTo ? replyingTo._id : null
     };
 
@@ -76,7 +94,9 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
       setChatMessages(prev => [...prev, res.data]);
       setChatInput("");
       setReplyingTo(null);
-      
+      setPendingAttachment(null);
+      fetchConversations();
+
       // Scroll to bottom
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -86,16 +106,55 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
     }
   };
 
-  // Fetch initial user list and unread counts on mount
+  // Read a picked file (image or document) into a base64 attachment payload
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    e.target.value = ""; // allow re-picking the same file later
+    if (!file) return;
+
+    setAttachmentError("");
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      setAttachmentError("File is too large (max 5MB).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPendingAttachment({
+        fileName: file.name,
+        fileType: file.type,
+        fileData: reader.result
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Delete a message you sent
+  const handleDeleteMessage = async (messageId) => {
+    if (!myId) return;
+    if (!window.confirm("Delete this message?")) return;
+    try {
+      await axios.delete(`http://127.0.0.1:5000/api/messages/${messageId}?userId=${myId}`);
+      setChatMessages(prev => prev.filter(m => m._id !== messageId));
+      if (replyingTo?._id === messageId) setReplyingTo(null);
+      fetchConversations();
+    } catch (err) {
+      console.error("Error deleting message:", err);
+    }
+  };
+
+  // Fetch initial user list, unread counts and conversation previews on mount
   useEffect(() => {
     fetchChatUsers();
     fetchUnreadCounts();
+    fetchConversations();
   }, [currentDivision, myId]);
 
-  // Set up 4-second short-polling interval for unread counts and selected user chat history
+  // Set up 4-second short-polling interval for unread counts, previews and selected user chat history
   useEffect(() => {
     const intervalId = setInterval(() => {
       fetchUnreadCounts();
+      fetchConversations();
       if (selectedUser) {
         fetchChatMessages(selectedUser._id);
         markMessagesAsRead(selectedUser._id); // Mark messages read automatically while active
@@ -127,12 +186,36 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
       .join(" ");
   };
 
-  // Sort chats to highlight unread messages by placing them at the top
+  // Telegram-style relative timestamp: time for today, weekday for this week, date otherwise
+  const formatConversationTime = (isoDate) => {
+    if (!isoDate) return "";
+    const date = new Date(isoDate);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    if (isToday) {
+      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+      return date.toLocaleDateString([], { weekday: "short" });
+    }
+    return date.toLocaleDateString([], { day: "2-digit", month: "short" });
+  };
+
+  // Sort chats Telegram-style: unread first, then by most recent message activity
   const sortedChatUsers = [...chatUsers].sort((a, b) => {
     const unreadA = unreadCounts[a._id] || 0;
     const unreadB = unreadCounts[b._id] || 0;
     if (unreadA > 0 && unreadB === 0) return -1;
     if (unreadB > 0 && unreadA === 0) return 1;
+
+    const lastA = conversations[a._id]?.createdAt ? new Date(conversations[a._id].createdAt).getTime() : 0;
+    const lastB = conversations[b._id]?.createdAt ? new Date(conversations[b._id].createdAt).getTime() : 0;
+    if (lastA !== lastB) return lastB - lastA;
+
     return a.fullName.localeCompare(b.fullName);
   });
 
@@ -174,8 +257,17 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
                     )}
                   </div>
                   <div className="chat-user-info">
-                    <div className="chat-user-name">{user.fullName}</div>
-                    <div className="chat-user-role">{formatRole(user.role)}</div>
+                    <div className="chat-user-row-top">
+                      <div className="chat-user-name">{user.fullName}</div>
+                      {conversations[user._id]?.createdAt && (
+                        <span className="chat-user-time">{formatConversationTime(conversations[user._id].createdAt)}</span>
+                      )}
+                    </div>
+                    <div className="chat-user-preview">
+                      {conversations[user._id]
+                        ? `${conversations[user._id].isMine ? "You: " : ""}${conversations[user._id].content}`
+                        : formatRole(user.role)}
+                    </div>
                   </div>
                   {hasUnread && (
                     <div className="chat-unread-badge">
@@ -245,21 +337,50 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
                           </div>
                         </div>
                       )}
-                      <div className="bubble-content">{msg.content}</div>
+                      {msg.attachment?.fileData && (
+                        msg.attachment.fileType?.startsWith("image/") ? (
+                          <a href={msg.attachment.fileData} target="_blank" rel="noopener noreferrer" className="attachment-image-link">
+                            <img src={msg.attachment.fileData} alt={msg.attachment.fileName} className="attachment-image" />
+                          </a>
+                        ) : (
+                          <a
+                            href={msg.attachment.fileData}
+                            download={msg.attachment.fileName}
+                            className="attachment-file-chip"
+                          >
+                            <FileText size={18} />
+                            <span className="attachment-file-name">{msg.attachment.fileName}</span>
+                            <Download size={14} />
+                          </a>
+                        )
+                      )}
+                      {msg.content && <div className="bubble-content">{msg.content}</div>}
                       <div className="bubble-time">{timeStr}</div>
                     </div>
-                    <button 
-                      type="button" 
-                      className="chat-message-reply-btn"
-                      onClick={() => setReplyingTo({
-                        _id: msg._id,
-                        senderName: msg.sender === myId ? "You" : (selectedUser?.fullName || "Member"),
-                        content: msg.content
-                      })}
-                      title="Reply"
-                    >
-                      <CornerUpLeft size={14} />
-                    </button>
+                    <div className="chat-message-actions">
+                      <button
+                        type="button"
+                        className="chat-message-reply-btn"
+                        onClick={() => setReplyingTo({
+                          _id: msg._id,
+                          senderName: msg.sender === myId ? "You" : (selectedUser?.fullName || "Member"),
+                          content: msg.content || msg.attachment?.fileName || "Attachment"
+                        })}
+                        title="Reply"
+                      >
+                        <CornerUpLeft size={14} />
+                      </button>
+                      {isSent && (
+                        <button
+                          type="button"
+                          className="chat-message-delete-btn"
+                          onClick={() => handleDeleteMessage(msg._id)}
+                          title="Delete message"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -282,7 +403,43 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
               </div>
             )}
 
+            {attachmentError && (
+              <div className="attachment-error-bar">{attachmentError}</div>
+            )}
+
+            {pendingAttachment && (
+              <div className="attachment-preview-bar">
+                {pendingAttachment.fileType?.startsWith("image/") ? (
+                  <img src={pendingAttachment.fileData} alt={pendingAttachment.fileName} className="attachment-preview-thumb" />
+                ) : (
+                  <FileText size={20} />
+                )}
+                <span className="attachment-preview-name">{pendingAttachment.fileName}</span>
+                <button
+                  type="button"
+                  className="attachment-preview-remove"
+                  onClick={() => setPendingAttachment(null)}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
             <form className="chat-input-area" onSubmit={handleSendMessage}>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                style={{ display: "none" }}
+              />
+              <button
+                type="button"
+                className="chat-attach-btn"
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach image or document"
+              >
+                <Paperclip size={18} />
+              </button>
               <input
                 type="text"
                 className="chat-textarea"
@@ -293,7 +450,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
               <button
                 type="submit"
                 className="chat-send-btn"
-                disabled={!chatInput.trim()}
+                disabled={!chatInput.trim() && !pendingAttachment}
               >
                 <Send size={16} />
               </button>
