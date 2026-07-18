@@ -755,16 +755,21 @@ const UserDashboard = () => {
                               />
                             </div>
 
-                            <div className="btn-group-estimation" style={{ marginBottom: '14px' }}>
-                              <button
-                                type="button"
-                                className="tik-btn"
-                                onClick={handleSubmitEstimate}
-                                disabled={selectedJob.estimateSubmitted}
-                                title="Send estimate details to Head Office"
-                              >
-                                <Check size={16} /> Tick
-                              </button>
+                            <div className="btn-group-estimation" style={{ marginBottom: '14px', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <button
+                                  type="button"
+                                  className={`tick-checkbox ${selectedJob.estimateSubmitted ? 'checked' : ''}`}
+                                  onClick={handleSubmitEstimate}
+                                  disabled={selectedJob.estimateSubmitted}
+                                  title="Send estimate details to Head Office"
+                                >
+                                  {selectedJob.estimateSubmitted && <Check size={20} strokeWidth={3} />}
+                                </button>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                  {selectedJob.estimateSubmitted ? 'Sent to Head Office' : 'Tick to send to Head Office'}
+                                </span>
+                              </div>
                               <button
                                 type="button"
                                 className="undo-btn"

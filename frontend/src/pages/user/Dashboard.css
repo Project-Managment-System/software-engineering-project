@@ -1221,3 +1221,32 @@
   background-color: #b91c1c;
 }
 
+.tick-checkbox {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border: 2px solid var(--border-base);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tick-checkbox:hover:not(:disabled) {
+  border-color: var(--success);
+}
+
+.tick-checkbox.checked {
+  background-color: var(--success);
+  border-color: var(--success);
+}
+
+.tick-checkbox:disabled {
+  cursor: not-allowed;
+}
+
