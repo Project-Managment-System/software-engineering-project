@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
   Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
-  FileText, MessageSquare
+  FileText, MessageSquare, Bell, RotateCcw, Check, Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -42,7 +42,6 @@ const formatRoleName = (role) => {
 /* ─────────────────────────────────────── */
 const UserDashboard = () => {
   const navigate = useNavigate();
-  const dateInputRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
@@ -52,6 +51,20 @@ const UserDashboard = () => {
   const [selectedJobId, setSelectedJobId] = useState('');
   const [visitDate, setVisitDate] = useState('');
   const [estimateAmount, setEstimateAmount] = useState('');
+  const [isDateConfirmed, setIsDateConfirmed] = useState(false);
+  const [finalEstimateCost, setFinalEstimateCost] = useState('');
+  const [finalEstimateDate, setFinalEstimateDate] = useState('');
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user_notifications') || '[]');
+    } catch (_) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('user_notifications', JSON.stringify(notifications));
+  }, [notifications]);
 
   const [profileName, setProfileName] = useState(localStorage.getItem('fullName') || 'User');
   const [regNo, setRegNo] = useState(localStorage.getItem('employeeId') || 'REG/2021/CS/088');
@@ -240,47 +253,114 @@ const UserDashboard = () => {
       setEditableAllocation(foundJob.allocation);
       setEditableAssignDate(foundJob.assignDate);
       setEditableDeadline(foundJob.deadline);
+      setVisitDate(foundJob.fieldVisitedDate ? new Date(foundJob.fieldVisitedDate).toISOString().split('T')[0] : '');
+      setEstimateAmount(foundJob.fieldEstimateAmount || '');
+      setIsDateConfirmed(!!foundJob.fieldVisitedDate);
+      setFinalEstimateCost(foundJob.finalEstimateCost || '');
+      setFinalEstimateDate(foundJob.finalEstimateDate ? new Date(foundJob.finalEstimateDate).toISOString().split('T')[0] : '');
+    } else {
+      setVisitDate('');
+      setEstimateAmount('');
+      setIsDateConfirmed(false);
+      setFinalEstimateCost('');
+      setFinalEstimateDate('');
     }
   };
 
   const handleSaveJob = async () => {
-    try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
-        jobName: editableJobName,
-        allocation: editableAllocation,
-      });
-      addToast("Job details saved successfully!", "success");
-      fetchData();
-    } catch (err) {
-      addToast("Failed to save changes", "error");
-    }
+    // Structural specifications are read-only for users now.
+    addToast("Structural specifications cannot be modified by the user", "warning");
   };
 
-  const handleSubmitEstimate = () => {
-    if (!selectedJobId || !visitDate || !estimateAmount) {
-      addToast("Please fill in all fields", "warning");
+  const handleSubmitEstimate = async () => {
+    if (!selectedJobId) {
+      addToast('Please select a job first.', 'warning');
       return;
     }
-    const newEstimate = {
-      no: submittedEstimates.length + 1,
-      jobNo: selectedJob.jobNo,
-      jobName: selectedJob.jobName,
-      toName: profileName,
-      allocation: selectedJob.allocation,
-      estimatedAmount: estimateAmount,
-      checkedOn: visitDate,
-      sendApproval: "Pending",
-      isChecked: false
-    };
-    setSubmittedEstimates([...submittedEstimates, newEstimate]);
-    setVisitDate('');
-    setEstimateAmount('');
-    addToast("Estimate submitted to OA", "success");
+    if (!visitDate || !isDateConfirmed) {
+      addToast('Please confirm the field visited date first.', 'warning');
+      return;
+    }
+    if (!estimateAmount) {
+      addToast('Please enter the calculated estimate value.', 'warning');
+      return;
+    }
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+        fieldVisitedDate: visitDate,
+        fieldEstimateAmount: Number(estimateAmount),
+        estimateSubmitted: true,
+        estimateSubmittedAt: new Date().toISOString()
+      });
+      addToast('Estimate details sent to Head Office!', 'success');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to submit estimate details.', 'error');
+    }
   };
 
-  const handleCalendarClick = () => {
-    if (dateInputRef.current) {
-      dateInputRef.current.showPicker ? dateInputRef.current.showPicker() : dateInputRef.current.focus();
+  const handleUndoEstimate = async () => {
+    if (!selectedJobId) return;
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+        estimateSubmitted: false,
+        estimateSubmittedAt: null
+      });
+      addToast('Estimate submission undone.', 'info');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to undo submission.', 'error');
+    }
+  };
+
+  const handleSaveFinalEstimate = async () => {
+    if (!selectedJobId) return;
+    if (!finalEstimateCost || !finalEstimateDate) {
+      addToast('Please enter both the final estimate cost and alignment date.', 'warning');
+      return;
+    }
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+        finalEstimateCost: Number(finalEstimateCost),
+        finalEstimateDate: finalEstimateDate
+      });
+      addToast('Final estimate saved successfully!', 'success');
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to save final estimate details.', 'error');
+    }
+  };
+
+  const handleSimulateReceiveDrawing = async () => {
+    if (!selectedJobId || !selectedJob) return;
+    try {
+      const mockDrawingUrl = "data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iagogIDw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iagoyIDAgb2JqCiAgPDwvVHlwZS9QYWdlcy9LaWRzWzMgMCBSXS9Db3VudCAxPj4KZW5kb2JqCjMgMCBvYmoKICA8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA1OTUgODQyXS9Db250ZW50cyA0IDAgUj4+CmVuZG9iago0IDAgb2JqCiAgPDwvTGVuZ3RoIDU5Pj4Kc3RyZWFtCkJUCiAgL0YxIDE4IFRmCiAgNTQgNzIwIFRkCiAgKFN0cnVjdHVyYWwgRHJhd2luZyBmb3IgQ0VNUyBKb2IpIFRqCkUKZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgNQowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTUgMDAwMDAgbiAKMDAwMDAwMDA2MCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIGYgCjAwMDAwMDAyMDEgMDAwMDAgbiAKdHJhaWxlcgogIDw8L1NpemUgNS9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjMxMAolJUVPRgo=";
+      const payload = {
+        drawingReceived: true,
+        drawingReceivedAt: new Date(),
+        drawingFileUrl: mockDrawingUrl
+      };
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, payload);
+
+      const newNotification = {
+        id: Date.now(),
+        jobNo: selectedJob.jobNo,
+        jobName: selectedJob.jobName,
+        title: "Drawing Received 📐",
+        message: `Head office has sent the structural drawing for Job: ${selectedJob.jobNo}`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        read: false
+      };
+
+      setNotifications(prev => [newNotification, ...prev]);
+      addToast("Drawing received from Head Office!", "success");
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      addToast("Simulation failed", "error");
     }
   };
 
@@ -406,6 +486,7 @@ const UserDashboard = () => {
             {[
               { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
               { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
+              { id: 'notifications', icon: Bell, label: 'Notifications' },
               { id: 'messages', icon: MessageSquare, label: 'Messages' },
               { id: 'profile', icon: Edit3, label: 'Profile' },
               { id: 'settings', icon: Settings, label: 'Settings' },
@@ -422,6 +503,11 @@ const UserDashboard = () => {
                 <item.icon size={18} /> {item.label}
                 {item.id === 'messages' && totalUnread > 0 && (
                   <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
+                {item.id === 'notifications' && notifications.filter(n => !n.read).length > 0 && (
+                  <span className="nav-unread-badge">
+                    {notifications.filter(n => !n.read).length > 99 ? '99+' : notifications.filter(n => !n.read).length}
+                  </span>
                 )}
               </button>
             ))}
@@ -559,67 +645,208 @@ const UserDashboard = () => {
                 </div>
 
                 {selectedJob && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
 
-                    {/* Column 1: Core Job Specs */}
-                    <div className="field-card" style={{ padding: '24px' }}>
-                      <p className="instruction-text" style={{ marginTop: '0px', marginBottom: '20px', fontWeight: 600 }}>Update structural specifications:</p>
-                      <div className="vertical-form">
-                        <div className="input-row-group">
-                          <label>Job Reference Code</label>
-                          <input type="text" disabled value={selectedJob.jobNo} className="input-field disabled" />
+                      {/* Column 1: Core Job Specs */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                        className="field-card"
+                        style={{ padding: '24px' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                          <FileText size={18} style={{ color: 'var(--accent-primary)' }} />
+                          <h3 className="recent-jobs-title" style={{ margin: 0 }}>Update Structural Specifications</h3>
                         </div>
-                        <div className="input-row-group">
-                          <label>Job Description</label>
-                          <input type="text" value={editableJobName} onChange={(e) => setEditableJobName(e.target.value)} className="input-field" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>Allocation Area</label>
-                          <input type="text" value={editableAllocation} onChange={(e) => setEditableAllocation(e.target.value)} className="input-field" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>Work Allocation Date</label>
-                          <input type="date" value={editableAssignDate} onChange={(e) => setEditableAssignDate(e.target.value)} className="input-field" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>Deadline Limit</label>
-                          <input type="date" value={editableDeadline} onChange={(e) => setEditableDeadline(e.target.value)} className="input-field" />
-                        </div>
-                        <button className="save-btn" onClick={handleSaveJob} style={{ marginTop: '10px' }}>
-                          <Save size={16} /> Save Changes
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Column 2: Estimates Submission */}
-                    <div className="field-card" style={{ padding: '24px' }}>
-                      <p className="instruction-text" style={{ marginTop: '0px', marginBottom: '20px', fontWeight: 600 }}>Generate structural field estimate:</p>
-                      <div className="vertical-form">
-                        <div className="input-row-group">
-                          <label>Field Survey Verification Date</label>
-                          <div className="hybrid-date-wrapper" style={{ display: 'flex', gap: '8px' }}>
-                            <input type="text" className="input-field" placeholder="YYYY-MM-DD" value={visitDate} onChange={(e) => setVisitDate(e.target.value)} />
-                            <button type="button" className="cal-btn" onClick={handleCalendarClick} style={{ padding: '0 12px' }}><Calendar size={18} /></button>
-                            <input type="date" ref={dateInputRef} className="hidden-date" onChange={(e) => setVisitDate(e.target.value)} style={{ opacity: 0, position: 'absolute', pointerEvents: 'none' }} />
+                        <div className="vertical-form">
+                          <div className="input-row-group">
+                            <label>JOB NUMBER</label>
+                            <input type="text" disabled value={selectedJob.jobNo} className="input-field disabled" />
+                          </div>
+                          <div className="input-row-group">
+                            <label>ACTIVITY</label>
+                            <input type="text" disabled value={selectedJob.jobName} className="input-field disabled" />
+                          </div>
+                          <div className="input-row-group">
+                            <label>Allocation</label>
+                            <input type="text" disabled value={selectedJob.allocation} className="input-field disabled" />
+                          </div>
+                          <div className="input-row-group">
+                            <label>Work Allocation Date</label>
+                            <input type="text" disabled value={selectedJob.assignDate} className="input-field disabled" />
+                          </div>
+                          <div className="input-row-group">
+                            <label>Deadline Limit</label>
+                            <input type="text" disabled value={selectedJob.deadline} className="input-field disabled" />
                           </div>
                         </div>
-                        <div className="input-row-group">
-                          <label>Calculated Estimate Value (LKR)</label>
-                          <input
-                            type="number"
-                            className="input-field"
-                            placeholder="0.00"
-                            value={estimateAmount}
-                            onChange={handleEstimateAmountChange}
-                            onKeyDown={handleEstimateAmountKeyDown}
-                          />
-                        </div>
-                        <button className="send-btn" onClick={handleSubmitEstimate} style={{ marginTop: '10px' }}>
-                          <Send size={16} /> Submit Estimate
-                        </button>
-                      </div>
-                    </div>
+                      </motion.div>
 
+                      {/* Column 2: Generate Structural Field Estimate */}
+                      <div className="field-card" style={{ padding: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                          <Calendar size={18} style={{ color: 'var(--accent-primary)' }} />
+                          <h3 className="recent-jobs-title" style={{ margin: 0 }}>Generate Structural Field Estimate</h3>
+                        </div>
+
+                        <div className="vertical-form">
+                          {/* Field Visited Date with OK confirm */}
+                          <div className="input-row-group" style={{ position: 'relative' }}>
+                            <label>Field Visited On</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <input
+                                type="date"
+                                className="input-field"
+                                value={visitDate}
+                                disabled={isDateConfirmed}
+                                onChange={(e) => setVisitDate(e.target.value)}
+                                max={new Date().toISOString().split('T')[0]}
+                                style={{ flex: 1 }}
+                              />
+                              {!isDateConfirmed && (
+                                <button
+                                  type="button"
+                                  className="tik-btn"
+                                  style={{ padding: '8px 16px', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+                                  onClick={() => {
+                                    if (!visitDate) {
+                                      addToast('Please select a field visited date first.', 'warning');
+                                      return;
+                                    }
+                                    setIsDateConfirmed(true);
+                                  }}
+                                >
+                                  OK
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Content below — blurred until date confirmed */}
+                          <div style={{ filter: isDateConfirmed ? 'none' : 'blur(5px)', transition: 'filter 0.4s ease', pointerEvents: isDateConfirmed ? 'auto' : 'none' }}>
+
+                            <div className="input-row-group" style={{ marginBottom: '10px' }}>
+                              <label>Calculated Estimate Value (LKR)</label>
+                              <input
+                                type="number"
+                                className="input-field"
+                                placeholder="Enter calculated estimate amount"
+                                value={estimateAmount}
+                                onChange={handleEstimateAmountChange}
+                                onKeyDown={handleEstimateAmountKeyDown}
+                                disabled={selectedJob.estimateSubmitted}
+                              />
+                            </div>
+
+                            <div className="btn-group-estimation" style={{ marginBottom: '14px' }}>
+                              <button
+                                type="button"
+                                className="tik-btn"
+                                onClick={handleSubmitEstimate}
+                                disabled={selectedJob.estimateSubmitted}
+                                title="Send estimate details to Head Office"
+                              >
+                                <Check size={16} /> Tick
+                              </button>
+                              <button
+                                type="button"
+                                className="undo-btn"
+                                onClick={handleUndoEstimate}
+                                disabled={!selectedJob.estimateSubmitted || selectedJob.drawingReceived}
+                                title={selectedJob.drawingReceived ? 'Cannot undo after the drawing has been received' : 'Undo the estimate submission'}
+                              >
+                                <RotateCcw size={16} /> Undo
+                              </button>
+                            </div>
+
+                            {/* Status indicator */}
+                            <div style={{ margin: '0 0 14px', padding: '12px', borderRadius: '8px', background: 'var(--bg-input)', border: '1px solid var(--border-base)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-label)', fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
+                              <span style={{ fontWeight: 800, color: selectedJob.drawingReceived ? 'var(--success)' : 'var(--warning)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem' }}>
+                                {selectedJob.drawingReceived ? (
+                                  <><CheckCircle size={16} /> Received Drawing</>
+                                ) : (
+                                  <><Clock size={16} /> {(() => {
+                                    if (!selectedJob.estimateSubmittedAt) return 'Pending (0 days)';
+                                    const diff = Math.floor(Math.abs(new Date() - new Date(selectedJob.estimateSubmittedAt)) / (1000 * 60 * 60 * 24));
+                                    return `Pending (${diff} day${diff === 1 ? '' : 's'})`;
+                                  })()}</>
+                                )}
+                              </span>
+                            </div>
+
+                            {/* Drawing download */}
+                            {selectedJob.drawingReceived && selectedJob.drawingFileUrl && (
+                              <div style={{ marginBottom: '14px' }}>
+                                <a href={selectedJob.drawingFileUrl} download={`Drawing_${selectedJob.jobNo}.pdf`} className="download-pdf-btn">
+                                  <Download size={16} /> Download Drawing PDF
+                                </a>
+                              </div>
+                            )}
+
+                            {/* Dev simulation panel — only relevant before drawing received */}
+                            {!selectedJob.drawingReceived && (
+                              <div className="simulation-panel" style={{ marginBottom: '14px' }}>
+                                <div className="simulation-title">Developer Simulation Panel</div>
+                                <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0 0 10px 0' }}>
+                                  Simulate Head Office sending the drawing for this job.
+                                </p>
+                                <button className="action-btn-pill primary" onClick={handleSimulateReceiveDrawing}>
+                                  <Send size={12} /> Send Drawing from Head Office
+                                </button>
+                              </div>
+                            )}
+
+                            {/* ─── Sub-field: Final Estimate Cost & Drawing Alignment (only once drawing is received) ─── */}
+                            {selectedJob.drawingReceived && (
+                              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent-primary)' }}>
+                                  ↳ Final Estimate Cost &amp; Drawing Alignment
+                                </span>
+
+                                <div className="input-row-group">
+                                  <label>Estimate Cost (LKR)</label>
+                                  <input
+                                    type="number"
+                                    className="input-field"
+                                    placeholder="Enter final cost amount"
+                                    value={finalEstimateCost}
+                                    onChange={(e) => setFinalEstimateCost(e.target.value)}
+                                  />
+                                </div>
+
+                                <div className="input-row-group">
+                                  <label>Estimate Alignment Date</label>
+                                  <input
+                                    type="date"
+                                    className="input-field"
+                                    min={selectedJob.drawingReceivedAt ? new Date(selectedJob.drawingReceivedAt).toISOString().split('T')[0] : ''}
+                                    max={new Date().toISOString().split('T')[0]}
+                                    value={finalEstimateDate}
+                                    onChange={(e) => setFinalEstimateDate(e.target.value)}
+                                  />
+                                  <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                    Only dates between drawing received date and today can be selected.
+                                  </small>
+                                </div>
+
+                                <button
+                                  className="tik-btn"
+                                  style={{ alignSelf: 'flex-start' }}
+                                  onClick={handleSaveFinalEstimate}
+                                >
+                                  <CheckCircle size={16} /> Submit Final Estimate
+                                </button>
+                              </div>
+                            )}
+
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
                   </div>
                 )}
 
@@ -673,6 +900,74 @@ const UserDashboard = () => {
                     </div>
                   </motion.div>
                 )}
+              </motion.section>
+            )}
+
+            {/* ── Notifications Tab ── */}
+            {activeTab === 'notifications' && (
+              <motion.section key="notifications" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="notifications-view">
+                <div className="field-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Bell size={20} style={{ color: 'var(--accent-primary)' }} />
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Notifications</h3>
+                    </div>
+                    {notifications.length > 0 && (
+                      <button
+                        className="action-btn-pill secondary"
+                        onClick={() => {
+                          setNotifications(notifications.map(n => ({ ...n, read: true })));
+                          addToast("All notifications marked as read", "success");
+                        }}
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '180px', border: 'none' }}>
+                      <Bell size={32} style={{ opacity: 0.35, marginBottom: '10px' }} />
+                      <span>You have no notifications yet.</span>
+                    </div>
+                  ) : (
+                    <div className="notification-list">
+                      {notifications.map((notif) => (
+                        <div key={notif.id} className={`notification-card-item ${notif.read ? '' : 'unread'}`}>
+                          <div className="notification-main">
+                            <div className="notification-header">
+                              <span className="notification-title">{notif.title}</span>
+                              <span className="notification-time">{notif.time}</span>
+                            </div>
+                            <p className="notification-msg">{notif.message}</p>
+                          </div>
+                          <div className="notification-btn-row">
+                            {!notif.read && (
+                              <button
+                                className="action-btn-pill primary"
+                                onClick={() => {
+                                  setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                                  addToast("Notification marked as read", "info");
+                                }}
+                              >
+                                Mark as Read
+                              </button>
+                            )}
+                            <button
+                              className="action-btn-pill secondary"
+                              onClick={() => {
+                                setNotifications(notifications.filter(n => n.id !== notif.id));
+                                addToast("Notification dismissed", "info");
+                              }}
+                            >
+                              Dismiss
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </motion.section>
             )}
 

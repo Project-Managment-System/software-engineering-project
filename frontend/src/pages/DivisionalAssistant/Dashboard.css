@@ -615,3 +615,102 @@
   70%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* ============================================================
+   UPDATE PROGRESS TAB — Structural Estimate Sub-fields
+   ============================================================ */
+
+#cems-user-dashboard .update-progress-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#cems-user-dashboard .vertical-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#cems-user-dashboard .input-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#cems-user-dashboard .input-row-group label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-label);
+}
+
+#cems-user-dashboard .input-field {
+  width: 100%;
+  padding: 10px 13px;
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+#cems-user-dashboard .input-field:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+#cems-user-dashboard .input-field.disabled,
+#cems-user-dashboard .input-field:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: var(--bg-table-alt);
+}
+
+#cems-user-dashboard .job-select-dropdown {
+  width: 100%;
+  padding: 10px 13px;
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+#cems-user-dashboard .job-select-dropdown:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+#cems-user-dashboard .download-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: var(--radius-btn);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark));
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: var(--shadow-btn);
+}
+
+#cems-user-dashboard .download-pdf-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
