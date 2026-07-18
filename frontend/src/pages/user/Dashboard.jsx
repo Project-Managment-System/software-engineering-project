@@ -54,6 +54,15 @@ const cardVariant = {
 };
 
 /* ─── Role Formatting Helpers ─── */
+/* ─── Selectable accent color themes (Settings) ─── */
+const THEME_OPTIONS = [
+  { id: 'violet', label: 'Violet', swatch: '#7c3aed' },
+  { id: 'ocean', label: 'Ocean', swatch: '#0891b2' },
+  { id: 'emerald', label: 'Emerald', swatch: '#059669' },
+  { id: 'rose', label: 'Rose', swatch: '#e11d48' },
+  { id: 'amber', label: 'Amber', swatch: '#d97706' },
+];
+
 const formatRoleName = (role) => {
   if (!role) return 'N/A';
   switch (role.toLowerCase()) {
@@ -72,6 +81,7 @@ const UserDashboard = () => {
   const fileInputRef = useRef(null);
 
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -462,7 +472,7 @@ const UserDashboard = () => {
   const allocationData = Object.values(allocationBreakdown);
 
   return (
-    <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
+    <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
       {/* Floating Hamburger Button */}
       <button
         className="sidebar-toggle-menu-btn"
@@ -1308,6 +1318,35 @@ const UserDashboard = () => {
                         <option value="Light Mode">Light Mode</option>
                         <option value="Dark Mode">Dark Mode</option>
                       </select>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label>Accent Color</label>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        {THEME_OPTIONS.map(theme => (
+                          <button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => {
+                              setAccentTheme(theme.id);
+                              localStorage.setItem('accentTheme', theme.id);
+                            }}
+                            title={theme.label}
+                            style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '50%',
+                              background: theme.swatch,
+                              border: accentTheme === theme.id ? '3px solid var(--text-primary)' : '3px solid transparent',
+                              boxShadow: accentTheme === theme.id ? `0 0 0 2px ${theme.swatch}` : 'none',
+                              cursor: 'pointer',
+                              padding: 0,
+                              transition: 'transform 0.15s ease',
+                              transform: accentTheme === theme.id ? 'scale(1.1)' : 'scale(1)'
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
