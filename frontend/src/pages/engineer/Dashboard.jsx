@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, RadialBarChart, RadialBar
@@ -96,6 +96,7 @@ const EngineerDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [currentDivision, setCurrentDivision] = useState(localStorage.getItem('userDivision') || '');
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'engineer');
 
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem('fullName') || 'User',
@@ -198,6 +199,14 @@ const EngineerDashboard = () => {
           localStorage.setItem('email', user.email || '');
           localStorage.setItem('phoneNo', user.phoneNo || '');
           localStorage.setItem('profilePic', user.profilePic || '');
+          if (user.division) {
+            setCurrentDivision(user.division);
+            localStorage.setItem('userDivision', user.division);
+          }
+          if (user.role) {
+            setUserRole(user.role);
+            localStorage.setItem('role', user.role);
+          }
         }
       }
     } catch (err) {
@@ -249,7 +258,7 @@ const EngineerDashboard = () => {
         doc.setFontSize(8);
         doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()} · Division: ${currentDivision || 'N/A'}`, 14, 21);
         
-        doc.autoTable({
+        autoTable(doc, {
           head: [headers],
           body: rows,
           startY: 25,
@@ -657,11 +666,37 @@ const EngineerDashboard = () => {
             <div className="profile-photo">
               {profilePic ? <img src={profilePic} alt="Profile" /> : <User size={48} />}
             </div>
-            <h3>{profileData.name}</h3>
-            <p className="reg-number">{profileData.reg}</p>
-            <p className="role-title" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', marginTop: '4px', textTransform: 'uppercase' }}>
-              {formatRoleName(localStorage.getItem('role') || 'engineer')}
-            </p>
+            <div className="profile-info">
+              {currentDivision && (
+                <span className="profile-division" style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--accent-primary)',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '2px',
+                  display: 'block'
+                }}>
+                  {currentDivision}
+                </span>
+              )}
+              <h3>{profileData.name}</h3>
+              <p className="reg-number">{profileData.reg}</p>
+              <span className="role-title" style={{
+                fontSize: '0.68rem',
+                color: '#ffffff',
+                backgroundColor: 'var(--accent-primary)',
+                fontWeight: '800',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                marginTop: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'inline-block'
+              }}>
+                {formatRoleName(userRole || 'engineer')}
+              </span>
+            </div>
           </div>
           <nav className="sidebar-nav">
             {[
@@ -1103,7 +1138,7 @@ const EngineerDashboard = () => {
                     <label>Password *</label>
                     <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} required />
                     <label>Division *</label>
-                    <input name="division" value={userFormData.division} disabled className="input-field" style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                    <input name="division" value={userFormData.division} disabled className="input-field" style={{ opacity: 0.7, cursor: 'not-allowed', maxWidth: '220px', width: '220px' }} />
                     <label>Position *</label>
                     <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
                       <option value="" disabled>Select Position</option>
