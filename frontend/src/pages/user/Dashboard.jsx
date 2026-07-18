@@ -660,27 +660,27 @@ const UserDashboard = () => {
                           <FileText size={18} style={{ color: 'var(--accent-primary)' }} />
                           <h3 className="recent-jobs-title" style={{ margin: 0 }}>Update Structural Specifications</h3>
                         </div>
-                        <div className="vertical-form">
-                          <div className="input-row-group">
-                            <label>JOB NUMBER</label>
-                            <input type="text" disabled value={selectedJob.jobNo} className="input-field disabled" />
-                          </div>
-                          <div className="input-row-group">
-                            <label>ACTIVITY</label>
-                            <input type="text" disabled value={selectedJob.jobName} className="input-field disabled" />
-                          </div>
-                          <div className="input-row-group">
-                            <label>Allocation</label>
-                            <input type="text" disabled value={selectedJob.allocation} className="input-field disabled" />
-                          </div>
-                          <div className="input-row-group">
-                            <label>Work Allocation Date</label>
-                            <input type="text" disabled value={selectedJob.assignDate} className="input-field disabled" />
-                          </div>
-                          <div className="input-row-group">
-                            <label>Deadline Limit</label>
-                            <input type="text" disabled value={selectedJob.deadline} className="input-field disabled" />
-                          </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '14px' }}>
+                          {[
+                            { label: 'Job Number', value: selectedJob.jobNo },
+                            { label: 'Activity', value: selectedJob.jobName },
+                            { label: 'Allocation', value: selectedJob.allocation },
+                            { label: 'Work Allocation Date', value: selectedJob.assignDate },
+                            { label: 'Deadline Limit', value: selectedJob.deadline },
+                          ].map(field => (
+                            <div
+                              key={field.label}
+                              className="field-card"
+                              style={{ padding: '16px 18px', margin: 0 }}
+                            >
+                              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-label)', marginBottom: '8px' }}>
+                                {field.label}
+                              </div>
+                              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                {field.value || '—'}
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </motion.div>
 
