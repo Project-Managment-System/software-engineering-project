@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
   Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
-  FileText, MessageSquare, Bell, RotateCcw, Check, Download
+  FileText, MessageSquare, Bell, RotateCcw, Check, Download, Hash, Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -660,24 +660,39 @@ const UserDashboard = () => {
                           <FileText size={18} style={{ color: 'var(--accent-primary)' }} />
                           <h3 className="recent-jobs-title" style={{ margin: 0 }}>Update Structural Specifications</h3>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '14px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
                           {[
-                            { label: 'Job Number', value: selectedJob.jobNo },
-                            { label: 'Activity', value: selectedJob.jobName },
-                            { label: 'Allocation', value: selectedJob.allocation },
-                            { label: 'Work Allocation Date', value: selectedJob.assignDate },
-                            { label: 'Deadline Limit', value: selectedJob.deadline },
-                          ].map(field => (
+                            { label: 'Job Number', value: selectedJob.jobNo, icon: Hash },
+                            { label: 'Activity', value: selectedJob.jobName, icon: Briefcase },
+                            { label: 'Allocation', value: selectedJob.allocation, icon: Layers },
+                            { label: 'Work Allocation Date', value: selectedJob.assignDate, icon: Calendar },
+                            { label: 'Deadline Limit', value: selectedJob.deadline, icon: Clock },
+                          ].map((field, idx, arr) => (
                             <div
                               key={field.label}
-                              className="field-card"
-                              style={{ padding: '16px 18px', margin: 0 }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '14px',
+                                padding: '14px 4px',
+                                borderBottom: idx < arr.length - 1 ? '1px solid var(--border-base)' : 'none'
+                              }}
                             >
-                              <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-label)', marginBottom: '8px' }}>
-                                {field.label}
+                              <div style={{
+                                width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+                                background: 'color-mix(in srgb, var(--accent-primary) 12%, transparent)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                color: 'var(--accent-primary)'
+                              }}>
+                                <field.icon size={17} />
                               </div>
-                              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                {field.value || '—'}
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-label)', marginBottom: '3px' }}>
+                                  {field.label}
+                                </div>
+                                <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {field.value || '—'}
+                                </div>
                               </div>
                             </div>
                           ))}
