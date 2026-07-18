@@ -187,34 +187,7 @@ const DivisionalAssistantDashboard = () => {
     }
   };
 
-  const fetchUserProfile = async () => {
-    try {
-      const userId = localStorage.getItem('userId');
-      if (userId) {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
-        const user = res.data;
-        if (user) {
-          const fetchedProfile = {
-            name: user.fullName || 'Divisional Assistant',
-            reg: user.employeeId || '',
-            email: user.email || '',
-            phone: user.phoneNo || ''
-          };
-          setProfileData(fetchedProfile);
-          setProfileForm(fetchedProfile);
-          setProfilePic(user.profilePic || null);
 
-          localStorage.setItem('fullName', user.fullName || '');
-          localStorage.setItem('employeeId', user.employeeId || '');
-          localStorage.setItem('email', user.email || '');
-          localStorage.setItem('phoneNo', user.phoneNo || '');
-          localStorage.setItem('profilePic', user.profilePic || '');
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching divisional assistant profile:", err);
-    }
-  };
 
   useEffect(() => {
     fetchUsers();
