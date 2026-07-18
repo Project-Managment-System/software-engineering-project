@@ -1026,11 +1026,6 @@ const AdminDashboard = () => {
 
                 {/* ── Filters Card ── */}
                 <div className="recent-jobs-card">
-<<<<<<< HEAD
-                  <h3 className="recent-jobs-title">Analytics Filters</h3>
-
-                  <div className="table-filters-row">
-=======
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>Analytics Filters</h3>
                     {(filters.department || filters.ministry || filters.division) && (
@@ -1040,7 +1035,6 @@ const AdminDashboard = () => {
                     )}
                   </div>
                   <div className="table-filters-row" style={{ marginBottom: 0 }}>
->>>>>>> c5602ad0e08677d4c28bb37171f1f4e54f17bde6
                     <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Ministry</label>
                       <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
