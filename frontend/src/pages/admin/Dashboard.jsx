@@ -5,7 +5,7 @@ import {
   Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
-  FileText, MessageSquare
+  FileText, MessageSquare, Lock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -862,14 +862,20 @@ const AdminDashboard = () => {
                                 <td>{j.remark}</td>
                                 <td>{j.submitDate ? j.submitDate.split('T')[0] : 'N/A'}</td>
                                 <td>
-                                  <div style={{ display: 'flex', gap: '6px' }}>
-                                    <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit">
-                                      <Edit size={15} />
+                                  {j.status === 'Approved' && userRole === 'clerk' ? (
+                                    <button className="inactive-btn" disabled title="Locked — job already approved by Engineer">
+                                      <Lock size={14} /> Inactive
                                     </button>
-                                    <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete">
-                                      <Trash2 size={15} />
-                                    </button>
-                                  </div>
+                                  ) : (
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit">
+                                        <Edit size={15} />
+                                      </button>
+                                      <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete">
+                                        <Trash2 size={15} />
+                                      </button>
+                                    </div>
+                                  )}
                                 </td>
                                 <td>
                                   <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
