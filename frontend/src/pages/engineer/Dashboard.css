@@ -186,12 +186,13 @@
   align-items: center;
   text-align: center;
   margin-bottom: 26px;
-  padding: 22px 10px 20px;
+  padding: 22px 12px 22px;
   background: var(--accent-soft);
   border: 1px solid var(--border-base);
   border-radius: var(--radius-card);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  min-height: fit-content;
 }
 
 #cems-user-dashboard .profile-box::before {
@@ -229,6 +230,13 @@
   object-fit: cover;
 }
 
+#cems-user-dashboard .profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 #cems-user-dashboard .profile-info h3,
 #cems-user-dashboard .profile-box > h3 {
   font-family: 'Outfit', sans-serif;
@@ -241,8 +249,8 @@
 
 #cems-user-dashboard .reg-number {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.73rem;
-  color: var(--accent-primary);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
   margin: 0;
   letter-spacing: 0.03em;
 }
@@ -739,7 +747,15 @@
   position: relative !important;
   overflow: hidden !important;
   width: auto !important;
-  max-width: 540px !important;
+  max-width: 480px !important;
+}
+
+/* Division input in add-user form — fixed shorter width */
+#cems-user-dashboard .profile-form input.input-field[name='division'],
+#cems-user-dashboard .profile-form input[disabled][name='division'] {
+  max-width: 220px !important;
+  width: 220px !important;
+  display: inline-block !important;
 }
 
 #cems-user-dashboard .profile-section::before,

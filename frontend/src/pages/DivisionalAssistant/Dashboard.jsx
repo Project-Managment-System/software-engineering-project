@@ -85,7 +85,8 @@ const DivisionalAssistantDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
 
-  const [currentDivision] = useState(localStorage.getItem('userDivision') || '');
+  const [currentDivision, setCurrentDivision] = useState(localStorage.getItem('userDivision') || '');
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'division_assistant');
 
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem('fullName') || 'Divisional Assistant',
@@ -112,6 +113,42 @@ const DivisionalAssistantDashboard = () => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
+  };
+
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const user = res.data;
+        if (user) {
+          const fetchedProfile = {
+            name: user.fullName || 'Divisional Assistant',
+            reg: user.employeeId || '',
+            email: user.email || '',
+            phone: user.phoneNo || ''
+          };
+          setProfileData(fetchedProfile);
+          setProfileForm(fetchedProfile);
+          setProfilePic(user.profilePic || null);
+          if (user.division) {
+            setCurrentDivision(user.division);
+            localStorage.setItem('userDivision', user.division);
+          }
+          if (user.role) {
+            setUserRole(user.role);
+            localStorage.setItem('role', user.role);
+          }
+          localStorage.setItem('fullName', user.fullName || '');
+          localStorage.setItem('employeeId', user.employeeId || '');
+          localStorage.setItem('email', user.email || '');
+          localStorage.setItem('phoneNo', user.phoneNo || '');
+          localStorage.setItem('profilePic', user.profilePic || '');
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching assistant profile:", err);
+    }
   };
 
   const toggleDarkMode = () => {
@@ -327,11 +364,37 @@ const DivisionalAssistantDashboard = () => {
                 <User size={48} />
               )}
             </div>
-            <h3>{profileData.name}</h3>
-            <p className="reg-number">{profileData.reg}</p>
-            <p className="role-title" style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 'bold', marginTop: '4px', textTransform: 'uppercase' }}>
-              Division Assistant
-            </p>
+            <div className="profile-info">
+              {currentDivision && (
+                <span className="profile-division" style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--accent-primary)',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '2px',
+                  display: 'block'
+                }}>
+                  {currentDivision}
+                </span>
+              )}
+              <h3>{profileData.name}</h3>
+              <p className="reg-number">{profileData.reg}</p>
+              <span className="role-title" style={{
+                fontSize: '0.68rem',
+                color: '#ffffff',
+                backgroundColor: 'var(--accent-primary)',
+                fontWeight: '800',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                marginTop: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'inline-block'
+              }}>
+                {formatRoleName(userRole || 'division_assistant')}
+              </span>
+            </div>
           </div>
 
           {/* Division Badge */}

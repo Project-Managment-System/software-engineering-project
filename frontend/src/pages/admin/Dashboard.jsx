@@ -90,6 +90,19 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+/* ─── Role Formatting Helpers ─── */
+const formatRoleName = (role) => {
+  if (!role) return 'N/A';
+  switch (role.toLowerCase()) {
+    case 'admin': return 'Admin';
+    case 'engineer': return 'Engineer';
+    case 'division_assistant': return 'Division Assistant';
+    case 'user': return 'User';
+    case 'clerk': return 'Clerk';
+    default: return role;
+  }
+};
+
 /* ─────────────────────────────────────── */
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -163,6 +176,14 @@ const AdminDashboard = () => {
           localStorage.setItem('email', user.email || '');
           localStorage.setItem('phoneNo', user.phoneNo || '');
           localStorage.setItem('profilePic', user.profilePic || '');
+          if (user.division) {
+            setUserDivision(user.division);
+            localStorage.setItem('userDivision', user.division);
+          }
+          if (user.role) {
+            setUserRole(user.role);
+            localStorage.setItem('role', user.role);
+          }
         }
       }
     } catch (err) {
@@ -180,6 +201,8 @@ const AdminDashboard = () => {
   const [email, setEmail] = useState(localStorage.getItem('email') || 'john.doe@example.com');
   const [phoneNo, setPhoneNo] = useState(localStorage.getItem('phoneNo') || '071-2345678');
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
+  const [userDivision, setUserDivision] = useState(localStorage.getItem('userDivision') || '');
+  const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'admin');
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -427,8 +450,35 @@ const AdminDashboard = () => {
               )}
             </div>
             <div className="profile-info">
+              {userDivision && (
+                <span className="profile-division" style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--accent-primary)',
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  marginBottom: '2px',
+                  display: 'block'
+                }}>
+                  {userDivision}
+                </span>
+              )}
               <h3>{profileName}</h3>
               <p className="reg-number">{regNo}</p>
+              <span className="role-title" style={{
+                fontSize: '0.68rem',
+                color: '#ffffff',
+                backgroundColor: 'var(--accent-primary)',
+                fontWeight: '800',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                marginTop: '6px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'inline-block'
+              }}>
+                {formatRoleName(userRole || 'admin')}
+              </span>
             </div>
           </div>
           <nav className="sidebar-nav">
