@@ -394,6 +394,15 @@
   background: var(--accent-primary);
 }
 
+/* Narrow variant — matches the Add User form's width so the banner
+   doesn't stretch past the card it introduces */
+#cems-user-dashboard .division-banner.division-banner-narrow {
+  width: auto !important;
+  max-width: 480px !important;
+  margin-left: 0;
+  margin-right: 0;
+}
+
 /* Sub-tabs */
 #cems-user-dashboard .sub-tabs {
   display: flex;

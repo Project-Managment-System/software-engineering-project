@@ -1008,17 +1008,17 @@ const AdminDashboard = () => {
                   </div>
                   <div className="table-filters-row" style={{ marginBottom: 0 }}>
                     <div className="input-row-group">
-                      <label><Filter size={12} /> Filter by Department</label>
-                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
-                        <option value="">All Departments</option>
-                        {departmentOptions.map((d) => (<option key={d} value={d}>{d}</option>))}
-                      </select>
-                    </div>
-                    <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Ministry</label>
                       <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
                         <option value="">All Ministries</option>
                         {ministryOptions.map((m) => (<option key={m} value={m}>{m}</option>))}
+                      </select>
+                    </div>
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Department</label>
+                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Departments</option>
+                        {departmentOptions.map((d) => (<option key={d} value={d}>{d}</option>))}
                       </select>
                     </div>
                     <div className="input-row-group">
