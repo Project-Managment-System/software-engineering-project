@@ -36,6 +36,17 @@ const ProjectSchema = new mongoose.Schema({
     dsDivision: { type: String, default: '' },
     remark:     { type: String, default: '' },
 
+    // User Portal Estimate & Drawing Fields
+    fieldVisitedDate: { type: Date },
+    fieldEstimateAmount: { type: Number },
+    estimateSubmitted: { type: Boolean, default: false },
+    estimateSubmittedAt: { type: Date },
+    drawingReceived: { type: Boolean, default: false },
+    drawingReceivedAt: { type: Date },
+    drawingFileUrl: { type: String, default: '' },
+    finalEstimateCost: { type: Number },
+    finalEstimateDate: { type: Date },
+
     // Optional: Keep track of who assigned it if needed, 
     // though the system handles this via division
     assignedBy: { 

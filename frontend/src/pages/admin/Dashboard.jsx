@@ -104,6 +104,15 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 /* ─── Role Formatting Helpers ─── */
+/* ─── Selectable accent color themes (Settings) ─── */
+const THEME_OPTIONS = [
+  { id: 'violet', label: 'Violet', swatch: '#7c3aed' },
+  { id: 'ocean', label: 'Ocean', swatch: '#0891b2' },
+  { id: 'emerald', label: 'Emerald', swatch: '#059669' },
+  { id: 'rose', label: 'Rose', swatch: '#e11d48' },
+  { id: 'amber', label: 'Amber', swatch: '#d97706' },
+];
+
 const formatRoleName = (role) => {
   if (!role) return 'N/A';
   switch (role.toLowerCase()) {
@@ -121,6 +130,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'rose');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [jobs, setJobs] = useState([]);
@@ -458,7 +468,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div id="cems-user-dashboard" className={isDark ? 'dark-mode' : 'light-mode'}>
+    <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
       {/* Hamburger */}
       <button
         className="sidebar-toggle-menu-btn"
@@ -1016,9 +1026,21 @@ const AdminDashboard = () => {
 
                 {/* ── Filters Card ── */}
                 <div className="recent-jobs-card">
+<<<<<<< HEAD
                   <h3 className="recent-jobs-title">Analytics Filters</h3>
 
                   <div className="table-filters-row">
+=======
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Analytics Filters</h3>
+                    {(filters.department || filters.ministry || filters.division) && (
+                      <button className="cancel-btn" onClick={handleClearFilters} style={{ minHeight: '32px', padding: '6px 16px' }}>
+                        <X size={12} /> Clear Filters
+                      </button>
+                    )}
+                  </div>
+                  <div className="table-filters-row" style={{ marginBottom: 0 }}>
+>>>>>>> c5602ad0e08677d4c28bb37171f1f4e54f17bde6
                     <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Ministry</label>
                       <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
@@ -1039,6 +1061,13 @@ const AdminDashboard = () => {
                       </select>
                     </div>
 
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Department</label>
+                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Departments</option>
+                        {departmentOptions.map((d) => (<option key={d} value={d}>{d}</option>))}
+                      </select>
+                    </div>
                     <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Division</label>
                       <select name="division" value={filters.division} onChange={handleFilterChange} className="input-field">
@@ -1182,6 +1211,35 @@ const AdminDashboard = () => {
                         <option value="Light Mode">Light Mode</option>
                         <option value="Dark Mode">Dark Mode</option>
                       </select>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label>Accent Color</label>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        {THEME_OPTIONS.map(theme => (
+                          <button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => {
+                              setAccentTheme(theme.id);
+                              localStorage.setItem('accentTheme', theme.id);
+                            }}
+                            title={theme.label}
+                            style={{
+                              width: '38px',
+                              height: '38px',
+                              borderRadius: '50%',
+                              background: theme.swatch,
+                              border: accentTheme === theme.id ? '3px solid var(--text-primary)' : '3px solid transparent',
+                              boxShadow: accentTheme === theme.id ? `0 0 0 2px ${theme.swatch}` : 'none',
+                              cursor: 'pointer',
+                              padding: 0,
+                              transition: 'transform 0.15s ease',
+                              transform: accentTheme === theme.id ? 'scale(1.1)' : 'scale(1)'
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
