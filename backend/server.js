@@ -18,6 +18,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/projects', require('./routes/projectRoutes')); // This is the ONLY project line
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/chatbot', require('./routes/chatbotRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
 
 // --- ERROR HANDLING ---
 app.use((err, req, res, next) => {
