@@ -88,6 +88,84 @@
 }
 
 /* ============================================================
+   2b. ACCENT THEME VARIANTS — selectable in Settings
+   ============================================================ */
+#cems-user-dashboard.theme-violet.light-mode {
+  --accent-primary: #7c3aed; --accent-dark: #5b21b6; --accent-2: #a855f7; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-violet.dark-mode {
+  --accent-primary: #8b5cf6; --accent-dark: #7c3aed; --accent-2: #a78bfa; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-ocean.light-mode {
+  --accent-primary: #0891b2; --accent-dark: #0e7490; --accent-2: #06b6d4; --accent-3: #38bdf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-ocean.dark-mode {
+  --accent-primary: #06b6d4; --accent-dark: #0891b2; --accent-2: #22d3ee; --accent-3: #38bdf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-emerald.light-mode {
+  --accent-primary: #059669; --accent-dark: #047857; --accent-2: #14b8a6; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-emerald.dark-mode {
+  --accent-primary: #10b981; --accent-dark: #059669; --accent-2: #2dd4bf; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-rose.light-mode {
+  --accent-primary: #e11d48; --accent-dark: #be123c; --accent-2: #f43f5e; --accent-3: #fb7185;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-rose.dark-mode {
+  --accent-primary: #f43f5e; --accent-dark: #e11d48; --accent-2: #fb7185; --accent-3: #fda4af;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-amber.light-mode {
+  --accent-primary: #d97706; --accent-dark: #b45309; --accent-2: #f97316; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-amber.dark-mode {
+  --accent-primary: #f59e0b; --accent-dark: #d97706; --accent-2: #fb923c; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+/* ============================================================
    3. ROOT ELEMENT
    ============================================================ */
 #cems-user-dashboard {
@@ -1020,3 +1098,233 @@
   70%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* ============================================================
+   Custom Portal Styles for Estimation & Notifications
+   ============================================================ */
+.blurred-content {
+  filter: blur(5px);
+  opacity: 0.4;
+  pointer-events: none;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.unblurred-content {
+  filter: blur(0px);
+  opacity: 1;
+  pointer-events: all;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.simulation-panel {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--info) 10%, transparent), color-mix(in srgb, var(--accent-primary) 8%, transparent));
+  border: 1px dashed var(--info);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.simulation-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--info);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-card-item {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.notification-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.notification-card-item.unread {
+  border-left: 4px solid var(--accent-primary);
+  background-color: color-mix(in srgb, var(--accent-primary) 3%, var(--bg-card));
+}
+
+.notification-main {
+  flex: 1;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.notification-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.notification-time {
+  font-size: 0.72rem;
+  color: var(--text-label);
+}
+
+.notification-msg {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.notification-btn-row {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn-pill {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.action-btn-pill.primary {
+  background-color: var(--accent-primary);
+  color: #fff;
+}
+
+.action-btn-pill.primary:hover {
+  background-color: var(--accent-dark);
+}
+
+.action-btn-pill.secondary {
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-base);
+}
+
+.action-btn-pill.secondary:hover {
+  background-color: var(--bg-table-hover);
+}
+
+.download-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-btn);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--success), #047857);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.download-pdf-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3);
+}
+
+.btn-group-estimation {
+  display: flex;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.tik-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: var(--success);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tik-btn:hover {
+  background-color: #047857;
+}
+
+.tik-btn:disabled,
+.undo-btn:disabled {
+  background-color: var(--border-base);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.undo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: var(--danger);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.undo-btn:hover {
+  background-color: #b91c1c;
+}
+
+.tick-checkbox {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-input);
+  border: 2px solid var(--border-base);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tick-checkbox:hover:not(:disabled) {
+  border-color: var(--success);
+}
+
+.tick-checkbox.checked {
+  background-color: var(--success);
+  border-color: var(--success);
+}
+
+.tick-checkbox:disabled {
+  cursor: not-allowed;
+}
+

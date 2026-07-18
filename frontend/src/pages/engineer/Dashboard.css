@@ -90,6 +90,84 @@
 }
 
 /* ============================================================
+   2b. ACCENT THEME VARIANTS — selectable in Settings
+   ============================================================ */
+#cems-user-dashboard.theme-violet.light-mode {
+  --accent-primary: #7c3aed; --accent-dark: #5b21b6; --accent-2: #a855f7; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-violet.dark-mode {
+  --accent-primary: #8b5cf6; --accent-dark: #7c3aed; --accent-2: #a78bfa; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-ocean.light-mode {
+  --accent-primary: #0891b2; --accent-dark: #0e7490; --accent-2: #06b6d4; --accent-3: #38bdf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-ocean.dark-mode {
+  --accent-primary: #06b6d4; --accent-dark: #0891b2; --accent-2: #22d3ee; --accent-3: #38bdf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-emerald.light-mode {
+  --accent-primary: #059669; --accent-dark: #047857; --accent-2: #14b8a6; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-emerald.dark-mode {
+  --accent-primary: #10b981; --accent-dark: #059669; --accent-2: #2dd4bf; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-rose.light-mode {
+  --accent-primary: #e11d48; --accent-dark: #be123c; --accent-2: #f43f5e; --accent-3: #fb7185;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-rose.dark-mode {
+  --accent-primary: #f43f5e; --accent-dark: #e11d48; --accent-2: #fb7185; --accent-3: #fda4af;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-amber.light-mode {
+  --accent-primary: #d97706; --accent-dark: #b45309; --accent-2: #f97316; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-amber.dark-mode {
+  --accent-primary: #f59e0b; --accent-dark: #d97706; --accent-2: #fb923c; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+/* ============================================================
    3. ROOT ELEMENT
    ============================================================ */
 #cems-user-dashboard {

@@ -92,6 +92,84 @@
 }
 
 /* ============================================================
+   2b. ACCENT THEME VARIANTS — selectable in Settings
+   ============================================================ */
+#cems-user-dashboard.theme-violet.light-mode {
+  --accent-primary: #7c3aed; --accent-dark: #5b21b6; --accent-2: #a855f7; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-violet.dark-mode {
+  --accent-primary: #8b5cf6; --accent-dark: #7c3aed; --accent-2: #a78bfa; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-ocean.light-mode {
+  --accent-primary: #0891b2; --accent-dark: #0e7490; --accent-2: #06b6d4; --accent-3: #38bdf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-ocean.dark-mode {
+  --accent-primary: #06b6d4; --accent-dark: #0891b2; --accent-2: #22d3ee; --accent-3: #38bdf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-emerald.light-mode {
+  --accent-primary: #059669; --accent-dark: #047857; --accent-2: #14b8a6; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-emerald.dark-mode {
+  --accent-primary: #10b981; --accent-dark: #059669; --accent-2: #2dd4bf; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-rose.light-mode {
+  --accent-primary: #e11d48; --accent-dark: #be123c; --accent-2: #f43f5e; --accent-3: #fb7185;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-rose.dark-mode {
+  --accent-primary: #f43f5e; --accent-dark: #e11d48; --accent-2: #fb7185; --accent-3: #fda4af;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-amber.light-mode {
+  --accent-primary: #d97706; --accent-dark: #b45309; --accent-2: #f97316; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-amber.dark-mode {
+  --accent-primary: #f59e0b; --accent-dark: #d97706; --accent-2: #fb923c; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+/* ============================================================
    3. LAYOUT — Root & Grid
    ============================================================ */
 #cems-user-dashboard {
@@ -615,3 +693,102 @@
   70%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* ============================================================
+   UPDATE PROGRESS TAB — Structural Estimate Sub-fields
+   ============================================================ */
+
+#cems-user-dashboard .update-progress-view {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+#cems-user-dashboard .vertical-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#cems-user-dashboard .input-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#cems-user-dashboard .input-row-group label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-label);
+}
+
+#cems-user-dashboard .input-field {
+  width: 100%;
+  padding: 10px 13px;
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+#cems-user-dashboard .input-field:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+#cems-user-dashboard .input-field.disabled,
+#cems-user-dashboard .input-field:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background: var(--bg-table-alt);
+}
+
+#cems-user-dashboard .job-select-dropdown {
+  width: 100%;
+  padding: 10px 13px;
+  border-radius: var(--radius-input);
+  border: 1.5px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+#cems-user-dashboard .job-select-dropdown:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+#cems-user-dashboard .download-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border-radius: var(--radius-btn);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark));
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: var(--shadow-btn);
+}
+
+#cems-user-dashboard .download-pdf-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
