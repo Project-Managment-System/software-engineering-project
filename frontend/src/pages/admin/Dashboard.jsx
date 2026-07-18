@@ -55,6 +55,18 @@ const MINISTRY_DEPARTMENTS = {
   ],
 };
 
+/* ─── Division → DS Divisions Covered mapping ─── */
+const DIVISION_DS_DIVISIONS = {
+  'Anuradhapura-East': ['Nuwaragam Palatha East', 'Mihinthale', 'Kahatagasdigiliya', 'Rambewa'],
+  'Anuradhapura-West': ['Nuwaragam Palatha Central', 'Nochchiyagama', 'Rajanganaya', 'Thalawa'],
+  'Hingurakgoda': ['Hingurakgoda', 'Medirigiriya'],
+  'Kekirawa': ['Kekirawa', 'Galnewa', 'Palagala'],
+  'Medawachchiya': ['Medawachchiya', 'Padaviya', 'Kebithigollewa', 'Horowpothana', 'Mahawilachchiya'],
+  'Mihinthale': ['Galenbindunuwewa', 'Nachchaduwa', 'Ipalogama', 'Thirappane'],
+  'Polonnaruwa': ['Thamankaduwa', 'Dimbulagala'],
+  'Thambuttegama': ['Thambuttegama'],
+};
+
 /* ─── Animation variants ─── */
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -243,6 +255,9 @@ const AdminDashboard = () => {
     if (name === 'ministry') {
       const firstDept = MINISTRY_DEPARTMENTS[value]?.[0] || '';
       setFormData({ ...formData, ministry: value, department: firstDept });
+    } else if (name === 'division') {
+      const firstDsDivision = DIVISION_DS_DIVISIONS[value]?.[0] || '';
+      setFormData({ ...formData, division: value, dsDivision: firstDsDivision });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -431,6 +446,7 @@ const AdminDashboard = () => {
   };
 
   const availableDepartments = MINISTRY_DEPARTMENTS[formData.ministry] || [];
+  const availableDsDivisions = DIVISION_DS_DIVISIONS[formData.division] || [];
 
   /* ─── Computed stats ─── */
   const totalJobs = jobs.length;
@@ -620,14 +636,9 @@ const AdminDashboard = () => {
                         className="job-select-dropdown" required
                       >
                         <option value="" disabled>Select Division</option>
-                        <option value="Anuradhapura-East">Anuradhapura-East</option>
-                        <option value="Anuradhapura-West">Anuradhapura-West</option>
-                        <option value="Medawachchiya">Medawachchiya</option>
-                        <option value="Mihinthale">Mihinthale</option>
-                        <option value="Kekirawa">Kekirawa</option>
-                        <option value="Thabuththegama">Thabuththegama</option>
-                        <option value="Polonnaruwa">Polonnaruwa</option>
-                        <option value="Higurakgoda">Higurakgoda</option>
+                        {Object.keys(DIVISION_DS_DIVISIONS).map((div) => (
+                          <option key={div} value={div}>{div}</option>
+                        ))}
                       </select>
                     </div>
 
@@ -726,13 +737,20 @@ const AdminDashboard = () => {
                       </div>
                       <div className="input-row-group">
                         <label>DS Division</label>
-                        <input
+                        <select
                           name="dsDivision"
                           value={formData.dsDivision || ''}
                           onChange={handleInputChange}
-                          className="input-field"
-                          placeholder="e.g. Anuradhapura-East"
-                        />
+                          className="job-select-dropdown"
+                        >
+                          {availableDsDivisions.length === 0 ? (
+                            <option value="">Select a division first</option>
+                          ) : (
+                            availableDsDivisions.map((dsDiv) => (
+                              <option key={dsDiv} value={dsDiv}>{dsDiv}</option>
+                            ))
+                          )}
+                        </select>
                       </div>
                     </div>
 
@@ -1021,9 +1039,22 @@ const AdminDashboard = () => {
                       <label><Filter size={12} /> Filter by Ministry</label>
                       <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
                         <option value="">All Ministries</option>
-                        {ministryOptions.map((m) => (<option key={m} value={m}>{m}</option>))}
+                        {ministryOptions.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
                       </select>
                     </div>
+
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Department</label>
+                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Departments</option>
+                        {departmentOptions.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+
                     <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Department</label>
                       <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
@@ -1035,9 +1066,17 @@ const AdminDashboard = () => {
                       <label><Filter size={12} /> Filter by Division</label>
                       <select name="division" value={filters.division} onChange={handleFilterChange} className="input-field">
                         <option value="">All Divisions</option>
-                        {divisionOptions.map((dv) => (<option key={dv} value={dv}>{dv}</option>))}
+                        {divisionOptions.map((dv) => (
+                          <option key={dv} value={dv}>{dv}</option>
+                        ))}
                       </select>
                     </div>
+
+                    {(filters.department || filters.ministry || filters.division) && (
+                      <button className="cancel-btn" onClick={handleClearFilters}>
+                        <X size={14} /> Clear
+                      </button>
+                    )}
                   </div>
                 </div>
 
