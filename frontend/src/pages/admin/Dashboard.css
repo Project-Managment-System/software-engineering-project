@@ -864,10 +864,15 @@ select.input-field option {
   border-bottom: none;
 }
 
-/* Rejected row highlight override */
-.project-table tbody tr[style*="background: rgb(254, 226, 226)"],
-.project-table tbody tr[style*="backgroundColor: '#fee2e2'"] {
-  background: var(--danger-soft) !important;
+/* Rejected row highlight — flags jobs an engineer has rejected */
+.project-table tbody tr.row-rejected {
+  background: var(--danger-soft);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.project-table tbody tr.row-rejected:hover {
+  background: color-mix(in srgb, var(--danger) 16%, var(--danger-soft));
+  box-shadow: inset 3px 0 0 var(--danger);
 }
 
 /* Job No column — monospaced styling */
@@ -1094,6 +1099,103 @@ select.input-field option {
   background: var(--danger-soft);
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/* ============================================================
+   17b. NOTIFICATION LIST — Clerk job-rejection feed
+   ============================================================ */
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.notification-card-item {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.notification-card-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.notification-card-item.unread {
+  border-left: 4px solid var(--danger);
+  background-color: color-mix(in srgb, var(--danger) 4%, var(--bg-card));
+}
+
+.notification-main {
+  flex: 1;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.notification-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.notification-time {
+  font-size: 0.72rem;
+  color: var(--text-label);
+}
+
+.notification-msg {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.notification-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn-pill {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.action-btn-pill.primary {
+  background-color: var(--accent-primary);
+  color: #fff;
+}
+
+.action-btn-pill.primary:hover {
+  background-color: var(--accent-dark);
+}
+
+.action-btn-pill.secondary {
+  background-color: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-base);
+}
+
+.action-btn-pill.secondary:hover {
+  background-color: var(--bg-table-hover);
 }
 
 /* ============================================================
