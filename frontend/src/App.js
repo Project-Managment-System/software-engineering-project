@@ -9,11 +9,14 @@ import './App.css';
 // Landing Portal
 import Portal from './pages/Portal';
 import DivisionLogin from './pages/DivisionLogin';
-import HeadOfficeLogin from './pages/HeadOfficeLogin';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminLogin from './pages/admin/Login';
+
+// Head Office Pages
+import HeadOfficeLogin from './pages/HeadOffice/Login';
+import HeadOfficeDashboard from './pages/HeadOffice/Dashboard';
 
 // Engineer Pages
 import EngineerDashboard from './pages/engineer/Dashboard'; 
@@ -35,6 +38,7 @@ function App() {
         <Route path="/" element={<><Portal /><Footer /></>} />
         <Route path="/division/login" element={<DivisionLogin />} />
         <Route path="/headoffice/login" element={<HeadOfficeLogin />} />
+        <Route path="/headoffice/dashboard" element={<HeadOfficeDashboard />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

@@ -1,0 +1,597 @@
+/* ============================================================
+   HEAD OFFICE DASHBOARD — CIVILPRO MAX
+   Theme: Executive Oversight · Ministry-Wide Command
+   Palette: Deep Navy + Ocean Blue Accents + Gold Highlights
+   Root: #cems-user-dashboard.light-mode / .dark-mode
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap');
+
+/* ============================================================
+   1. CSS TOKENS — Light Mode
+   ============================================================ */
+#cems-user-dashboard.light-mode {
+  --bg-root:         #f0f8ff;
+  --bg-sidebar:      #ffffff;
+  --bg-card:         #ffffff;
+  --bg-card-hover:   #f5fbff;
+  --bg-input:        #f4fbff;
+  --bg-table-header: #eaf7ff;
+  --bg-table-alt:    #f5fbff;
+  --bg-table-hover:  #e0f4ff;
+  --bg-subtle:       #f0f6fc;
+  --border-base:     #d0eaf8;
+  --border-light:    #e5f4ff;
+  --text-primary:    #002B49;
+  --text-secondary:  #1e3a52;
+  --text-muted:      #4d7a96;
+  --text-label:      #7aaabf;
+  --accent-primary:  #006EB1;
+  --accent-dark:     #002B49;
+  --accent-glow:     rgba(0,110,177,0.15);
+  --accent-soft:     #ecfeff;
+  --accent-2:        #06b6d4;
+  --accent-3:        #90D5FF;
+  --success:         #059669;
+  --success-soft:    #d1fae5;
+  --warning:         #d97706;
+  --warning-soft:    #fef3c7;
+  --danger:          #dc2626;
+  --danger-soft:     #fee2e2;
+  --info:            #0284c7;
+  --info-soft:       #e0f2fe;
+  --shadow-card:     0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,110,177,0.07);
+  --shadow-hover:    0 8px 32px rgba(0,110,177,0.15), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn:      0 4px 16px rgba(0,110,177,0.28);
+  --radius-card:     16px;
+  --radius-btn:      10px;
+  --radius-input:    9px;
+  --gold:            #b45309;
+}
+
+/* ============================================================
+   2. CSS TOKENS — Dark Mode
+   ============================================================ */
+#cems-user-dashboard.dark-mode {
+  --bg-root:         #050e1c;
+  --bg-sidebar:      #070e1d;
+  --bg-card:         #0a1628;
+  --bg-card-hover:   #0d1c34;
+  --bg-input:        #071020;
+  --bg-table-header: #071020;
+  --bg-table-alt:    #081221;
+  --bg-table-hover:  #0d1a30;
+  --bg-subtle:       rgba(255,255,255,0.03);
+  --border-base:     rgba(6,182,212,0.15);
+  --border-light:    rgba(6,182,212,0.07);
+  --text-primary:    #e2f8ff;
+  --text-secondary:  #a8d8ee;
+  --text-muted:      #4d7a96;
+  --text-label:      #2d5a70;
+  --accent-primary:  #06b6d4;
+  --accent-dark:     #0891b2;
+  --accent-glow:     rgba(6,182,212,0.22);
+  --accent-soft:     rgba(6,182,212,0.08);
+  --accent-2:        #22d3ee;
+  --accent-3:        #90D5FF;
+  --success:         #10b981;
+  --success-soft:    rgba(16,185,129,0.12);
+  --warning:         #f59e0b;
+  --warning-soft:    rgba(245,158,11,0.12);
+  --danger:          #ef4444;
+  --danger-soft:     rgba(239,68,68,0.12);
+  --info:            #38bdf8;
+  --info-soft:       rgba(56,189,248,0.12);
+  --shadow-card:     0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(6,182,212,0.06);
+  --shadow-hover:    0 8px 32px rgba(6,182,212,0.18), 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-btn:      0 4px 16px rgba(6,182,212,0.35);
+  --radius-card:     16px;
+  --radius-btn:      10px;
+  --radius-input:    9px;
+  --gold:            #f59e0b;
+}
+
+/* ============================================================
+   2b. ACCENT THEME VARIANTS — selectable in Settings
+   ============================================================ */
+#cems-user-dashboard.theme-violet.light-mode {
+  --accent-primary: #7c3aed; --accent-dark: #5b21b6; --accent-2: #a855f7; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-violet.dark-mode {
+  --accent-primary: #8b5cf6; --accent-dark: #7c3aed; --accent-2: #a78bfa; --accent-3: #818cf8;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-ocean.light-mode {
+  --accent-primary: #006EB1; --accent-dark: #002B49; --accent-2: #06b6d4; --accent-3: #90D5FF;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-ocean.dark-mode {
+  --accent-primary: #06b6d4; --accent-dark: #0891b2; --accent-2: #22d3ee; --accent-3: #90D5FF;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-emerald.light-mode {
+  --accent-primary: #059669; --accent-dark: #047857; --accent-2: #14b8a6; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-emerald.dark-mode {
+  --accent-primary: #10b981; --accent-dark: #059669; --accent-2: #2dd4bf; --accent-3: #34d399;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-rose.light-mode {
+  --accent-primary: #e11d48; --accent-dark: #be123c; --accent-2: #f43f5e; --accent-3: #fb7185;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-rose.dark-mode {
+  --accent-primary: #f43f5e; --accent-dark: #e11d48; --accent-2: #fb7185; --accent-3: #fda4af;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+#cems-user-dashboard.theme-amber.light-mode {
+  --accent-primary: #d97706; --accent-dark: #b45309; --accent-2: #f97316; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 6%, white);
+  --shadow-hover: 0 8px 32px color-mix(in srgb, var(--accent-primary) 14%, transparent), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-btn: 0 4px 16px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+#cems-user-dashboard.theme-amber.dark-mode {
+  --accent-primary: #f59e0b; --accent-dark: #d97706; --accent-2: #fb923c; --accent-3: #fbbf24;
+  --accent-glow: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --shadow-hover: 0 12px 48px color-mix(in srgb, var(--accent-primary) 20%, transparent), 0 4px 16px rgba(0,0,0,0.5);
+  --shadow-btn: 0 4px 20px color-mix(in srgb, var(--accent-primary) 40%, transparent);
+}
+
+/* ============================================================
+   3. LAYOUT — Root & Grid
+   ============================================================ */
+#cems-user-dashboard {
+  min-height: 100vh;
+  background: var(--bg-root);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.user-dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   4. SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-base);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 200;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s;
+  overflow-y: auto;
+  box-shadow: 4px 0 24px rgba(0,110,177,0.06);
+}
+
+.sidebar-open  { transform: translateX(0); }
+.sidebar-closed { transform: translateX(-100%); }
+
+.sidebar-toggle-menu-btn {
+  position: fixed;
+  top: 16px; left: 16px;
+  z-index: 300;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  color: var(--text-primary);
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.sidebar-toggle-menu-btn:hover {
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-hover);
+}
+
+/* ── Profile box ── */
+.profile-box {
+  padding: 28px 16px 20px;
+  text-align: center;
+  border-bottom: 1px solid var(--border-base);
+  margin-bottom: 12px;
+  overflow: visible;
+  min-height: fit-content;
+}
+
+.profile-photo {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 2px solid var(--accent-primary);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px;
+  color: var(--accent-primary);
+  overflow: hidden;
+}
+.profile-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-box h3,
+.profile-info h3 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.reg-number {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+/* ── Nav ── */
+.sidebar-nav {
+  padding: 8px 12px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.15s;
+  text-align: left;
+  position: relative;
+}
+.nav-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  transform: translateX(3px);
+}
+.nav-item.active {
+  background: var(--accent-glow);
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+.logout-nav-item {
+  color: var(--danger);
+  margin-top: 8px;
+}
+.logout-nav-item:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* ============================================================
+   5. MAIN CONTENT
+   ============================================================ */
+.dashboard-content {
+  flex: 1;
+  padding: 68px 28px 40px;
+  transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
+  min-height: 100vh;
+}
+.content-shifted-open  { margin-left: 240px; }
+.content-shifted-closed { margin-left: 0; }
+
+/* ============================================================
+   6. CARDS
+   ============================================================ */
+.field-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.25s, transform 0.25s;
+}
+.field-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.recent-jobs-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 24px;
+}
+
+.recent-jobs-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 16px;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ============================================================
+   7. TABLE
+   ============================================================ */
+.table-scroll-wrapper {
+  overflow: auto;
+  border-radius: 10px;
+  border: 1px solid var(--border-base);
+  max-height: 560px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar { width: 7px; height: 7px; }
+.table-scroll-wrapper::-webkit-scrollbar-track { background: var(--bg-table-alt); border-radius: 99px; }
+.table-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 99px; }
+
+.project-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.project-table thead th {
+  background: var(--bg-table-header);
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-size: 0.7rem;
+  padding: 12px 14px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 2px solid var(--border-base);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.project-table tbody tr {
+  border-bottom: 1px solid var(--border-light);
+  transition: background 0.15s;
+}
+.project-table tbody tr:nth-child(even) { background: var(--bg-table-alt); }
+.project-table tbody tr:hover { background: var(--bg-table-hover); }
+.project-table tbody td {
+  padding: 11px 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.project-table .font-bold { font-weight: 700; color: var(--text-primary); }
+.project-table .font-mono { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+
+.row-rejected { opacity: 0.65; }
+
+/* ============================================================
+   8. STATUS BADGES
+   ============================================================ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.status-approved { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); }
+.status-pending  { background: var(--warning-soft); color: var(--warning); border: 1px solid var(--warning); }
+.status-rejected { background: var(--danger-soft);  color: var(--danger);  border: 1px solid var(--danger); }
+.status-success  { background: var(--info-soft);    color: var(--info);    border: 1px solid var(--info); }
+
+/* ============================================================
+   9. FORMS & INPUTS
+   ============================================================ */
+.input-field, .job-select-dropdown {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-input);
+  border: 1px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-field:focus, .job-select-dropdown:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.table-filters-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.input-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 160px;
+}
+.input-row-group label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-label);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ============================================================
+   10. BUTTONS
+   ============================================================ */
+.confirm-btn, .cancel-btn, .approve-btn, .reject-btn, .save-btn, .edit-btn, .delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-btn);
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+.confirm-btn, .save-btn {
+  background: var(--accent-primary);
+  color: #fff;
+  box-shadow: var(--shadow-btn);
+}
+.confirm-btn:hover, .save-btn:hover {
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+.cancel-btn {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-base);
+}
+.cancel-btn:hover { background: var(--bg-subtle); }
+
+/* ============================================================
+   11. SETTINGS
+   ============================================================ */
+.profile-view { max-width: 680px; }
+
+.vertical-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-section {
+  max-width: 600px;
+}
+.settings-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ============================================================
+   12. PLACEHOLDER / EMPTY STATE
+   ============================================================ */
+.placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px dashed var(--border-base);
+  border-radius: var(--radius-card);
+  width: 100%;
+}
+
+/* ============================================================
+   13. ALERTS / TOASTS
+   ============================================================ */
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+.alert-success { background: var(--success-soft); color: var(--success); border-color: var(--success); }
+.alert-error   { background: var(--danger-soft);  color: var(--danger);  border-color: var(--danger); }
+.alert-warning { background: var(--warning-soft); color: var(--warning); border-color: var(--warning); }
+.alert-info    { background: var(--info-soft);    color: var(--info);    border-color: var(--info); }
+
+/* ============================================================
+   14. ANALYTICS GRID
+   ============================================================ */
+.analytics-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.stat-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+/* ============================================================
+   15. RESPONSIVE
+   ============================================================ */
+@media (max-width: 768px) {
+  .dashboard-content { padding: 68px 14px 32px; }
+  .sidebar { width: 220px; min-width: 220px; }
+  .content-shifted-open { margin-left: 220px; }
+  .analytics-dashboard-grid { grid-template-columns: 1fr; }
+}
