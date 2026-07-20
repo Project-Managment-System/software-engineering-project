@@ -2,13 +2,20 @@ const mongoose = require('mongoose');
 
 const ProjectSchema = new mongoose.Schema({
     // Primary Key
-    jobNo: { 
-        type: String, 
-        required: true, 
-        unique: true, 
-        index: true 
+    jobNo: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true
     },
-    
+
+    // Auto-generated estimation number: YY-DIVCODE-MINCODE-WORK-SERIAL (e.g. 26-ANU E-610-N-01)
+    estimationNo: {
+        type: String,
+        index: true,
+        default: ''
+    },
+
     // Core Project Data
     jobName: { type: String, required: true },
     division: { type: String, required: true }, // Used for Engineer filtering
