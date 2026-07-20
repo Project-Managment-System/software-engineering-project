@@ -175,14 +175,10 @@ const DivisionalAssistantDashboard = () => {
 
   /* ─── Fetch data ─── */
   const fetchUsers = async () => {
+    if (!currentDivision) return;
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/users/all');
-      const divUsers = res.data.filter(u =>
-        u.division && currentDivision &&
-        u.division.toLowerCase() === currentDivision.toLowerCase() &&
-        u.role && u.role.toLowerCase() === 'user'
-      );
-      setDivisionUsers(divUsers);
+      const res = await axios.get(`http://127.0.0.1:5000/api/users/division/${encodeURIComponent(currentDivision)}`);
+      setDivisionUsers(res.data);
     } catch (err) {
       console.error('Error fetching users:', err);
     }
@@ -283,11 +279,18 @@ const DivisionalAssistantDashboard = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchJobs();
     fetchUserProfile();
     // eslint-disable-next-line
   }, []);
+
+  // Re-fetch division-scoped data once the assistant's division is known
+  useEffect(() => {
+    if (currentDivision) {
+      fetchUsers();
+      fetchJobs();
+    }
+    // eslint-disable-next-line
+  }, [currentDivision]);
 
   // Background polling for unread message badge (all tabs)
   useEffect(() => {
