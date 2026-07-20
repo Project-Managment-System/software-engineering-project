@@ -881,18 +881,9 @@ const AdminDashboard = () => {
                           </tr>
                         ) : (
                           filteredJobs.map((j) => {
-                            // Compute Estimation No: rank within same ministry, by creation order
-                            const ministryJobs = [...jobs]
-                              .sort((a, b) => new Date(a.createdAt || a.submitDate) - new Date(b.createdAt || b.submitDate))
-                              .filter(jj => jj.ministry === j.ministry);
-                            const estIdx = ministryJobs.findIndex(jj => jj._id === j._id) + 1;
-                            const prefix = j.ministry
-                              ? j.ministry.split(' ').map(w => w[0]).join('').replace(/[^A-Z]/gi, '').slice(0, 3).toUpperCase()
-                              : 'JB';
-                            const estNo = `${prefix}-${String(estIdx).padStart(3, '0')}`;
                             return (
                               <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                                <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
+                                <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.ministry}</td>
