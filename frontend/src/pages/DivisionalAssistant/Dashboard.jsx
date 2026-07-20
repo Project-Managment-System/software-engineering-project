@@ -7,7 +7,7 @@ import {
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3,
   Sun, Moon, Camera, TrendingUp, Activity,
   FileText, Globe, Filter, MessageSquare, Send,
-  RefreshCw, Download, RotateCcw, Bell, Calendar
+  Bell, ClipboardCheck, RotateCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -115,14 +115,8 @@ const DivisionalAssistantDashboard = () => {
   /* ─── Job filter ─── */
   const [jobFilter, setJobFilter] = useState({ ministry: '', status: '' });
 
-  /* ─── Update Progress state ─── */
-  const [selectedJobId, setSelectedJobId] = useState('');
-  const [visitDate, setVisitDate] = useState('');
-  const [estimateAmount, setEstimateAmount] = useState('');
-  const [isDateConfirmed, setIsDateConfirmed] = useState(false);
-  const [finalEstimateCost, setFinalEstimateCost] = useState('');
-  const [finalEstimateDate, setFinalEstimateDate] = useState('');
-  const dateInputRef = useRef(null);
+  /* ─── Review Submissions filter ─── */
+  const [reviewStatusFilter, setReviewStatusFilter] = useState('Actionable');
 
   /* ─── Change password state ─── */
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -208,97 +202,83 @@ const DivisionalAssistantDashboard = () => {
   };
 
 
-  /* ─── Update Progress handlers ─── */
-  const selectedJob = divisionJobs.find(j => j.jobNo === selectedJobId) || null;
-
-  const handleSelectionChange = (jobNo) => {
-    setSelectedJobId(jobNo);
-    setVisitDate('');
-    setEstimateAmount('');
-    setIsDateConfirmed(false);
-    setFinalEstimateCost('');
-    setFinalEstimateDate('');
-    if (jobNo) {
-      const job = divisionJobs.find(j => j.jobNo === jobNo);
-      if (job) {
-        setVisitDate(job.fieldVisitedDate ? job.fieldVisitedDate.split('T')[0] : '');
-        setEstimateAmount(job.fieldEstimateAmount ? String(job.fieldEstimateAmount) : '');
-        setIsDateConfirmed(!!job.estimateSubmitted);
-        setFinalEstimateCost(job.finalEstimateCost ? String(job.finalEstimateCost) : '');
-        setFinalEstimateDate(job.finalEstimateDate ? job.finalEstimateDate.split('T')[0] : '');
-      }
-    }
+  /* ─── Review Submissions handlers ─── */
+  // Jobs a user has finished estimating (finalEstimateCost set) — this DA's review queue
+  const submittedJobs = divisionJobs.filter(j => j.finalEstimateCost != null);
+  // Needs DA action: a fresh submission, or one DA already approved that the Engineer bounced back.
+  // A DA rejection is a final decision (until Undo/resubmit) regardless of any older engineerReviewStatus value.
+  const isActionable = (j) => {
+    const da = j.daReviewStatus || 'Pending';
+    if (da === 'Pending') return true;
+    if (da === 'Approved' && j.engineerReviewStatus === 'Rejected') return true;
+    return false;
   };
+  const reviewQueue = submittedJobs.filter(j => {
+    if (reviewStatusFilter === 'All') return true;
+    if (reviewStatusFilter === 'Actionable') return isActionable(j);
+    if (reviewStatusFilter === 'Approved') return j.daReviewStatus === 'Approved' && j.engineerReviewStatus !== 'Rejected';
+    if (reviewStatusFilter === 'Rejected') return j.daReviewStatus === 'Rejected';
+    return true;
+  });
+  const pendingReviewCount = submittedJobs.filter(isActionable).length;
 
-  const handleConfirmDate = () => {
-    if (!visitDate) {
-      addToast('Please select a field visited date first.', 'warning');
-      return;
-    }
-    setIsDateConfirmed(true);
-  };
-
-  const handleUndoEstimate = async () => {
+  const handleDaApprove = async (jobNo) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
-        estimateSubmitted: false,
-        estimateSubmittedAt: null
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        daReviewStatus: 'Approved',
+        daReviewedAt: new Date().toISOString(),
+        daReviewedBy: profileData.name,
+        daReviewNote: '',
+        // Reopens the Engineer's queue too, in case this is a re-approval after an Engineer rejection
+        engineerReviewStatus: 'Pending',
+        engineerReviewedAt: null,
+        engineerReviewNote: ''
       });
-      setIsDateConfirmed(false);
-      addToast('Estimate submission undone.', 'info');
+      addToast('Submission approved and sent to the Engineer for review!', 'success');
       fetchJobs();
     } catch (err) {
       console.error(err);
-      addToast('Failed to undo submission.', 'error');
+      addToast('Failed to approve submission.', 'error');
     }
   };
 
-  const handleSubmitAll = async () => {
-    if (!selectedJobId) {
-      addToast('Please select a job first.', 'warning');
-      return;
-    }
-    if (!visitDate) {
-      addToast('Please enter the field visited date.', 'warning');
-      return;
-    }
-    if (!isDateConfirmed) {
-      addToast('Please confirm the field visited date by clicking OK.', 'warning');
-      return;
-    }
-    if (!estimateAmount) {
-      addToast('Please enter the calculated estimate value.', 'warning');
-      return;
-    }
-    if (!finalEstimateCost) {
-      addToast('Please enter the final estimate cost.', 'warning');
-      return;
-    }
-    if (!finalEstimateDate) {
-      addToast('Please enter the estimate alignment date.', 'warning');
-      return;
-    }
+  const handleDaReject = async (jobNo) => {
+    const note = window.prompt('Add a review summary for the user (optional):', '');
+    if (note === null) return; // cancelled
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
-        fieldVisitedDate: visitDate,
-        fieldEstimateAmount: Number(estimateAmount),
-        estimateSubmitted: true,
-        estimateSubmittedAt: new Date().toISOString(),
-        finalEstimateCost: Number(finalEstimateCost),
-        finalEstimateDate: finalEstimateDate
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        daReviewStatus: 'Rejected',
+        daReviewedAt: new Date().toISOString(),
+        daReviewedBy: profileData.name,
+        daReviewNote: note,
+        engineerReviewStatus: 'Pending',
+        engineerReviewedAt: null,
+        engineerReviewNote: ''
       });
-      addToast('All estimate details submitted successfully!', 'success');
-      // Reset & clear selection — form is ready for new work
-      setSelectedJobId('');
-      setVisitDate('');
-      setEstimateAmount('');
-      setIsDateConfirmed(false);
-      setFinalEstimateCost('');
-      setFinalEstimateDate('');
+      addToast('Submission rejected.', 'info');
       fetchJobs();
     } catch (err) {
       console.error(err);
-      addToast('Failed to submit estimate details.', 'error');
+      addToast('Failed to reject submission.', 'error');
+    }
+  };
+
+  // Reopen a job DA already decided on, without waiting for the user to resubmit
+  const handleDaUndo = async (jobNo) => {
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        daReviewStatus: 'Pending',
+        daReviewedAt: null,
+        daReviewNote: '',
+        engineerReviewStatus: 'Pending',
+        engineerReviewedAt: null,
+        engineerReviewNote: ''
+      });
+      addToast('Review reopened — Approve/Reject are available again.', 'info');
+      fetchJobs();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to reopen submission.', 'error');
     }
   };
 
@@ -526,7 +506,7 @@ const DivisionalAssistantDashboard = () => {
               { id: 'overview', icon: BarChart3, label: 'Overview' },
               { id: 'my-users', icon: Users, label: 'My Users' },
               { id: 'view-jobs', icon: Briefcase, label: 'View Jobs' },
-              { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
+              { id: 'review-submissions', icon: ClipboardCheck, label: 'Review Submissions' },
               { id: 'messages', icon: MessageSquare, label: 'Messages' },
               { id: 'profile', icon: Edit3, label: 'Profile' },
               { id: 'settings', icon: Settings, label: 'Settings' },
@@ -542,6 +522,9 @@ const DivisionalAssistantDashboard = () => {
                 <item.icon size={18} /> {item.label}
                 {item.id === 'messages' && totalUnread > 0 && (
                   <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
+                {item.id === 'review-submissions' && pendingReviewCount > 0 && (
+                  <span className="nav-unread-badge">{pendingReviewCount > 99 ? '99+' : pendingReviewCount}</span>
                 )}
               </button>
             ))}
@@ -931,206 +914,110 @@ const DivisionalAssistantDashboard = () => {
               </motion.div>
             )}
 
-            {/* ── Update Progress Tab ── */}
-            {activeTab === 'update-progress' && (
-              <motion.section key="update-progress" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="update-progress-view">
-
-                {/* Job Selector */}
-                <div className="field-card" style={{ marginBottom: '24px', padding: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                    <RefreshCw size={20} style={{ color: 'var(--accent-primary)' }} />
-                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Select Active Job to Update</h3>
-                  </div>
-                  <div className="vertical-form">
-                    <div className="input-row-group">
-                      <label>Job Directory Reference</label>
-                      <select
-                        className="job-select-dropdown"
-                        value={selectedJobId}
-                        onChange={(e) => handleSelectionChange(e.target.value)}
-                      >
-                        <option value="">-- Choose Job ID --</option>
-                        {divisionJobs.filter(j => !j.finalEstimateCost).map(job => (
-                          <option key={job.jobNo} value={job.jobNo}>{job.jobNo} - {job.jobName}</option>
-                        ))}
-                      </select>
+            {/* ── Review Submissions Tab ── */}
+            {activeTab === 'review-submissions' && (
+              <motion.section key="review-submissions" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <ClipboardCheck size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Review Submissions</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Final structural estimates submitted by users in {currentDivision || 'your division'} — approve to forward to the Engineer
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {selectedJob && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
-
-                    {/* ── Column 1: Structural Specifications (read-only) ── */}
-                    <div className="field-card" style={{ padding: '24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                        <FileText size={18} style={{ color: 'var(--accent-primary)' }} />
-                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Update Structural Specifications</h3>
-                      </div>
-                      <div className="vertical-form">
-                        <div className="input-row-group">
-                          <label>JOB NUMBER</label>
-                          <input type="text" disabled value={selectedJob.jobNo || ''} className="input-field disabled" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>ACTIVITY</label>
-                          <input type="text" disabled value={selectedJob.jobName || ''} className="input-field disabled" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>Allocation</label>
-                          <input type="text" disabled value={selectedJob.allocation || ''} className="input-field disabled" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>Ministry</label>
-                          <input type="text" disabled value={selectedJob.ministry || ''} className="input-field disabled" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>Department</label>
-                          <input type="text" disabled value={selectedJob.department || ''} className="input-field disabled" />
-                        </div>
-                        <div className="input-row-group">
-                          <label>Division</label>
-                          <input type="text" disabled value={selectedJob.division || ''} className="input-field disabled" />
-                        </div>
-                      </div>
+                <div className="recent-jobs-card">
+                  <div className="table-filters-row" style={{ marginBottom: '16px' }}>
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Review Status</label>
+                      <select value={reviewStatusFilter} onChange={e => setReviewStatusFilter(e.target.value)} className="input-field">
+                        <option value="Actionable">Needs Action</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="All">All</option>
+                      </select>
                     </div>
-
-                    {/* ── Column 2: Generate Structural Field Estimate ── */}
-                    <div className="field-card" style={{ padding: '24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                        <Calendar size={18} style={{ color: 'var(--accent-primary)' }} />
-                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Generate Structural Field Estimate</h3>
-                      </div>
-
-                      <div className="vertical-form">
-                        {/* Field Visited Date with OK confirm */}
-                        <div className="input-row-group" style={{ position: 'relative' }}>
-                          <label>Field Visited On</label>
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <input
-                              type="date"
-                              ref={dateInputRef}
-                              className="input-field"
-                              value={visitDate}
-                              disabled={isDateConfirmed}
-                              onChange={(e) => setVisitDate(e.target.value)}
-                              max={new Date().toISOString().split('T')[0]}
-                              style={{ flex: 1 }}
-                            />
-                            {!isDateConfirmed && (
-                              <button
-                                className="confirm-btn"
-                                style={{ padding: '8px 16px', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
-                                onClick={handleConfirmDate}
-                              >
-                                OK
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Content below — blurred until date confirmed */}
-                        <div style={{ filter: isDateConfirmed ? 'none' : 'blur(5px)', transition: 'filter 0.4s ease', pointerEvents: isDateConfirmed ? 'auto' : 'none' }}>
-
-                          <div className="input-row-group" style={{ marginBottom: '14px' }}>
-                            <label>Field Visited On</label>
-                            <input type="text" disabled value={visitDate} className="input-field disabled" />
-                          </div>
-
-                          <div className="input-row-group" style={{ marginBottom: '14px' }}>
-                            <label>Calculated Estimate Value (LKR)</label>
-                            <input
-                              type="number"
-                              className="input-field"
-                              placeholder="Enter calculated estimate"
-                              value={estimateAmount}
-                              onChange={(e) => setEstimateAmount(e.target.value)}
-                            />
-                          </div>
-
-                          {/* Status indicator */}
-                          <div style={{ margin: '0 0 14px', padding: '12px', borderRadius: '8px', background: 'var(--bg-input)', border: '1px solid var(--border-base)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-label)', fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
-                            <span style={{ fontWeight: 800, color: selectedJob.drawingReceived ? 'var(--success)' : 'var(--warning)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem' }}>
-                              {selectedJob.drawingReceived ? (
-                                <><CheckCircle size={16} /> Received Drawing</>
-                              ) : (
-                                <><Clock size={16} /> {(() => {
-                                  if (!selectedJob.estimateSubmittedAt) return 'Pending (0 days)';
-                                  const diff = Math.floor(Math.abs(new Date() - new Date(selectedJob.estimateSubmittedAt)) / (1000 * 60 * 60 * 24));
-                                  return `Pending (${diff} day${diff === 1 ? '' : 's'})`;
-                                })()}</>
-                              )}
-                            </span>
-                          </div>
-
-                          {/* Drawing download */}
-                          {selectedJob.drawingReceived && selectedJob.drawingFileUrl && (
-                            <div style={{ marginBottom: '14px' }}>
-                              <a href={selectedJob.drawingFileUrl} download={`Drawing_${selectedJob.jobNo}.pdf`} className="download-pdf-btn">
-                                <Download size={16} /> Download Drawing PDF
-                              </a>
-                            </div>
-                          )}
-
-                          {/* ─── Sub-field: Final Estimate Cost & Drawing Alignment ─── */}
-                          <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent-primary)' }}>
-                              ↳ Final Estimate Cost &amp; Drawing Alignment
-                            </span>
-
-                            <div className="input-row-group">
-                              <label>Estimate Cost (LKR)</label>
-                              <input
-                                type="number"
-                                className="input-field"
-                                placeholder="Enter final cost amount"
-                                value={finalEstimateCost}
-                                onChange={(e) => setFinalEstimateCost(e.target.value)}
-                              />
-                            </div>
-
-                            <div className="input-row-group">
-                              <label>Estimate Alignment Date</label>
-                              <input
-                                type="date"
-                                className="input-field"
-                                min={selectedJob.drawingReceivedAt ? new Date(selectedJob.drawingReceivedAt).toISOString().split('T')[0] : ''}
-                                max={new Date().toISOString().split('T')[0]}
-                                value={finalEstimateDate}
-                                onChange={(e) => setFinalEstimateDate(e.target.value)}
-                              />
-                              <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                Only dates between drawing received date and today can be selected.
-                              </small>
-                            </div>
-                          </div>
-
-                          {/* Single Submit button for all content in this card */}
-                          <button
-                            className="confirm-btn"
-                            style={{ marginTop: '20px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}
-                            onClick={handleSubmitAll}
-                          >
-                            <CheckCircle size={16} /> Submit
-                          </button>
-
-                          {/* Undo — only before final estimate is committed */}
-                          {selectedJob.estimateSubmitted && !selectedJob.finalEstimateCost && (
-                            <div style={{ marginTop: '10px' }}>
-                              <button className="cancel-btn" onClick={handleUndoEstimate} style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', justifyContent: 'center' }}>
-                                <RotateCcw size={14} /> Undo Submission
-                              </button>
-                            </div>
-                          )}
-
-                        </div>
-                      </div>
-                    </div>
-
                   </div>
-                )}
 
+                  {reviewQueue.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
+                      <ClipboardCheck size={32} style={{ opacity: 0.35 }} />
+                      <span>
+                        {submittedJobs.length === 0
+                          ? 'No users have submitted a final estimate yet.'
+                          : `No ${reviewStatusFilter.toLowerCase()} submissions.`}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
+                          <tr>
+                            <th>Job No</th>
+                            <th>Activity</th>
+                            <th>Submitted By</th>
+                            <th>Estimate Cost (LKR)</th>
+                            <th>Alignment Date</th>
+                            <th>Review Status</th>
+                            <th>Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reviewQueue.map(j => {
+                            const daStatus = j.daReviewStatus || 'Pending';
+                            const isReopened = daStatus === 'Approved' && j.engineerReviewStatus === 'Rejected';
+                            return (
+                              <tr key={j._id}>
+                                <td className="font-mono">{j.jobNo}</td>
+                                <td className="font-bold">{j.jobName}</td>
+                                <td>{j.assignee || '—'}</td>
+                                <td className="font-bold">{j.finalEstimateCost?.toLocaleString()}</td>
+                                <td>{j.finalEstimateDate ? j.finalEstimateDate.split('T')[0] : 'N/A'}</td>
+                                <td>
+                                  <span className={`status-badge status-${isReopened ? 'rejected' : daStatus.toLowerCase()}`}>
+                                    {isReopened ? 'Reopened by Engineer' : daStatus}
+                                  </span>
+                                  {daStatus === 'Rejected' && j.daReviewNote && (
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '220px' }}>"{j.daReviewNote}"</div>
+                                  )}
+                                  {isReopened && j.engineerReviewNote && (
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--danger)', marginTop: '4px', maxWidth: '220px' }}>Engineer: "{j.engineerReviewNote}"</div>
+                                  )}
+                                </td>
+                                <td>
+                                  {isActionable(j) ? (
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      <button className="approve-btn" onClick={() => handleDaApprove(j.jobNo)} title="Approve & send to Engineer">
+                                        <CheckCircle size={15} /> Approve
+                                      </button>
+                                      <button className="reject-btn" onClick={() => handleDaReject(j.jobNo)} title="Reject">
+                                        <XCircle size={15} /> Reject
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                        {j.daReviewedAt ? new Date(j.daReviewedAt).toLocaleDateString() : '—'}
+                                      </span>
+                                      <button className="edit-btn" onClick={() => handleDaUndo(j.jobNo)} title="Undo — reopen for Approve/Reject" style={{ padding: '4px 8px', minWidth: 'auto' }}>
+                                        <RotateCcw size={13} />
+                                      </button>
+                                    </div>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </motion.section>
             )}
 

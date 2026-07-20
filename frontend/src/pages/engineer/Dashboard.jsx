@@ -6,7 +6,7 @@ import {
   Check, X, Menu, UserPlus, Undo, Trash2, Shield, Clock,
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3, Wrench, Filter,
   Globe, Sun, Moon, Lightbulb, Camera, TrendingUp, Activity,
-  FileText, FileSpreadsheet, Printer, MessageSquare, Send
+  FileText, FileSpreadsheet, Printer, MessageSquare, Send, ClipboardCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -497,6 +497,26 @@ const EngineerDashboard = () => {
     } catch (error) { console.error("Error undoing status:", error); }
   };
 
+  const handleEngineerReview = async (jobNo, engineerReviewStatus) => {
+    let engineerReviewNote = '';
+    if (engineerReviewStatus === 'Rejected') {
+      const note = window.prompt('Add a review summary for the Divisional Assistant (optional):', '');
+      if (note === null) return; // cancelled
+      engineerReviewNote = note;
+    }
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        engineerReviewStatus,
+        engineerReviewedAt: new Date().toISOString(),
+        engineerReviewNote
+      });
+      fetchData();
+      addToast(`Submission ${engineerReviewStatus.toLowerCase()}!`, engineerReviewStatus === 'Approved' ? 'success' : 'warning');
+    } catch (err) {
+      addToast('Review update failed!', 'error');
+    }
+  };
+
   const handleAssigneeChange = async (jobNo, newAssignee) => {
     try {
       await axios.patch(`http://127.0.0.1:5000/api/projects/assign/${jobNo}`, { assignee: newAssignee });
@@ -641,6 +661,10 @@ const EngineerDashboard = () => {
   const pendingApprovals = approvalData.filter(j => !j.status || j.status === 'Pending').length;
   const approvedCount = approvalData.filter(j => j.status === 'Approved').length;
   const rejectedCount = approvalData.filter(j => j.status === 'Rejected').length;
+
+  /* ─── DA-approved submissions awaiting Engineer review ─── */
+  const daApprovedJobs = approvalData.filter(j => j.daReviewStatus === 'Approved');
+  const pendingDaReviewCount = daApprovedJobs.filter(j => (j.engineerReviewStatus || 'Pending') === 'Pending').length;
 
   const statCards = [
     { label: 'Total Jobs', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
@@ -792,6 +816,7 @@ const EngineerDashboard = () => {
               { id: 'overview', icon: BarChart3, label: 'Overview' },
               { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
               { id: 'all-jobs', icon: Globe, label: 'All Jobs' },
+              { id: 'review-da', icon: ClipboardCheck, label: 'Review DA Submissions' },
               { id: 'add-user', icon: UserPlus, label: 'Add User' },
               { id: 'view-progress', icon: TrendingUp, label: 'View Progress' },
               { id: 'ai-chatbot', icon: MessageSquare, label: 'AI Assistant' },
@@ -810,6 +835,9 @@ const EngineerDashboard = () => {
                 <item.icon size={18} /> {item.label}
                 {item.id === 'messages' && totalUnread > 0 && (
                   <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
+                {item.id === 'review-da' && pendingDaReviewCount > 0 && (
+                  <span className="nav-unread-badge">{pendingDaReviewCount > 99 ? '99+' : pendingDaReviewCount}</span>
                 )}
               </button>
             ))}
@@ -1206,6 +1234,83 @@ const EngineerDashboard = () => {
                                 <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
                                   {job.status || 'Pending'}
                                 </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Review DA Submissions Tab ── */}
+            {activeTab === 'review-da' && (
+              <motion.div key="review-da" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="field-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <ClipboardCheck size={20} style={{ color: 'var(--accent-primary)' }} />
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Review DA Submissions</h3>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      Final estimates approved by the Divisional Assistant, awaiting your review
+                    </span>
+                  </div>
+
+                  <div className="table-scroll-wrapper">
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Job No</th>
+                          <th>Job Name</th>
+                          <th>Submitted By</th>
+                          <th>Estimate Cost (LKR)</th>
+                          <th>Alignment Date</th>
+                          <th>DA Reviewed On</th>
+                          <th>Engineer Review</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {daApprovedJobs.length === 0 ? (
+                          <tr>
+                            <td colSpan={7}>
+                              <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                <ClipboardCheck size={24} style={{ opacity: 0.35 }} />
+                                <span>No DA-approved submissions waiting for review.</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          daApprovedJobs.map((job) => (
+                            <tr key={job.jobNo}>
+                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-bold">{job.jobName}</td>
+                              <td>{job.assignee || '—'}</td>
+                              <td className="font-bold">{job.finalEstimateCost?.toLocaleString()}</td>
+                              <td>{job.finalEstimateDate ? formatDate(job.finalEstimateDate) : 'N/A'}</td>
+                              <td>{job.daReviewedAt ? formatDate(job.daReviewedAt) : 'N/A'}</td>
+                              <td>
+                                {(job.engineerReviewStatus || 'Pending') === 'Pending' ? (
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button className="approve-btn" onClick={() => handleEngineerReview(job.jobNo, 'Approved')} title="Approve">
+                                      <Check size={15} />
+                                    </button>
+                                    <button className="reject-btn" onClick={() => handleEngineerReview(job.jobNo, 'Rejected')} title="Reject">
+                                      <X size={15} />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <span className={`status-badge status-${job.engineerReviewStatus.toLowerCase()}`}>
+                                      {job.engineerReviewStatus}
+                                    </span>
+                                    {job.engineerReviewStatus === 'Rejected' && job.engineerReviewNote && (
+                                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '220px' }}>"{job.engineerReviewNote}"</div>
+                                    )}
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           ))
