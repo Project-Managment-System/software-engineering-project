@@ -15,6 +15,7 @@ const ProjectSchema = new mongoose.Schema({
     ministry: { type: String, required: true },
     department: { type: String, required: true },
     institute: String,
+    work: { type: String, enum: ['N', 'R'], default: 'N' }, // N = New, R = Repair
     allocation: { type: String, required: true }, // Store as string or Number based on preference
     dateReq: { type: Date, required: true },
     ref: { type: String, required: true }, // Request Letter Reference

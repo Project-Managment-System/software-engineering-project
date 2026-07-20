@@ -137,7 +137,7 @@ const AdminDashboard = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
-    allocation: '', dateReq: '', ref: '', institute: '',
+    work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
     deptIdNo: '', source: '', dsDivision: ''
   });
 
@@ -364,7 +364,7 @@ const AdminDashboard = () => {
     setEditingId(null);
     setFormData({
       jobName: '', ministry: '', department: '', division: '',
-      allocation: '', dateReq: '', ref: '', institute: '',
+      work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
       deptIdNo: '', source: '', dsDivision: ''
     });
   };
@@ -692,6 +692,32 @@ const AdminDashboard = () => {
                           onChange={handleInputChange}
                           className="input-field"
                         />
+                      </div>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label>Work <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
+                      <div className="radio-group">
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="work"
+                            value="N"
+                            checked={formData.work === 'N'}
+                            onChange={handleInputChange}
+                          />
+                          New (N)
+                        </label>
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="work"
+                            value="R"
+                            checked={formData.work === 'R'}
+                            onChange={handleInputChange}
+                          />
+                          Repair (R)
+                        </label>
                       </div>
                     </div>
 
