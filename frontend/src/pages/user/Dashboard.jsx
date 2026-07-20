@@ -87,7 +87,6 @@ const UserDashboard = () => {
 
   const [selectedJobId, setSelectedJobId] = useState('');
   const [visitDate, setVisitDate] = useState('');
-  const [estimateAmount, setEstimateAmount] = useState('');
   const [isDateConfirmed, setIsDateConfirmed] = useState(false);
   const [finalEstimateCost, setFinalEstimateCost] = useState('');
   const [finalEstimateDate, setFinalEstimateDate] = useState('');
@@ -319,13 +318,11 @@ const UserDashboard = () => {
       setEditableAssignDate(foundJob.assignDate);
       setEditableDeadline(foundJob.deadline);
       setVisitDate(foundJob.fieldVisitedDate ? new Date(foundJob.fieldVisitedDate).toISOString().split('T')[0] : '');
-      setEstimateAmount(foundJob.fieldEstimateAmount || '');
       setIsDateConfirmed(!!foundJob.fieldVisitedDate);
       setFinalEstimateCost(foundJob.finalEstimateCost || '');
       setFinalEstimateDate(foundJob.finalEstimateDate ? new Date(foundJob.finalEstimateDate).toISOString().split('T')[0] : '');
     } else {
       setVisitDate('');
-      setEstimateAmount('');
       setIsDateConfirmed(false);
       setFinalEstimateCost('');
       setFinalEstimateDate('');
@@ -346,14 +343,9 @@ const UserDashboard = () => {
       addToast('Please confirm the field visited date first.', 'warning');
       return;
     }
-    if (!estimateAmount) {
-      addToast('Please enter the calculated estimate value.', 'warning');
-      return;
-    }
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
         fieldVisitedDate: visitDate,
-        fieldEstimateAmount: Number(estimateAmount),
         estimateSubmitted: true,
         estimateSubmittedAt: new Date().toISOString()
       });
@@ -468,19 +460,6 @@ const UserDashboard = () => {
     reader.readAsDataURL(file);
   };
 
-
-  const handleEstimateAmountChange = (e) => {
-    const value = e.target.value;
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setEstimateAmount(value);
-    }
-  };
-
-  const handleEstimateAmountKeyDown = (e) => {
-    if (['e', 'E', '+', '-'].includes(e.key)) {
-      e.preventDefault();
-    }
-  };
 
   /* ─── Computed stats ─── */
   const totalMyJobs = myJobs.length;
@@ -980,19 +959,6 @@ const UserDashboard = () => {
 
                           {/* Content below — blurred until date confirmed */}
                           <div style={{ filter: isDateConfirmed ? 'none' : 'blur(5px)', transition: 'filter 0.4s ease', pointerEvents: isDateConfirmed ? 'auto' : 'none' }}>
-
-                            <div className="input-row-group" style={{ marginBottom: '10px' }}>
-                              <label>Calculated Estimate Value (LKR)</label>
-                              <input
-                                type="number"
-                                className="input-field"
-                                placeholder="Enter calculated estimate amount"
-                                value={estimateAmount}
-                                onChange={handleEstimateAmountChange}
-                                onKeyDown={handleEstimateAmountKeyDown}
-                                disabled={selectedJob.estimateSubmitted}
-                              />
-                            </div>
 
                             <div className="btn-group-estimation" style={{ marginBottom: '14px', alignItems: 'center' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

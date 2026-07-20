@@ -137,7 +137,7 @@ const AdminDashboard = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
-    allocation: '', dateReq: '', ref: '', institute: '',
+    work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
     deptIdNo: '', source: '', dsDivision: ''
   });
 
@@ -245,6 +245,17 @@ const AdminDashboard = () => {
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [userDivision, setUserDivision] = useState(localStorage.getItem('userDivision') || '');
   const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'admin');
+
+  // Lock the "New Job" form's Division field to the logged-in user's own division, if any
+  useEffect(() => {
+    if (userDivision && DIVISION_DS_DIVISIONS[userDivision] && !editingId) {
+      setFormData((prev) => prev.division === userDivision ? prev : {
+        ...prev,
+        division: userDivision,
+        dsDivision: DIVISION_DS_DIVISIONS[userDivision][0] || ''
+      });
+    }
+  }, [userDivision, editingId]);
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -362,10 +373,11 @@ const AdminDashboard = () => {
 
   const handleCancel = () => {
     setEditingId(null);
+    const lockedDivision = userDivision && DIVISION_DS_DIVISIONS[userDivision] ? userDivision : '';
     setFormData({
-      jobName: '', ministry: '', department: '', division: '',
-      allocation: '', dateReq: '', ref: '', institute: '',
-      deptIdNo: '', source: '', dsDivision: ''
+      jobName: '', ministry: '', department: '', division: lockedDivision,
+      work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
+      deptIdNo: '', source: '', dsDivision: DIVISION_DS_DIVISIONS[lockedDivision]?.[0] || ''
     });
   };
 
@@ -447,6 +459,9 @@ const AdminDashboard = () => {
 
   const availableDepartments = MINISTRY_DEPARTMENTS[formData.ministry] || [];
   const availableDsDivisions = DIVISION_DS_DIVISIONS[formData.division] || [];
+  const jobFormDivisionOptions = userDivision && DIVISION_DS_DIVISIONS[userDivision]
+    ? [userDivision]
+    : Object.keys(DIVISION_DS_DIVISIONS);
 
   /* ─── Computed stats ─── */
   const totalJobs = jobs.length;
@@ -634,9 +649,10 @@ const AdminDashboard = () => {
                         value={formData.division}
                         onChange={handleInputChange}
                         className="job-select-dropdown" required
+                        disabled={jobFormDivisionOptions.length === 1}
                       >
                         <option value="" disabled>Select Division</option>
-                        {Object.keys(DIVISION_DS_DIVISIONS).map((div) => (
+                        {jobFormDivisionOptions.map((div) => (
                           <option key={div} value={div}>{div}</option>
                         ))}
                       </select>
@@ -692,6 +708,32 @@ const AdminDashboard = () => {
                           onChange={handleInputChange}
                           className="input-field"
                         />
+                      </div>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label>Work <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
+                      <div className="radio-group">
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="work"
+                            value="N"
+                            checked={formData.work === 'N'}
+                            onChange={handleInputChange}
+                          />
+                          New (N)
+                        </label>
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="work"
+                            value="R"
+                            checked={formData.work === 'R'}
+                            onChange={handleInputChange}
+                          />
+                          Repair (R)
+                        </label>
                       </div>
                     </div>
 
@@ -855,18 +897,9 @@ const AdminDashboard = () => {
                           </tr>
                         ) : (
                           filteredJobs.map((j) => {
-                            // Compute Estimation No: rank within same ministry, by creation order
-                            const ministryJobs = [...jobs]
-                              .sort((a, b) => new Date(a.createdAt || a.submitDate) - new Date(b.createdAt || b.submitDate))
-                              .filter(jj => jj.ministry === j.ministry);
-                            const estIdx = ministryJobs.findIndex(jj => jj._id === j._id) + 1;
-                            const prefix = j.ministry
-                              ? j.ministry.split(' ').map(w => w[0]).join('').replace(/[^A-Z]/gi, '').slice(0, 3).toUpperCase()
-                              : 'JB';
-                            const estNo = `${prefix}-${String(estIdx).padStart(3, '0')}`;
                             return (
                               <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                                <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
+                                <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.ministry}</td>
