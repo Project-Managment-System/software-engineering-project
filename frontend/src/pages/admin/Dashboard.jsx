@@ -245,6 +245,17 @@ const AdminDashboard = () => {
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [userDivision, setUserDivision] = useState(localStorage.getItem('userDivision') || '');
   const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'admin');
+
+  // Lock the "New Job" form's Division field to the logged-in user's own division, if any
+  useEffect(() => {
+    if (userDivision && DIVISION_DS_DIVISIONS[userDivision] && !editingId) {
+      setFormData((prev) => prev.division === userDivision ? prev : {
+        ...prev,
+        division: userDivision,
+        dsDivision: DIVISION_DS_DIVISIONS[userDivision][0] || ''
+      });
+    }
+  }, [userDivision, editingId]);
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -362,10 +373,11 @@ const AdminDashboard = () => {
 
   const handleCancel = () => {
     setEditingId(null);
+    const lockedDivision = userDivision && DIVISION_DS_DIVISIONS[userDivision] ? userDivision : '';
     setFormData({
-      jobName: '', ministry: '', department: '', division: '',
+      jobName: '', ministry: '', department: '', division: lockedDivision,
       work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
-      deptIdNo: '', source: '', dsDivision: ''
+      deptIdNo: '', source: '', dsDivision: DIVISION_DS_DIVISIONS[lockedDivision]?.[0] || ''
     });
   };
 
@@ -447,6 +459,9 @@ const AdminDashboard = () => {
 
   const availableDepartments = MINISTRY_DEPARTMENTS[formData.ministry] || [];
   const availableDsDivisions = DIVISION_DS_DIVISIONS[formData.division] || [];
+  const jobFormDivisionOptions = userDivision && DIVISION_DS_DIVISIONS[userDivision]
+    ? [userDivision]
+    : Object.keys(DIVISION_DS_DIVISIONS);
 
   /* ─── Computed stats ─── */
   const totalJobs = jobs.length;
@@ -634,9 +649,10 @@ const AdminDashboard = () => {
                         value={formData.division}
                         onChange={handleInputChange}
                         className="job-select-dropdown" required
+                        disabled={jobFormDivisionOptions.length === 1}
                       >
                         <option value="" disabled>Select Division</option>
-                        {Object.keys(DIVISION_DS_DIVISIONS).map((div) => (
+                        {jobFormDivisionOptions.map((div) => (
                           <option key={div} value={div}>{div}</option>
                         ))}
                       </select>
