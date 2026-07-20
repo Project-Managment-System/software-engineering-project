@@ -95,6 +95,19 @@ const MINISTRY_COLORS = [
   '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'
 ];
 
+/* ─── Division → DS Divisions Covered mapping (keys match the exact division string
+   stored on the engineer's own account) ─── */
+const DIVISION_DS_DIVISIONS = {
+  'Anuradhapura-East': ['Nuwaragam Palatha East', 'Mihinthale', 'Kahatagasdigiliya', 'Rambewa'],
+  'Anuradhapura-West': ['Nuwaragam Palatha Central', 'Nochchiyagama', 'Rajanganaya', 'Thalawa'],
+  'Higurakgoda': ['Hingurakgoda', 'Medirigiriya'],
+  'Kekirawa': ['Kekirawa', 'Galnewa', 'Palagala'],
+  'Medawachchiya': ['Medawachchiya', 'Padaviya', 'Kebithigollewa', 'Horowpothana', 'Mahawilachchiya'],
+  'Mihinthale': ['Galenbindunuwewa', 'Nachchaduwa', 'Ipalogama', 'Thirappane'],
+  'Polonnaruwa': ['Thamankaduwa', 'Dimbulagala'],
+  'Thambuththegama': ['Thambuttegama'],
+};
+
 /* ─────────────────────────────────────── */
 const EngineerDashboard = () => {
   const navigate = useNavigate();
@@ -130,6 +143,7 @@ const EngineerDashboard = () => {
     phoneNo: '',
     password: '',
     division: localStorage.getItem('userDivision') || '',
+    dsDivision: '',
     role: ''
   });
   const [userDivision, setUserDivision] = useState('');
@@ -578,6 +592,7 @@ const EngineerDashboard = () => {
       phoneNo: userFormData.phoneNo,
       password: userFormData.password,
       division: userFormData.division || localStorage.getItem('userDivision') || '',
+      dsDivision: userFormData.dsDivision || '',
       role: userFormData.role
     };
     try {
@@ -591,6 +606,7 @@ const EngineerDashboard = () => {
         phoneNo: '',
         password: '',
         division: localStorage.getItem('userDivision') || '',
+        dsDivision: '',
         role: ''
       });
       await fetchUsers();
@@ -1238,6 +1254,19 @@ const EngineerDashboard = () => {
                     <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} required />
                     <label>Division *</label>
                     <input name="division" value={userFormData.division} disabled className="input-field" style={{ opacity: 0.7, cursor: 'not-allowed', maxWidth: '220px', width: '220px' }} />
+                    <label>DS Division</label>
+                    <select
+                      name="dsDivision"
+                      value={userFormData.dsDivision}
+                      onChange={handleUserFormChange}
+                      className="job-select-dropdown"
+                      style={{ maxWidth: '260px' }}
+                    >
+                      <option value="">Select DS Division</option>
+                      {(DIVISION_DS_DIVISIONS[userFormData.division] || []).map((ds) => (
+                        <option key={ds} value={ds}>{ds}</option>
+                      ))}
+                    </select>
                     <label>Position *</label>
                     <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
                       <option value="" disabled>Select Position</option>
@@ -1265,8 +1294,8 @@ const EngineerDashboard = () => {
                     </h3>
                     {renderExportButtons(
                       "System Users",
-                      ["#", "Employee ID", "Name", "Email", "Division", "Position"],
-                      allSystemUsers.map((user, i) => [i + 1, user.employeeId, user.fullName, user.email, user.division, formatRoleName(user.role)])
+                      ["#", "Employee ID", "Name", "Email", "Division", "DS Division", "Position"],
+                      allSystemUsers.map((user, i) => [i + 1, user.employeeId, user.fullName, user.email, user.division, user.dsDivision || '—', formatRoleName(user.role)])
                     )}
                   </div>
                   <div className="table-scroll-wrapper">
@@ -1278,6 +1307,7 @@ const EngineerDashboard = () => {
                           <th>Name</th>
                           <th>Email</th>
                           <th>Division</th>
+                          <th>DS Division</th>
                           <th>Position</th>
                           <th>Action</th>
                         </tr>
@@ -1285,7 +1315,7 @@ const EngineerDashboard = () => {
                       <tbody>
                         {allSystemUsers.length === 0 ? (
                           <tr>
-                            <td colSpan={7}>
+                            <td colSpan={8}>
                               <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
                                 <Users size={24} style={{ opacity: 0.35 }} />
                                 <span>No users in system yet</span>
@@ -1332,6 +1362,20 @@ const EngineerDashboard = () => {
                                     style={{ opacity: 0.7, cursor: 'not-allowed' }}
                                   />
                                 ) : user.division}
+                              </td>
+                              <td>
+                                {editingUser === user._id ? (
+                                  <select
+                                    value={editUserForm.dsDivision || ''}
+                                    onChange={e => setEditUserForm({ ...editUserForm, dsDivision: e.target.value })}
+                                    className="job-select-dropdown"
+                                  >
+                                    <option value="">Select DS Division</option>
+                                    {(DIVISION_DS_DIVISIONS[editUserForm.division] || []).map((ds) => (
+                                      <option key={ds} value={ds}>{ds}</option>
+                                    ))}
+                                  </select>
+                                ) : (user.dsDivision || '—')}
                               </td>
                               <td>
                                 {editingUser === user._id ? (

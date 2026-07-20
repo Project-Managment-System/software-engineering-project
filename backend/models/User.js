@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema({
       return this.role !== 'admin';
     }
   },
+  dsDivision: { type: String, default: '' },
   phoneNo: { type: String, default: '' },
   profilePic: { type: String, default: '' },
 }, { timestamps: true });
