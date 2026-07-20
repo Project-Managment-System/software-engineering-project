@@ -559,6 +559,16 @@
   margin-bottom: 14px;
 }
 
+#cems-user-dashboard .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+#cems-user-dashboard .form-row .input-row-group {
+  margin-bottom: 0;
+}
+
 #cems-user-dashboard .input-row-group label,
 #cems-user-dashboard .selection-area label {
   font-size: 0.72rem;
@@ -611,6 +621,26 @@
 #cems-user-dashboard select option {
   background: var(--bg-card);
   color: var(--text-primary);
+}
+
+/* Currency input wrapper */
+#cems-user-dashboard .currency-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#cems-user-dashboard .currency-prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+#cems-user-dashboard .input-field.currency-input {
+  padding-left: 42px;
 }
 
 /* Calendar/Date hybrid wrapper */
