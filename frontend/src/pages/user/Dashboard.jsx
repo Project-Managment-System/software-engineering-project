@@ -37,6 +37,14 @@ const CustomTooltip = ({ active, payload }) => {
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
+/* ─── Formats a raw numeric string with thousand separators, ATM-style, while typing ─── */
+const formatCurrencyInput = (value) => {
+  if (!value) return '';
+  const [intPart, decPart] = String(value).split('.');
+  const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return decPart !== undefined ? `${formattedInt}.${decPart}` : formattedInt;
+};
+
 /* ─── Animation variants ─── */
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -1056,32 +1064,43 @@ const UserDashboard = () => {
                                     </div>
                                   )}
 
-                                  <div className="input-row-group">
-                                    <label>Estimate Cost (LKR)</label>
-                                    <input
-                                      type="number"
-                                      className={`input-field${isLocked ? ' disabled' : ''}`}
-                                      placeholder="Enter final cost amount"
-                                      value={finalEstimateCost}
-                                      disabled={isLocked}
-                                      onChange={(e) => setFinalEstimateCost(e.target.value)}
-                                    />
-                                  </div>
+                                  <div className="form-row">
+                                    <div className="input-row-group">
+                                      <label>Estimate Cost (LKR)</label>
+                                      <div className="currency-input-wrapper">
+                                        <span className="currency-prefix">Rs.</span>
+                                        <input
+                                          type="text"
+                                          inputMode="decimal"
+                                          className={`input-field currency-input${isLocked ? ' disabled' : ''}`}
+                                          placeholder="0.00"
+                                          value={formatCurrencyInput(finalEstimateCost)}
+                                          disabled={isLocked}
+                                          onChange={(e) => {
+                                            const raw = e.target.value.replace(/,/g, '');
+                                            if (raw === '' || /^\d*\.?\d{0,2}$/.test(raw)) {
+                                              setFinalEstimateCost(raw);
+                                            }
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
 
-                                  <div className="input-row-group">
-                                    <label>Estimate Alignment Date</label>
-                                    <input
-                                      type="date"
-                                      className={`input-field${isLocked ? ' disabled' : ''}`}
-                                      min={selectedJob.drawingReceivedAt ? new Date(selectedJob.drawingReceivedAt).toISOString().split('T')[0] : ''}
-                                      max={new Date().toISOString().split('T')[0]}
-                                      value={finalEstimateDate}
-                                      disabled={isLocked}
-                                      onChange={(e) => setFinalEstimateDate(e.target.value)}
-                                    />
-                                    <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                      Only dates between drawing received date and today can be selected.
-                                    </small>
+                                    <div className="input-row-group">
+                                      <label>Estimate Date</label>
+                                      <input
+                                        type="date"
+                                        className={`input-field${isLocked ? ' disabled' : ''}`}
+                                        min={selectedJob.drawingReceivedAt ? new Date(selectedJob.drawingReceivedAt).toISOString().split('T')[0] : ''}
+                                        max={new Date().toISOString().split('T')[0]}
+                                        value={finalEstimateDate}
+                                        disabled={isLocked}
+                                        onChange={(e) => setFinalEstimateDate(e.target.value)}
+                                      />
+                                      <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                        Only dates between drawing received date and today can be selected.
+                                      </small>
+                                    </div>
                                   </div>
 
                                   {!isLocked && (
