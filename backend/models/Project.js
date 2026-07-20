@@ -55,6 +55,25 @@ const ProjectSchema = new mongoose.Schema({
     finalEstimateCost: { type: Number },
     finalEstimateDate: { type: Date },
 
+    // Divisional Assistant review of the user's final estimate submission
+    daReviewStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending'
+    },
+    daReviewedAt: { type: Date },
+    daReviewNote: { type: String, default: '' },
+    daReviewedBy: { type: String, default: '' },
+
+    // Engineer review of the DA-approved submission
+    engineerReviewStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending'
+    },
+    engineerReviewedAt: { type: Date },
+    engineerReviewNote: { type: String, default: '' },
+
     // Optional: Keep track of who assigned it if needed, 
     // though the system handles this via division
     assignedBy: { 

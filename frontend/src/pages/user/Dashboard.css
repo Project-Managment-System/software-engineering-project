@@ -623,6 +623,26 @@
   color: var(--text-primary);
 }
 
+/* Currency input wrapper */
+#cems-user-dashboard .currency-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#cems-user-dashboard .currency-prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+#cems-user-dashboard .input-field.currency-input {
+  padding-left: 42px;
+}
+
 /* Calendar/Date hybrid wrapper */
 #cems-user-dashboard .hybrid-date-wrapper {
   display: flex;
