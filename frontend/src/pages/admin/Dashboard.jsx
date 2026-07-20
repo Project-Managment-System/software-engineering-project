@@ -137,7 +137,7 @@ const AdminDashboard = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
-    allocation: '', dateReq: '', ref: '', institute: '',
+    work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
     deptIdNo: '', source: '', dsDivision: ''
   });
 
@@ -422,7 +422,7 @@ const AdminDashboard = () => {
     setEditingId(null);
     setFormData({
       jobName: '', ministry: '', department: '', division: '',
-      allocation: '', dateReq: '', ref: '', institute: '',
+      work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
       deptIdNo: '', source: '', dsDivision: ''
     });
   };
@@ -761,6 +761,32 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
+                    <div className="input-row-group">
+                      <label>Work <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
+                      <div className="radio-group">
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="work"
+                            value="N"
+                            checked={formData.work === 'N'}
+                            onChange={handleInputChange}
+                          />
+                          New (N)
+                        </label>
+                        <label className="radio-option">
+                          <input
+                            type="radio"
+                            name="work"
+                            value="R"
+                            checked={formData.work === 'R'}
+                            onChange={handleInputChange}
+                          />
+                          Repair (R)
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="form-row">
                       <div className="input-row-group">
                         <label>Allocation (Rs.) <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
@@ -921,18 +947,9 @@ const AdminDashboard = () => {
                           </tr>
                         ) : (
                           filteredJobs.map((j) => {
-                            // Compute Estimation No: rank within same ministry, by creation order
-                            const ministryJobs = [...jobs]
-                              .sort((a, b) => new Date(a.createdAt || a.submitDate) - new Date(b.createdAt || b.submitDate))
-                              .filter(jj => jj.ministry === j.ministry);
-                            const estIdx = ministryJobs.findIndex(jj => jj._id === j._id) + 1;
-                            const prefix = j.ministry
-                              ? j.ministry.split(' ').map(w => w[0]).join('').replace(/[^A-Z]/gi, '').slice(0, 3).toUpperCase()
-                              : 'JB';
-                            const estNo = `${prefix}-${String(estIdx).padStart(3, '0')}`;
                             return (
                               <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                                <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{estNo}</td>
+                                <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.ministry}</td>

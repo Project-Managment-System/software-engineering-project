@@ -557,6 +557,34 @@
   font-size: 0.9rem;
 }
 
+/* Radio button group (e.g. Work: New / Repair) */
+.radio-group {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.radio-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  cursor: pointer;
+}
+
+.radio-option input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
 /* ============================================================
    9. INPUT FIELDS & DROPDOWNS
    ============================================================ */
