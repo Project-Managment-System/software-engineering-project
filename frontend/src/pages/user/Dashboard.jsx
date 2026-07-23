@@ -1317,7 +1317,14 @@ const UserDashboard = () => {
                     </div>
                     <div className="input-row-group">
                       <label>Phone Contact</label>
-                      <input type="text" value={editPhoneNo} onChange={(e) => setEditPhoneNo(e.target.value)} className="input-field" />
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={10}
+                        value={editPhoneNo}
+                        onChange={(e) => setEditPhoneNo(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        className="input-field"
+                      />
                     </div>
 
                     <div className="form-action-row" style={{ marginTop: '20px' }}>

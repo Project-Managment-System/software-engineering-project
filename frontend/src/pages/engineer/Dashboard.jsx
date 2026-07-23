@@ -600,7 +600,9 @@ const EngineerDashboard = () => {
   };
 
   const handleUserFormChange = (e) => {
-    setUserFormData({ ...userFormData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const sanitized = name === 'phoneNo' ? value.replace(/\D/g, '').slice(0, 10) : value;
+    setUserFormData({ ...userFormData, [name]: sanitized });
   };
 
   const handleSaveUser = async (e) => {
@@ -1354,7 +1356,7 @@ const EngineerDashboard = () => {
                     <label>Email Address *</label>
                     <input type="email" name="email" value={userFormData.email} onChange={handleUserFormChange} required />
                     <label>Phone Number</label>
-                    <input type="tel" name="phoneNo" value={userFormData.phoneNo} onChange={handleUserFormChange} />
+                    <input type="tel" inputMode="numeric" maxLength={10} name="phoneNo" value={userFormData.phoneNo} onChange={handleUserFormChange} />
                     <label>Password *</label>
                     <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} required />
                     <label>Division *</label>
@@ -1596,7 +1598,13 @@ const EngineerDashboard = () => {
                     <label>Email</label>
                     <input value={profileForm.email || ''} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} />
                     <label>Phone</label>
-                    <input value={profileForm.phone || ''} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} />
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={10}
+                      value={profileForm.phone || ''}
+                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                    />
                   </div>
                   <div className="action-buttons">
                     <button className="confirm-btn" onClick={handleSaveProfile}><Save size={14} /> Confirm</button>

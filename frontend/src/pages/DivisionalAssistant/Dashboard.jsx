@@ -1089,7 +1089,14 @@ const DivisionalAssistantDashboard = () => {
                       <label>Email</label>
                       <input value={profileForm.email || ''} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} className="input-field" />
                       <label>Phone</label>
-                      <input value={profileForm.phone || ''} onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })} className="input-field" />
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={10}
+                        value={profileForm.phone || ''}
+                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                        className="input-field"
+                      />
                     </div>
                     <div className="action-buttons" style={{ marginTop: '20px' }}>
                       <button className="confirm-btn" onClick={handleSaveProfile}><Save size={14} /> Save Profile</button>
