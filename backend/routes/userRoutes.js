@@ -5,6 +5,9 @@ const User = require('../models/User');
 // Allowed roles an engineer can assign to staff they add
 const ALLOWED_STAFF_ROLES = ['division_assistant', 'user', 'clerk'];
 
+// Allowed roles the Head Office admin can assign to branch staff
+const ALLOWED_BRANCH_ROLES = ['branch_engineer', 'branch_director'];
+
 // Add a new staff user (called by engineer dashboard)
 router.post('/add', async (req, res) => {
     try {
@@ -31,6 +34,37 @@ router.post('/add', async (req, res) => {
         const newUser = new User(userData);
         await newUser.save();
         res.status(201).json({ message: "User saved successfully!" });
+    } catch (err) {
+        console.error("DEBUG ERROR:", err.message);
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Add a new branch staff user (called by Head Office dashboard)
+router.post('/branch-add', async (req, res) => {
+    try {
+        const role = req.body.role;
+
+        // Only allow Head Office to create branch engineer/director accounts here
+        if (!ALLOWED_BRANCH_ROLES.includes(role)) {
+            return res.status(400).json({
+                error: `Invalid role. Allowed values: ${ALLOWED_BRANCH_ROLES.join(', ')}`
+            });
+        }
+
+        const userData = {
+            fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
+            employeeId: req.body.employeeId,
+            email: req.body.email,
+            phoneNo: req.body.phoneNo || '',
+            password: req.body.password,
+            branch: req.body.branch,
+            role: role
+        };
+
+        const newUser = new User(userData);
+        await newUser.save();
+        res.status(201).json({ message: "Branch staff saved successfully!" });
     } catch (err) {
         console.error("DEBUG ERROR:", err.message);
         res.status(400).json({ error: err.message });

@@ -5,11 +5,11 @@ import {
   Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
-  FileText, MessageSquare, Lock, Bell, Check
+  FileText, MessageSquare, Lock, Bell, Check, Users, Layers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import DivisionChat from '../../components/DivisionChat';
@@ -134,6 +134,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [jobs, setJobs] = useState([]);
+  const [users, setUsers] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
@@ -192,8 +193,13 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
+      const [jobsRes, usersRes] = await Promise.all([
+        axios.get('http://127.0.0.1:5000/api/projects/all'),
+        axios.get('http://127.0.0.1:5000/api/users'),
+      ]);
+      const res = jobsRes;
       setJobs(res.data);
+      setUsers(usersRes.data || []);
 
       // Detect jobs an engineer just rejected and raise a notification for the clerk
       if (localStorage.getItem('role') === 'clerk') {
@@ -527,6 +533,14 @@ const AdminDashboard = () => {
   const approvedJobs = jobs.filter(j => j.status === 'Approved').length;
   const rejectedJobs = jobs.filter(j => j.status === 'Rejected').length;
 
+  /* ─── Computed user stats (across all divisions) ─── */
+  const totalUsers = users.length;
+  const divisionsWithUsers = new Set(users.map(u => u.division).filter(Boolean)).size;
+  const usersByDivision = divisionOptions.map((dv) => ({
+    name: dv,
+    count: users.filter(u => u.division === dv).length,
+  }));
+
   /* ─── Computed filtered stats (for charts) ─── */
   const totalFilteredJobs = filteredJobs.length;
   const pendingFilteredJobs = filteredJobs.filter(j => !j.status || j.status === 'Pending').length;
@@ -538,6 +552,8 @@ const AdminDashboard = () => {
     { label: 'Pending', value: pendingJobs, icon: Clock, color: 'var(--warning)' },
     { label: 'Approved', value: approvedJobs, icon: CheckCircle, color: 'var(--success)' },
     { label: 'Rejected', value: rejectedJobs, icon: XCircle, color: 'var(--danger)' },
+    { label: 'Total Users', value: totalUsers, icon: Users, color: 'var(--info)' },
+    { label: 'Divisions Covered', value: divisionsWithUsers, icon: Layers, color: 'var(--gold)' },
   ];
 
   return (
@@ -1131,7 +1147,7 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                       <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>System Overview</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Analytics and job status breakdown across all divisions</p>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Summary of users and jobs across all divisions</p>
                     </div>
                   </div>
                 </div>
@@ -1226,11 +1242,6 @@ const AdminDashboard = () => {
                               ))}
                             </Pie>
                             <RechartsTooltip content={<CustomTooltip />} />
-                            <Legend verticalAlign="bottom" height={36}
-                              formatter={(value) => (
-                                <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem' }}>{value}</span>
-                              )}
-                            />
                           </PieChart>
                         </ResponsiveContainer>
                         {/* Centre label */}
@@ -1246,6 +1257,28 @@ const AdminDashboard = () => {
                             Total Jobs
                           </div>
                         </div>
+                      </div>
+
+                      {/* Status percentage breakdown */}
+                      <div className="status-breakdown-list">
+                        {[
+                          { name: 'Approved', value: approvedFilteredJobs, color: 'var(--success)' },
+                          { name: 'Pending', value: pendingFilteredJobs, color: 'var(--warning)' },
+                          { name: 'Rejected', value: rejectedFilteredJobs, color: 'var(--danger)' },
+                        ].map((d) => {
+                          const pct = totalFilteredJobs > 0 ? Math.round((d.value / totalFilteredJobs) * 100) : 0;
+                          return (
+                            <div key={d.name} className="status-breakdown-row">
+                              <span className="status-breakdown-dot" style={{ background: d.color }} />
+                              <span className="status-breakdown-label">{d.name}</span>
+                              <span className="status-breakdown-value">{d.value}</span>
+                              <div className="status-breakdown-bar-track">
+                                <div className="status-breakdown-bar-fill" style={{ width: `${pct}%`, background: d.color }} />
+                              </div>
+                              <span className="status-breakdown-pct">{pct}%</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -1277,6 +1310,22 @@ const AdminDashboard = () => {
                                 <Cell key={`bar-${i}`} fill={entry.color} />
                               ))}
                             </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Users by Division */}
+                    <div className="field-card" style={{ padding: '24px 26px 28px' }}>
+                      <h3 className="recent-jobs-title">Users by Division ({totalUsers} total)</h3>
+                      <div style={{ width: '100%', height: 300 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={usersByDivision} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
+                            <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 10, fontWeight: 600 }} interval={0} angle={-25} textAnchor="end" height={60} />
+                            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
+                            <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                            <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--info)" />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>

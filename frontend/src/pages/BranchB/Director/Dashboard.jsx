@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  HardHat, LogOut, Menu, BarChart3, Briefcase, Clock, CheckCircle,
+  Briefcase, LogOut, Menu, BarChart3, Landmark, Clock, CheckCircle,
   XCircle, Filter, X, AlertTriangle, Settings, Sun, Moon,
-  Table2, UserCheck
+  Table2, Layers, Wallet
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -27,9 +27,9 @@ const cardVariant = {
 };
 
 const THEME_OPTIONS = [
-  { id: 'emerald', label: 'Emerald', swatch: '#059669' },
-  { id: 'ocean', label: 'Ocean', swatch: '#0891b2' },
   { id: 'violet', label: 'Violet', swatch: '#7c3aed' },
+  { id: 'ocean', label: 'Ocean', swatch: '#0891b2' },
+  { id: 'emerald', label: 'Emerald', swatch: '#059669' },
   { id: 'rose', label: 'Rose', swatch: '#e11d48' },
   { id: 'amber', label: 'Amber', swatch: '#d97706' },
 ];
@@ -53,16 +53,21 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-const DesignEngineerDashboard = () => {
+const parseAllocation = (val) => {
+  const num = parseFloat(String(val ?? '0').replace(/,/g, ''));
+  return isNaN(num) ? 0 : num;
+};
+
+const BranchBDirectorDashboard = () => {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'emerald');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ division: '', status: '' });
+  const [filters, setFilters] = useState({ ministry: '', status: '' });
 
   const fetchData = async () => {
     setLoading(true);
@@ -70,7 +75,7 @@ const DesignEngineerDashboard = () => {
       const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
       setJobs(res.data || []);
     } catch (err) {
-      console.error('Error loading engineer design dashboard data:', err);
+      console.error('Error loading director design dashboard data:', err);
     } finally {
       setLoading(false);
     }
@@ -95,16 +100,17 @@ const DesignEngineerDashboard = () => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
-  const handleClearFilters = () => setFilters({ division: '', status: '' });
+  const handleClearFilters = () => setFilters({ ministry: '', status: '' });
 
   const getUniqueValues = (key) => {
     const values = jobs.map((j) => j[key]).filter((v) => v !== undefined && v !== null && v !== '');
     return [...new Set(values)].sort();
   };
+  const ministryOptions = getUniqueValues('ministry');
   const divisionOptions = getUniqueValues('division');
 
   const filteredJobs = jobs.filter((j) => {
-    if (filters.division && j.division !== filters.division) return false;
+    if (filters.ministry && j.ministry !== filters.ministry) return false;
     if (filters.status && (j.status || 'Pending') !== filters.status) return false;
     return true;
   });
@@ -113,21 +119,22 @@ const DesignEngineerDashboard = () => {
   const pendingJobs = jobs.filter(j => !j.status || j.status === 'Pending').length;
   const approvedJobs = jobs.filter(j => j.status === 'Approved').length;
   const rejectedJobs = jobs.filter(j => j.status === 'Rejected').length;
-  const assignedJobs = jobs.filter(j => j.assignee).length;
-  const unassignedJobs = totalJobs - assignedJobs;
+  const totalAllocation = jobs.reduce((sum, j) => sum + parseAllocation(j.allocation), 0);
+  const totalMinistries = ministryOptions.length;
+  const totalDivisions = divisionOptions.length;
 
   const statCards = [
-    { label: 'Total Jobs', value: totalJobs, icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Total Allocation (Rs.)', value: totalAllocation.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: Wallet, color: 'var(--accent-primary)' },
+    { label: 'Total Jobs', value: totalJobs, icon: Briefcase, color: 'var(--info)' },
+    { label: 'Ministries', value: totalMinistries, icon: Landmark, color: 'var(--gold)' },
+    { label: 'Divisions', value: totalDivisions, icon: Layers, color: 'var(--success)' },
     { label: 'Pending', value: pendingJobs, icon: Clock, color: 'var(--warning)' },
-    { label: 'Approved', value: approvedJobs, icon: CheckCircle, color: 'var(--success)' },
     { label: 'Rejected', value: rejectedJobs, icon: XCircle, color: 'var(--danger)' },
-    { label: 'Assigned', value: assignedJobs, icon: UserCheck, color: 'var(--info)' },
-    { label: 'Unassigned', value: unassignedJobs, icon: AlertTriangle, color: 'var(--gold)' },
   ];
 
-  const jobsPerDivision = divisionOptions.map((div) => ({
-    name: div,
-    count: jobs.filter(j => j.division === div).length,
+  const allocationPerMinistry = ministryOptions.map((m) => ({
+    name: m,
+    total: jobs.filter(j => j.ministry === m).reduce((sum, j) => sum + parseAllocation(j.allocation), 0),
   }));
 
   return (
@@ -139,16 +146,16 @@ const DesignEngineerDashboard = () => {
       <div className="user-dashboard-layout">
         <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
-            <div className="profile-photo"><HardHat size={32} /></div>
+            <div className="profile-photo"><Briefcase size={32} /></div>
             <div className="profile-info">
-              <h3>Engineer</h3>
-              <p className="reg-number">Design Branch</p>
+              <h3>Director</h3>
+              <p className="reg-number">Branch B</p>
               <span className="role-title" style={{
                 fontSize: '0.68rem', color: '#ffffff', backgroundColor: 'var(--accent-primary)',
                 fontWeight: '800', padding: '3px 10px', borderRadius: '12px', marginTop: '6px',
                 textTransform: 'uppercase', letterSpacing: '0.05em', display: 'inline-block'
               }}>
-                Engineer
+                Director
               </span>
             </div>
           </div>
@@ -156,7 +163,7 @@ const DesignEngineerDashboard = () => {
           <nav className="sidebar-nav">
             {[
               { id: 'Overview', icon: BarChart3, label: 'Overview' },
-              { id: 'Records', icon: Table2, label: 'All Jobs' },
+              { id: 'Records', icon: Table2, label: 'All Records' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
               <button key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => setActiveTab(item.id)}>
@@ -190,7 +197,7 @@ const DesignEngineerDashboard = () => {
                     <stat.icon size={20} />
                   </div>
                 </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
                   {stat.value}
                 </div>
                 <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
@@ -206,11 +213,11 @@ const DesignEngineerDashboard = () => {
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                      <HardHat size={22} />
+                      <Landmark size={22} />
                     </div>
                     <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Engineering Overview</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Task and assignment breakdown across all divisions</p>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Executive Overview</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Budget allocation and status breakdown across every ministry</p>
                     </div>
                   </div>
                 </div>
@@ -257,15 +264,15 @@ const DesignEngineerDashboard = () => {
                     </div>
 
                     <div className="field-card" style={{ padding: '24px 26px 28px' }}>
-                      <h3 className="recent-jobs-title">Jobs by Division</h3>
+                      <h3 className="recent-jobs-title">Allocation by Ministry (Rs.)</h3>
                       <div style={{ width: '100%', height: 300 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={jobsPerDivision} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
+                          <BarChart data={allocationPerMinistry} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
-                            <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 10, fontWeight: 600 }} interval={0} angle={-25} textAnchor="end" height={60} />
+                            <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 10, fontWeight: 600 }} interval={0} angle={-25} textAnchor="end" height={70} />
                             <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
                             <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                            <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--accent-primary)" />
+                            <Bar dataKey="total" radius={[6, 6, 0, 0]} fill="var(--accent-primary)" />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -283,8 +290,8 @@ const DesignEngineerDashboard = () => {
                       <Table2 size={22} />
                     </div>
                     <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>All Jobs</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Every job across every division, with assignment status</p>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>All Records</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Every job across every ministry and division</p>
                     </div>
                   </div>
                 </div>
@@ -294,10 +301,10 @@ const DesignEngineerDashboard = () => {
 
                   <div className="table-filters-row">
                     <div className="input-row-group">
-                      <label><Filter size={12} /> Division</label>
-                      <select name="division" value={filters.division} onChange={handleFilterChange} className="input-field">
-                        <option value="">All Divisions</option>
-                        {divisionOptions.map((dv) => (<option key={dv} value={dv}>{dv}</option>))}
+                      <label><Filter size={12} /> Ministry</label>
+                      <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
+                        <option value="">All Ministries</option>
+                        {ministryOptions.map((m) => (<option key={m} value={m}>{m}</option>))}
                       </select>
                     </div>
                     <div className="input-row-group">
@@ -309,7 +316,7 @@ const DesignEngineerDashboard = () => {
                         <option value="Rejected">Rejected</option>
                       </select>
                     </div>
-                    {(filters.division || filters.status) && (
+                    {(filters.ministry || filters.status) && (
                       <button className="cancel-btn" onClick={handleClearFilters}><X size={14} /> Clear</button>
                     )}
                   </div>
@@ -318,14 +325,14 @@ const DesignEngineerDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Job No</th><th>Activity</th><th>Division</th><th>Ministry</th>
-                          <th>Allocation</th><th>Assignee</th><th>Status</th>
+                          <th>Job No</th><th>Activity</th><th>Ministry</th><th>Division</th>
+                          <th>Allocation</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={7}>
+                            <td colSpan={6}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{loading ? 'Loading records...' : jobs.length === 0 ? 'No records available.' : 'No records match the selected filters.'}</span>
@@ -337,10 +344,9 @@ const DesignEngineerDashboard = () => {
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
                               <td className="font-mono">{j.jobNo}</td>
                               <td className="font-bold">{j.jobName}</td>
-                              <td>{j.division}</td>
                               <td>{j.ministry}</td>
+                              <td>{j.division}</td>
                               <td className="font-bold">{j.allocation}</td>
-                              <td>{j.assignee || '—'}</td>
                               <td>
                                 <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
                                   {j.status || 'Pending'}
@@ -414,4 +420,4 @@ const DesignEngineerDashboard = () => {
   );
 };
 
-export default DesignEngineerDashboard;
+export default BranchBDirectorDashboard;

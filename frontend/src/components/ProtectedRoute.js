@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 
-const ProtectedRoute = ({ children, allowedRoles = ['admin'] }) => {
+const ProtectedRoute = ({ children, allowedRoles = ['admin'], requiredBranch }) => {
   const [status, setStatus] = useState('checking'); // 'checking' | 'allowed' | 'denied'
 
   const allowedRolesString = allowedRoles.join(',');
@@ -22,7 +22,9 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin'] }) => {
         // Confirm this user actually exists in the DB and really has the allowed role,
         // rather than trusting whatever localStorage happens to say.
         const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
-        if (allowedRoles.includes(res.data.role)) {
+        const roleOk = allowedRoles.includes(res.data.role);
+        const branchOk = !requiredBranch || res.data.branch === requiredBranch;
+        if (roleOk && branchOk) {
           setStatus('allowed');
         } else {
           setStatus('denied');
@@ -34,7 +36,7 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin'] }) => {
     };
 
     verify();
-  }, [allowedRolesString]);
+  }, [allowedRolesString, requiredBranch]);
 
   if (status === 'checking') {
     return <div style={{ padding: '40px', textAlign: 'center' }}>Checking access...</div>;

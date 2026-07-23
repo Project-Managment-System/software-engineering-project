@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Lock, User, ShieldAlert, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axios from 'axios';
 
-// Fixed Head Office credentials (single executive login, not tied to the user database)
-const HEAD_OFFICE_USERNAME = 'ho123';
-const HEAD_OFFICE_PASSWORD = '123';
+// Maps a branch slug (from the user's DB record) to its dashboard route segment
+const BRANCH_ROUTE_SLUGS = ['design', 'branch-a', 'branch-b', 'branch-c', 'branch-d'];
 
 // Component animation frames
 const formContainerVariants = {
@@ -45,20 +45,55 @@ export default function HeadOfficeLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setError('');
 
-    if (username.trim() === HEAD_OFFICE_USERNAME && password === HEAD_OFFICE_PASSWORD) {
-      setError('');
-      localStorage.setItem('headOfficeAuth', 'true');
-      localStorage.setItem('role', 'headoffice');
-      localStorage.setItem('fullName', 'Head Office Administrator');
-      localStorage.setItem('employeeId', HEAD_OFFICE_USERNAME);
-      navigate('/headoffice/dashboard');
-    } else {
-      setError('Invalid Head Office ID or password.');
+    try {
+      const res = await axios.post('http://127.0.0.1:5000/api/auth/login', {
+        employeeId: username,
+        password,
+      });
+
+      const { role, userId, employeeId, fullName, email, branch, profilePic } = res.data;
+
+      localStorage.setItem('userId', userId);
+      localStorage.setItem('employeeId', employeeId);
+      localStorage.setItem('fullName', fullName);
+      localStorage.setItem('email', email || '');
+      localStorage.setItem('role', role);
+      localStorage.setItem('profilePic', profilePic || '');
+      localStorage.setItem('isAuthenticated', 'true');
+      if (branch) localStorage.setItem('userBranch', branch);
+
+      if (role === 'headoffice_admin') {
+        navigate('/headoffice/dashboard');
+      } else if (role === 'branch_engineer' && BRANCH_ROUTE_SLUGS.includes(branch)) {
+        navigate(`/${branch}/engineer/dashboard`);
+      } else if (role === 'branch_director' && BRANCH_ROUTE_SLUGS.includes(branch)) {
+        navigate(`/${branch}/director/dashboard`);
+      } else {
+        setError('This portal is not available for your account.');
+      }
+    } catch (err) {
+      const code = err.response?.data?.error;
+      if (code === 'USER_NOT_FOUND') {
+        setError('No account found with that ID.');
+      } else if (code === 'INVALID_PASSWORD') {
+        setError('Incorrect password. Please try again.');
+      } else if (code === 'MISSING_CREDENTIALS') {
+        setError('Please enter both ID and password.');
+      } else {
+        setError('Login failed. Please try again.');
+        console.error('Login error:', err);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -175,9 +210,10 @@ export default function HeadOfficeLogin() {
           <motion.div variants={itemVariants} className="pt-2">
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 hover:from-[#006EB1] hover:to-[#005a91] text-white font-bold text-xs tracking-[0.2em] rounded-xl transition-all duration-300 shadow-xl active:scale-[0.99] uppercase border border-slate-800 hover:border-[#90D5FF]"
+              disabled={isSubmitting}
+              className="w-full py-4 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 hover:from-[#006EB1] hover:to-[#005a91] text-white font-bold text-xs tracking-[0.2em] rounded-xl transition-all duration-300 shadow-xl active:scale-[0.99] uppercase border border-slate-800 hover:border-[#90D5FF] disabled:opacity-60"
             >
-              SIGN IN
+              {isSubmitting ? 'SIGNING IN...' : 'SIGN IN'}
             </button>
           </motion.div>
         </form>

@@ -53,7 +53,7 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
-const DesignEngineerDashboard = () => {
+const BranchCEngineerDashboard = () => {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'emerald');
@@ -142,7 +142,7 @@ const DesignEngineerDashboard = () => {
             <div className="profile-photo"><HardHat size={32} /></div>
             <div className="profile-info">
               <h3>Engineer</h3>
-              <p className="reg-number">Design Branch</p>
+              <p className="reg-number">Branch C</p>
               <span className="role-title" style={{
                 fontSize: '0.68rem', color: '#ffffff', backgroundColor: 'var(--accent-primary)',
                 fontWeight: '800', padding: '3px 10px', borderRadius: '12px', marginTop: '6px',
@@ -414,4 +414,4 @@ const DesignEngineerDashboard = () => {
   );
 };
 
-export default DesignEngineerDashboard;
+export default BranchCEngineerDashboard;

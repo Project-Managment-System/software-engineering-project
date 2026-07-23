@@ -1313,6 +1313,71 @@ select.input-field option {
     gap: 16px;
   }
 }
+
+/* ─── Status percentage breakdown (below the donut chart) ─── */
+.status-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-light);
+}
+
+.status-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-breakdown-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-breakdown-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  width: 76px;
+  flex-shrink: 0;
+}
+
+.status-breakdown-value {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 26px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.status-breakdown-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bg-subtle);
+  overflow: hidden;
+}
+
+.status-breakdown-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.status-breakdown-pct {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  width: 40px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
 /* --- Nav Unread Badge (Telegram-style) --- */
 .nav-item {
   position: relative;

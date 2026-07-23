@@ -587,6 +587,214 @@
 }
 
 /* ============================================================
+   14b. BRANCH CARDS (Head Office → Branches tab)
+   ============================================================ */
+.branch-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.branch-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 10%, transparent), transparent);
+  border-bottom: 1px solid var(--border-base);
+}
+
+.branch-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px -2px color-mix(in srgb, var(--accent-primary) 50%, transparent);
+}
+
+.branch-card-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.branch-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0 10px;
+}
+
+.branch-role-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 22px;
+}
+
+.branch-role-block + .branch-role-block {
+  border-top: 1px dashed var(--border-light);
+}
+
+.branch-role-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.branch-role-icon.is-director { background: color-mix(in srgb, var(--gold) 16%, transparent); color: var(--gold); }
+.branch-role-icon.is-engineer { background: color-mix(in srgb, var(--info) 16%, transparent); color: var(--info); }
+
+.branch-role-content { flex: 1; min-width: 0; }
+
+.branch-role-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-label);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.branch-role-count {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  padding: 1px 7px;
+  border-radius: 999px;
+  letter-spacing: 0;
+}
+
+.branch-person-card {
+  padding: 8px 0;
+}
+
+.branch-person-card + .branch-person-card {
+  border-top: 1px solid var(--border-light);
+}
+
+.branch-person-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.employee-id-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-base);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+.branch-person-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  padding: 1px 0;
+}
+
+.branch-unassigned {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.branch-card-header-btn {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.branch-card-header-btn:hover { filter: brightness(1.03); }
+
+.branch-card-count {
+  margin-left: auto;
+}
+
+.branch-card-selected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+.status-director { background: color-mix(in srgb, var(--gold) 16%, transparent); color: var(--gold); border: 1px solid var(--gold); }
+.status-engineer { background: color-mix(in srgb, var(--info) 16%, transparent); color: var(--info); border: 1px solid var(--info); }
+
+/* ============================================================
+   14c. TABLE ACTION BUTTONS
+   ============================================================ */
+.table-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border-base);
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-right: 6px;
+}
+.table-action-btn:last-child { margin-right: 0; }
+.table-action-btn.edit { color: var(--accent-primary); }
+.table-action-btn.edit:hover { background: color-mix(in srgb, var(--accent-primary) 14%, transparent); border-color: var(--accent-primary); }
+.table-action-btn.delete { color: var(--danger); }
+.table-action-btn.delete:hover { background: var(--danger-soft); border-color: var(--danger); }
+
+/* ============================================================
+   14d. MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 20, 35, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* ============================================================
    15. RESPONSIVE
    ============================================================ */
 @media (max-width: 768px) {
