@@ -24,6 +24,7 @@ router.post('/add', async (req, res) => {
             phoneNo: req.body.phoneNo || '',
             password: req.body.password,
             division: req.body.division,
+            dsDivision: req.body.dsDivision || '',
             role: role
         };
 

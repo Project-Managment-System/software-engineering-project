@@ -9,11 +9,20 @@ import './App.css';
 // Landing Portal
 import Portal from './pages/Portal';
 import DivisionLogin from './pages/DivisionLogin';
-import HeadOfficeLogin from './pages/HeadOfficeLogin';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminLogin from './pages/admin/Login';
+
+// Head Office Pages
+import HeadOfficeLogin from './pages/HeadOffice/Login';
+import HeadOfficeDashboard from './pages/HeadOffice/Dashboard';
+
+// Head Office → Design Section Pages (preview dashboards, fixed demo credentials)
+import DesignEngineerLogin from './pages/Design/Engineer/Login';
+import DesignEngineerDashboard from './pages/Design/Engineer/Dashboard';
+import DesignDirectorLogin from './pages/Design/Director/Login';
+import DesignDirectorDashboard from './pages/Design/Director/Dashboard';
 
 // Engineer Pages
 import EngineerDashboard from './pages/engineer/Dashboard'; 
@@ -35,6 +44,13 @@ function App() {
         <Route path="/" element={<><Portal /><Footer /></>} />
         <Route path="/division/login" element={<DivisionLogin />} />
         <Route path="/headoffice/login" element={<HeadOfficeLogin />} />
+        <Route path="/headoffice/dashboard" element={<HeadOfficeDashboard />} />
+
+        {/* Head Office → Design Section Routes (preview dashboards) */}
+        <Route path="/design/engineer/login" element={<DesignEngineerLogin />} />
+        <Route path="/design/engineer/dashboard" element={<DesignEngineerDashboard />} />
+        <Route path="/design/director/login" element={<DesignDirectorLogin />} />
+        <Route path="/design/director/dashboard" element={<DesignDirectorDashboard />} />
         
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

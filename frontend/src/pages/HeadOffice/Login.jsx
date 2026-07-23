@@ -1,8 +1,11 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, Lock, User, ShieldAlert } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft, Building2, Lock, User, ShieldAlert, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Fixed Head Office credentials (single executive login, not tied to the user database)
+const HEAD_OFFICE_USERNAME = 'ho123';
+const HEAD_OFFICE_PASSWORD = '123';
 
 // Component animation frames
 const formContainerVariants = {
@@ -41,29 +44,38 @@ const letterVariants = {
 export default function HeadOfficeLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // Future: Add authentication logic here
-    console.log("Head Office Login Attempt:", username);
-    navigate('/headoffice/dashboard');
+
+    if (username.trim() === HEAD_OFFICE_USERNAME && password === HEAD_OFFICE_PASSWORD) {
+      setError('');
+      localStorage.setItem('headOfficeAuth', 'true');
+      localStorage.setItem('role', 'headoffice');
+      localStorage.setItem('fullName', 'Head Office Administrator');
+      localStorage.setItem('employeeId', HEAD_OFFICE_USERNAME);
+      navigate('/headoffice/dashboard');
+    } else {
+      setError('Invalid Head Office ID or password.');
+    }
   };
 
   const pageTitle = "HEAD OFFICE";
 
   return (
-    <div 
+    <div
       className="min-h-screen relative flex items-center justify-center p-6 antialiased font-sans bg-cover bg-center bg-fixed bg-slate-900"
-      style={{ 
-        backgroundImage: `url("https://i.pinimg.com/736x/ad/31/d3/ad31d39d17b3bc1957c7d5ed5ff35f8d.jpg")` 
+      style={{
+        backgroundImage: `url("https://i.pinimg.com/736x/ad/31/d3/ad31d39d17b3bc1957c7d5ed5ff35f8d.jpg")`
       }}
     >
       {/* Background Image Safety Layer (Kept transparent to preserve original image colors) */}
       <div className="absolute inset-0 bg-black/5 z-0 pointer-events-none" />
 
       {/* Main Form Box Structure */}
-      <motion.div 
+      <motion.div
         variants={formContainerVariants}
         initial="hidden"
         animate="show"
@@ -74,26 +86,26 @@ export default function HeadOfficeLogin() {
 
         {/* Header Navigation Link Back */}
         <motion.div variants={itemVariants} className="mb-8">
-          <button 
-            onClick={() => navigate('/')} 
+          <button
+            onClick={() => navigate('/')}
             className="flex items-center text-xs font-bold tracking-widest text-[#006EB1] hover:text-[#002B49] uppercase transition-colors group"
           >
-            <ArrowLeft size={14} className="mr-2 transition-transform duration-300 group-hover:-translate-x-1" /> 
+            <ArrowLeft size={14} className="mr-2 transition-transform duration-300 group-hover:-translate-x-1" />
             Back to Portal
           </button>
         </motion.div>
 
         {/* Brand Icon & Premium Header Layout Block */}
         <div className="flex items-center gap-5 mb-8">
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="p-4 rounded-2xl bg-[#90D5FF]/20 border border-[#90D5FF]/50 text-[#006EB1] shadow-sm select-none"
           >
             <Building2 size={26} strokeWidth={2} />
           </motion.div>
-          
+
           <div>
-            <motion.h2 
+            <motion.h2
               variants={titleContainerVariants}
               initial="hidden"
               animate="visible"
@@ -101,7 +113,7 @@ export default function HeadOfficeLogin() {
             >
               {pageTitle.split("").map((char, index) => (
                 <motion.span key={index} variants={letterVariants}>
-                  {char === " " ? "\u00A0" : char}
+                  {char === " " ? " " : char}
                 </motion.span>
               ))}
             </motion.h2>
@@ -113,13 +125,13 @@ export default function HeadOfficeLogin() {
 
         {/* Authorization Form Segment */}
         <form onSubmit={handleLogin} className="space-y-5 relative z-20">
-          
+
           {/* Head Office ID Controlled Core Input Field Container */}
           <motion.div variants={itemVariants} className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#006EB1]/70">
               <User size={18} />
             </span>
-            <input 
+            <input
               type="text"
               placeholder="Head Office ID"
               className="w-full pl-12 pr-4 py-4 bg-white/60 border border-[#90D5FF]/40 rounded-xl text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:ring-2 focus:ring-[#006EB1] focus:border-[#006EB1] outline-none transition-all duration-300 text-sm shadow-inner"
@@ -134,7 +146,7 @@ export default function HeadOfficeLogin() {
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#006EB1]/70">
               <Lock size={18} />
             </span>
-            <input 
+            <input
               type="password"
               placeholder="Password"
               className="w-full pl-12 pr-4 py-4 bg-white/60 border border-[#90D5FF]/40 rounded-xl text-slate-900 placeholder-slate-400 font-medium focus:bg-white focus:ring-2 focus:ring-[#006EB1] focus:border-[#006EB1] outline-none transition-all duration-300 text-sm shadow-inner"
@@ -144,10 +156,25 @@ export default function HeadOfficeLogin() {
             />
           </motion.div>
 
+          {/* Inline error banner on bad credentials */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-2 text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 text-xs font-bold"
+              >
+                <AlertCircle size={16} className="shrink-0" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Submit/Execution Operational Action Button */}
           <motion.div variants={itemVariants} className="pt-2">
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="w-full py-4 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950 hover:from-[#006EB1] hover:to-[#005a91] text-white font-bold text-xs tracking-[0.2em] rounded-xl transition-all duration-300 shadow-xl active:scale-[0.99] uppercase border border-slate-800 hover:border-[#90D5FF]"
             >
               SIGN IN
@@ -156,7 +183,7 @@ export default function HeadOfficeLogin() {
         </form>
 
         {/* Subtle Security Notice Footer */}
-        <motion.div 
+        <motion.div
           variants={itemVariants}
           className="mt-8 pt-6 border-t border-slate-200/60 flex items-center justify-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest"
         >

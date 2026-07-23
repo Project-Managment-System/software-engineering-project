@@ -5,7 +5,7 @@ import {
   Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
-  FileText, MessageSquare, Lock
+  FileText, MessageSquare, Lock, Bell, Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -152,6 +152,23 @@ const AdminDashboard = () => {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
 
+  /* ─── Clerk rejection notifications (persisted per-user; flags jobs an engineer just rejected) ─── */
+  const [notifications, setNotifications] = useState(() => {
+    try {
+      const uid = localStorage.getItem('userId') || 'anon';
+      return JSON.parse(localStorage.getItem(`clerk_notifications_${uid}`) || '[]');
+    } catch (_) {
+      return [];
+    }
+  });
+  const seenRejectedIdsRef = useRef(null);
+
+  useEffect(() => {
+    const uid = localStorage.getItem('userId');
+    if (!uid) return;
+    localStorage.setItem(`clerk_notifications_${uid}`, JSON.stringify(notifications));
+  }, [notifications]);
+
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
@@ -177,6 +194,40 @@ const AdminDashboard = () => {
     try {
       const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
       setJobs(res.data);
+
+      // Detect jobs an engineer just rejected and raise a notification for the clerk
+      if (localStorage.getItem('role') === 'clerk') {
+        const uid = localStorage.getItem('userId') || 'anon';
+        const division = localStorage.getItem('userDivision');
+        const seenKey = `clerk_seen_rejected_${uid}`;
+        const rejected = res.data.filter(j => j.status === 'Rejected' && (!division || j.division === division));
+
+        if (seenRejectedIdsRef.current === null) {
+          // First load (this session or ever): establish a baseline so we don't spam old rejections
+          const stored = localStorage.getItem(seenKey);
+          seenRejectedIdsRef.current = stored ? new Set(JSON.parse(stored)) : new Set(rejected.map(j => j._id));
+          if (!stored) {
+            localStorage.setItem(seenKey, JSON.stringify([...seenRejectedIdsRef.current]));
+          }
+        }
+
+        const newlyRejected = rejected.filter(j => !seenRejectedIdsRef.current.has(j._id));
+        if (newlyRejected.length > 0) {
+          newlyRejected.forEach(j => seenRejectedIdsRef.current.add(j._id));
+          localStorage.setItem(seenKey, JSON.stringify([...seenRejectedIdsRef.current]));
+
+          const newNotifs = newlyRejected.map(j => ({
+            id: `${j._id}-${Date.now()}`,
+            jobNo: j.jobNo,
+            title: 'Job Rejected',
+            message: `${j.jobName} (${j.jobNo}) was rejected by the engineer.${j.remark ? ' Reason: ' + j.remark : ''}`,
+            time: new Date().toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }),
+            read: false,
+          }));
+          setNotifications(prev => [...newNotifs, ...prev]);
+          newNotifs.forEach(n => addToast(`Job rejected: ${n.jobNo}`, 'error'));
+        }
+      }
     } catch (err) {
       console.error(err);
     }
@@ -235,6 +286,13 @@ const AdminDashboard = () => {
     };
     pollUnread();
     const id = setInterval(pollUnread, 4000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Background polling for newly rejected jobs (clerk only) — powers the Notifications tab
+  useEffect(() => {
+    if (localStorage.getItem('role') !== 'clerk') return;
+    const id = setInterval(fetchData, 8000);
     return () => clearInterval(id);
   }, []);
 
@@ -548,8 +606,11 @@ const AdminDashboard = () => {
               { id: 'New Job', icon: Plus, label: 'New Job' },
               { id: 'Profile', icon: Edit3, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
-              // Clerks belong to a division and can use the messaging feature
-              ...(localStorage.getItem('role') === 'clerk' ? [{ id: 'Messages', icon: MessageSquare, label: 'Messages' }] : []),
+              // Clerks belong to a division and can use the messaging + notifications features
+              ...(localStorage.getItem('role') === 'clerk' ? [
+                { id: 'Messages', icon: MessageSquare, label: 'Messages' },
+                { id: 'Notifications', icon: Bell, label: 'Notifications' },
+              ] : []),
             ].map(item => (
               <button
                 key={item.id}
@@ -563,6 +624,11 @@ const AdminDashboard = () => {
                 <item.icon size={18} /> {item.label}
                 {item.id === 'Messages' && totalUnread > 0 && (
                   <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
+                )}
+                {item.id === 'Notifications' && notifications.filter(n => !n.read).length > 0 && (
+                  <span className="nav-unread-badge">
+                    {notifications.filter(n => !n.read).length > 99 ? '99+' : notifications.filter(n => !n.read).length}
+                  </span>
                 )}
               </button>
             ))}
@@ -1275,6 +1341,72 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+              </motion.section>
+            )}
+
+            {/* ── Notifications Tab (Clerk only) ── */}
+            {activeTab === 'Notifications' && localStorage.getItem('role') === 'clerk' && (
+              <motion.section
+                key="notifications"
+                variants={pageVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="profile-view"
+              >
+                <div className="recent-jobs-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Job Rejection Notifications</h3>
+                    {notifications.length > 0 && (
+                      <button
+                        className="cancel-btn"
+                        onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                        style={{ minHeight: '32px', padding: '6px 16px' }}
+                      >
+                        <Check size={12} /> Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  {notifications.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '180px' }}>
+                      <Bell size={28} style={{ opacity: 0.4 }} />
+                      <span>No rejection notifications yet.</span>
+                    </div>
+                  ) : (
+                    <div className="notification-list">
+                      {notifications.map((notif) => (
+                        <div key={notif.id} className={`notification-card-item ${notif.read ? '' : 'unread'}`}>
+                          <div className="notification-main">
+                            <div className="notification-header">
+                              <span className="notification-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <XCircle size={14} style={{ color: 'var(--danger)' }} /> {notif.title}
+                              </span>
+                              <span className="notification-time">{notif.time}</span>
+                            </div>
+                            <p className="notification-msg">{notif.message}</p>
+                          </div>
+                          <div className="notification-btn-row">
+                            {!notif.read && (
+                              <button
+                                className="action-btn-pill secondary"
+                                onClick={() => setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n))}
+                              >
+                                <Check size={12} /> Read
+                              </button>
+                            )}
+                            <button
+                              className="action-btn-pill secondary"
+                              onClick={() => setNotifications(notifications.filter(n => n.id !== notif.id))}
+                            >
+                              <X size={12} /> Dismiss
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </motion.section>
             )}
