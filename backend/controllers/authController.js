@@ -123,6 +123,7 @@ exports.login = async (req, res, next) => {
       fullName: user.fullName,
       email: user.email,
       division: user.division || null,
+      branch: user.branch || null,
       profilePic: user.profilePic || '',
       // Explicitly send true so the frontend allows the session
       isVerified: true 

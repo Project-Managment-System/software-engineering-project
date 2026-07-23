@@ -11,7 +11,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
-import '../DesignDashboard.css';
+import '../../shared/BranchDashboard.css';
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -69,12 +69,6 @@ const DesignDirectorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ ministry: '', status: '' });
 
-  useEffect(() => {
-    if (localStorage.getItem('designDirectorAuth') !== 'true') {
-      navigate('/design/director/login');
-    }
-  }, [navigate]);
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -97,7 +91,6 @@ const DesignDirectorDashboard = () => {
 
   const handleLogout = () => {
     const savedTheme = localStorage.getItem('theme');
-    localStorage.removeItem('designDirectorAuth');
     localStorage.clear();
     if (savedTheme) localStorage.setItem('theme', savedTheme);
     navigate('/');
@@ -156,13 +149,13 @@ const DesignDirectorDashboard = () => {
             <div className="profile-photo"><Briefcase size={32} /></div>
             <div className="profile-info">
               <h3>Director</h3>
-              <p className="reg-number">Design Preview</p>
+              <p className="reg-number">Design Branch</p>
               <span className="role-title" style={{
                 fontSize: '0.68rem', color: '#ffffff', backgroundColor: 'var(--accent-primary)',
                 fontWeight: '800', padding: '3px 10px', borderRadius: '12px', marginTop: '6px',
                 textTransform: 'uppercase', letterSpacing: '0.05em', display: 'inline-block'
               }}>
-                Preview Role
+                Director
               </span>
             </div>
           </div>

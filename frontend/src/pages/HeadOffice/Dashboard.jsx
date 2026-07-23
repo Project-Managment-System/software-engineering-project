@@ -4,13 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2, LogOut, Menu, BarChart3, Briefcase, Clock, CheckCircle,
   XCircle, Users, Filter, X, AlertTriangle, Settings, Sun, Moon,
-  Table2, ShieldCheck, Layers, Palette, HardHat, Landmark, KeyRound, ArrowRight
+  Table2, ShieldCheck, Layers, Palette, UserPlus, Save, Landmark, HardHat,
+  Mail, Phone, Edit3, Trash2, ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { BRANCHES } from '../../constants/branches';
 import './Dashboard.css';
 
 /* ─── Animation variants ─── */
@@ -72,12 +74,93 @@ const HeadOfficeDashboard = () => {
 
   const [filters, setFilters] = useState({ ministry: '', department: '', division: '', status: '' });
 
-  /* ─── Auth guard: Head Office uses a fixed login, not a DB user record ─── */
-  useEffect(() => {
-    if (localStorage.getItem('headOfficeAuth') !== 'true') {
-      navigate('/headoffice/login');
+  /* ─── Branches tab filters ─── */
+  const [branchFilter, setBranchFilter] = useState({ branch: '', position: '' });
+  const handleBranchFilterChange = (e) => {
+    const { name, value } = e.target;
+    setBranchFilter(prev => ({ ...prev, [name]: value }));
+  };
+  const handleClearBranchFilter = () => setBranchFilter({ branch: '', position: '' });
+
+  /* ─── Branches tab: view all users of a branch in a table ─── */
+  const [selectedBranchSlug, setSelectedBranchSlug] = useState(null);
+
+  /* ─── Branches tab: edit / delete a branch user ─── */
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserForm, setEditUserForm] = useState({ fullName: '', email: '', phoneNo: '' });
+  const [editUserMessage, setEditUserMessage] = useState(null);
+
+  const openEditUser = (user) => {
+    setEditingUser(user);
+    setEditUserForm({ fullName: user.fullName || '', email: user.email || '', phoneNo: user.phoneNo || '' });
+    setEditUserMessage(null);
+  };
+  const closeEditUser = () => {
+    setEditingUser(null);
+    setEditUserMessage(null);
+  };
+  const handleEditUserFormChange = (e) => {
+    const { name, value } = e.target;
+    const sanitized = name === 'phoneNo' ? value.replace(/\D/g, '').slice(0, 10) : value;
+    setEditUserForm(prev => ({ ...prev, [name]: sanitized }));
+  };
+  const handleSaveEditUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/users/${editingUser._id}`, {
+        fullName: editUserForm.fullName,
+        email: editUserForm.email,
+        phoneNo: editUserForm.phoneNo
+      });
+      await fetchData();
+      closeEditUser();
+    } catch (err) {
+      setEditUserMessage({ type: 'error', text: err.response?.data?.error || 'Update failed.' });
     }
-  }, [navigate]);
+  };
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`Remove ${user.fullName} (${user.employeeId}) from the system? This cannot be undone.`)) return;
+    try {
+      await axios.delete(`http://127.0.0.1:5000/api/users/${user._id}`);
+      await fetchData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Delete failed.');
+    }
+  };
+
+  /* ─── Assign Branch Staff form ─── */
+  const [branchFormData, setBranchFormData] = useState({
+    employeeId: '', firstName: '', secondName: '', email: '', phoneNo: '', password: '', branch: '', role: ''
+  });
+  const [branchFormMessage, setBranchFormMessage] = useState(null); // { type: 'success'|'error', text }
+
+  const handleBranchFormChange = (e) => {
+    const { name, value } = e.target;
+    const sanitized = name === 'phoneNo' ? value.replace(/\D/g, '').slice(0, 10) : value;
+    setBranchFormData(prev => ({ ...prev, [name]: sanitized }));
+  };
+
+  const handleSaveBranchUser = async (e) => {
+    e.preventDefault();
+    const payload = {
+      employeeId: branchFormData.employeeId,
+      fullName: `${branchFormData.firstName} ${branchFormData.secondName || ''}`.trim(),
+      email: branchFormData.email,
+      phoneNo: branchFormData.phoneNo,
+      password: branchFormData.password,
+      branch: branchFormData.branch,
+      role: branchFormData.role
+    };
+    try {
+      await axios.post('http://127.0.0.1:5000/api/users/branch-add', payload);
+      setBranchFormMessage({ type: 'success', text: 'Branch staff account created — they can now log in.' });
+      setBranchFormData({ employeeId: '', firstName: '', secondName: '', email: '', phoneNo: '', password: '', branch: '', role: '' });
+      await fetchData();
+    } catch (err) {
+      const errMsg = err.response?.data?.error || 'Save failed. Check if all fields are filled.';
+      setBranchFormMessage({ type: 'error', text: errMsg });
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -107,7 +190,6 @@ const HeadOfficeDashboard = () => {
 
   const handleLogout = () => {
     const savedTheme = localStorage.getItem('theme');
-    localStorage.removeItem('headOfficeAuth');
     localStorage.clear();
     if (savedTheme) localStorage.setItem('theme', savedTheme);
     navigate('/');
@@ -204,7 +286,8 @@ const HeadOfficeDashboard = () => {
             {[
               { id: 'Overview', icon: BarChart3, label: 'Overview' },
               { id: 'Records', icon: Table2, label: 'All Records' },
-              { id: 'Design', icon: Palette, label: 'Design' },
+              { id: 'Branches', icon: Palette, label: 'Branches' },
+              { id: 'AssignStaff', icon: UserPlus, label: 'Assign Staff' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
               <button
@@ -234,6 +317,7 @@ const HeadOfficeDashboard = () => {
           </header>
 
           {/* ─── Stat Cards ─── */}
+          {activeTab !== 'Branches' && activeTab !== 'BranchUsers' && (
           <motion.div
             className="stat-cards-grid"
             variants={staggerContainer}
@@ -265,6 +349,7 @@ const HeadOfficeDashboard = () => {
               </motion.div>
             ))}
           </motion.div>
+          )}
 
           <AnimatePresence mode="wait">
             {/* ── Overview Tab ── */}
@@ -478,10 +563,10 @@ const HeadOfficeDashboard = () => {
               </motion.section>
             )}
 
-            {/* ── Design Tab: links out to the Engineer & Director preview dashboards ── */}
-            {activeTab === 'Design' && (
+            {/* ── Branches Tab: assign & review Engineer/Director staff per branch ── */}
+            {activeTab === 'Branches' && (
               <motion.section
-                key="design"
+                key="branches"
                 variants={pageVariants}
                 initial="hidden"
                 animate="visible"
@@ -494,60 +579,270 @@ const HeadOfficeDashboard = () => {
                       <Palette size={22} />
                     </div>
                     <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Design Section</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Preview dashboards, each with its own separate login</p>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Branches</h2>
                     </div>
                   </div>
                 </div>
 
-                <div className="analytics-dashboard-grid">
-                  {/* Engineer preview card */}
-                  <div className="field-card" style={{ padding: '24px 26px 28px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--success) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
-                        <HardHat size={22} />
+                <div className="table-filters-row">
+                  <div className="input-row-group">
+                    <label><Filter size={12} /> Branch</label>
+                    <select name="branch" value={branchFilter.branch} onChange={handleBranchFilterChange} className="input-field">
+                      <option value="">All Branches</option>
+                      {BRANCHES.map(({ slug, label }) => (<option key={slug} value={slug}>{label}</option>))}
+                    </select>
+                  </div>
+                  <div className="input-row-group">
+                    <label><Filter size={12} /> Position</label>
+                    <select name="position" value={branchFilter.position} onChange={handleBranchFilterChange} className="input-field">
+                      <option value="">All Positions</option>
+                      <option value="branch_director">Director</option>
+                      <option value="branch_engineer">Engineer</option>
+                    </select>
+                  </div>
+                  {(branchFilter.branch || branchFilter.position) && (
+                    <button className="cancel-btn" onClick={handleClearBranchFilter}><X size={14} /> Clear</button>
+                  )}
+                </div>
+
+                <div className="analytics-dashboard-grid" style={{ marginBottom: '28px' }}>
+                  {BRANCHES
+                    .filter(({ slug }) => !branchFilter.branch || branchFilter.branch === slug)
+                    .map(({ slug, label }) => {
+                    const engineers = users.filter(u => u.branch === slug && u.role === 'branch_engineer');
+                    const director = users.find(u => u.branch === slug && u.role === 'branch_director');
+                    const showDirector = branchFilter.position !== 'branch_engineer';
+                    const showEngineers = branchFilter.position !== 'branch_director';
+
+                    const branchUserCount = (director ? 1 : 0) + engineers.length;
+
+                    return (
+                      <div key={slug} className={`field-card branch-card ${selectedBranchSlug === slug ? 'branch-card-selected' : ''}`}>
+                        <button
+                          type="button"
+                          className="branch-card-header branch-card-header-btn"
+                          onClick={() => { setSelectedBranchSlug(slug); setActiveTab('BranchUsers'); }}
+                          title="View all users in this branch"
+                        >
+                          <div className="branch-card-icon"><Building2 size={19} /></div>
+                          <span className="branch-card-title">{label}</span>
+                          {branchUserCount > 0 && <span className="branch-role-count branch-card-count">{branchUserCount}</span>}
+                        </button>
+
+                        <div className="branch-card-body">
+                          {showDirector && (
+                            <div className="branch-role-block">
+                              <div className="branch-role-icon is-director"><Landmark size={16} /></div>
+                              <div className="branch-role-content">
+                                <div className="branch-role-label">Director</div>
+                                {director ? (
+                                  <div className="branch-person-card">
+                                    <div className="branch-person-name">
+                                      {director.fullName}
+                                      <span className="employee-id-tag">{director.employeeId}</span>
+                                    </div>
+                                    <div className="branch-person-meta"><Mail size={11} /> {director.email || '—'}</div>
+                                    <div className="branch-person-meta"><Phone size={11} /> {director.phoneNo || '—'}</div>
+                                  </div>
+                                ) : (
+                                  <div className="branch-unassigned">No director assigned</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {showEngineers && (
+                            <div className="branch-role-block">
+                              <div className="branch-role-icon is-engineer"><HardHat size={16} /></div>
+                              <div className="branch-role-content">
+                                <div className="branch-role-label">
+                                  Engineers
+                                  {engineers.length > 0 && <span className="branch-role-count">{engineers.length}</span>}
+                                </div>
+                                {engineers.length === 0 ? (
+                                  <div className="branch-unassigned">No engineers assigned</div>
+                                ) : (
+                                  engineers.map(eng => (
+                                    <div key={eng._id} className="branch-person-card">
+                                      <div className="branch-person-name">
+                                        {eng.fullName}
+                                        <span className="employee-id-tag">{eng.employeeId}</span>
+                                      </div>
+                                      <div className="branch-person-meta"><Mail size={11} /> {eng.email || '—'}</div>
+                                      <div className="branch-person-meta"><Phone size={11} /> {eng.phoneNo || '—'}</div>
+                                    </div>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Engineer Dashboard</h3>
+                    );
+                  })}
+                </div>
+              </motion.section>
+            )}
+
+            {/* ── Branch Users Tab: drill-down table from clicking a branch card ── */}
+            {activeTab === 'BranchUsers' && (() => {
+              const branchLabelText = BRANCHES.find(b => b.slug === selectedBranchSlug)?.label || selectedBranchSlug;
+              const branchUsers = users
+                .filter(u => u.branch === selectedBranchSlug && (u.role === 'branch_director' || u.role === 'branch_engineer'))
+                .sort((a, b) => a.role === 'branch_director' ? -1 : b.role === 'branch_director' ? 1 : 0);
+
+              return (
+                <motion.section
+                  key="branch-users"
+                  variants={pageVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="project-table-section"
+                >
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                        <Building2 size={22} />
+                      </div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Users in {branchLabelText}</h2>
+                      </div>
                     </div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 16px' }}>
-                      Job/task-focused preview — status breakdown, assignments and division workload.
-                    </p>
-                    <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-base)', borderRadius: '10px', padding: '12px 14px', marginBottom: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-label)', marginBottom: '6px' }}>
-                        <KeyRound size={12} /> Login Credentials
-                      </div>
-                      <div className="font-mono" style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                        Username: <strong>eng123</strong> &nbsp;·&nbsp; Password: <strong>123</strong>
-                      </div>
-                    </div>
-                    <button className="save-btn" onClick={() => navigate('/design/engineer/login')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Open Engineer Login <ArrowRight size={14} />
-                    </button>
                   </div>
 
-                  {/* Director preview card */}
-                  <div className="field-card" style={{ padding: '24px 26px 28px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
-                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--gold) 16%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold)' }}>
-                        <Landmark size={22} />
-                      </div>
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Director Dashboard</h3>
+                  <motion.div
+                    className="recent-jobs-card"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.05, duration: 0.3 }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Staff Register ({branchUsers.length})</h3>
+                      <button className="cancel-btn" onClick={() => setActiveTab('Branches')}><ArrowLeft size={14} /> Back to Branches</button>
                     </div>
-                    <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 16px' }}>
-                      Executive/financial preview — budget allocation by ministry and approval status.
-                    </p>
-                    <div style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-base)', borderRadius: '10px', padding: '12px 14px', marginBottom: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-label)', marginBottom: '6px' }}>
-                        <KeyRound size={12} /> Login Credentials
+
+                    {branchUsers.length === 0 ? (
+                      <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
+                        <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                        <span>No staff assigned to this branch yet.</span>
                       </div>
-                      <div className="font-mono" style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>
-                        Username: <strong>dir123</strong> &nbsp;·&nbsp; Password: <strong>123</strong>
+                    ) : (
+                      <div className="table-scroll-wrapper">
+                        <table className="project-table">
+                          <thead>
+                            <tr>
+                              <th>Full Name</th>
+                              <th>Position</th>
+                              <th>Username (Employee ID)</th>
+                              <th>Email</th>
+                              <th>Phone</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {branchUsers.map(u => (
+                              <tr key={u._id}>
+                                <td className="font-bold">{u.fullName}</td>
+                                <td>
+                                  <span className={`status-badge ${u.role === 'branch_director' ? 'status-director' : 'status-engineer'}`}>
+                                    {u.role === 'branch_director' ? 'Director' : 'Engineer'}
+                                  </span>
+                                </td>
+                                <td className="font-mono">{u.employeeId}</td>
+                                <td>{u.email || '—'}</td>
+                                <td>{u.phoneNo || '—'}</td>
+                                <td>
+                                  <button className="table-action-btn edit" title="Edit user" onClick={() => openEditUser(u)}><Edit3 size={14} /></button>
+                                  <button className="table-action-btn delete" title="Delete user" onClick={() => handleDeleteUser(u)}><Trash2 size={14} /></button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
+                    )}
+                  </motion.div>
+                </motion.section>
+              );
+            })()}
+
+            {/* ── Assign Staff Tab ── */}
+            {activeTab === 'AssignStaff' && (
+              <motion.section
+                key="assign-staff"
+                variants={pageVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                className="project-table-section"
+              >
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <UserPlus size={22} />
                     </div>
-                    <button className="save-btn" onClick={() => navigate('/design/director/login')} style={{ width: '100%', justifyContent: 'center' }}>
-                      Open Director Login <ArrowRight size={14} />
-                    </button>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Assign Staff</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Create an Engineer or Director account for a branch</p>
+                    </div>
                   </div>
+                </div>
+
+                <div className="field-card" style={{ maxWidth: '640px', padding: '24px 26px 28px' }}>
+                  <form onSubmit={handleSaveBranchUser}>
+                    <div className="input-row-group">
+                      <label>Employee ID *</label>
+                      <input name="employeeId" className="input-field" value={branchFormData.employeeId} onChange={handleBranchFormChange} required />
+                    </div>
+                    <div className="input-row-group">
+                      <label>First Name *</label>
+                      <input name="firstName" className="input-field" value={branchFormData.firstName} onChange={handleBranchFormChange} required />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Second Name</label>
+                      <input name="secondName" className="input-field" value={branchFormData.secondName} onChange={handleBranchFormChange} />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Email Address *</label>
+                      <input type="email" name="email" className="input-field" value={branchFormData.email} onChange={handleBranchFormChange} required />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Phone Number</label>
+                      <input type="tel" inputMode="numeric" maxLength={10} name="phoneNo" className="input-field" value={branchFormData.phoneNo} onChange={handleBranchFormChange} />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Password *</label>
+                      <input type="password" name="password" className="input-field" value={branchFormData.password} onChange={handleBranchFormChange} required />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Branch *</label>
+                      <select name="branch" value={branchFormData.branch} onChange={handleBranchFormChange} className="job-select-dropdown" required>
+                        <option value="" disabled>Select Branch</option>
+                        {BRANCHES.map(({ slug, label }) => (
+                          <option key={slug} value={slug}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="input-row-group">
+                      <label>Position *</label>
+                      <select name="role" value={branchFormData.role} onChange={handleBranchFormChange} className="job-select-dropdown" required>
+                        <option value="" disabled>Select Position</option>
+                        <option value="branch_engineer">Engineer</option>
+                        <option value="branch_director">Director</option>
+                      </select>
+                    </div>
+
+                    {branchFormMessage && (
+                      <div className={`alert-banner alert-${branchFormMessage.type === 'success' ? 'success' : 'error'}`} style={{ margin: '4px 0 16px' }}>
+                        {branchFormMessage.text}
+                      </div>
+                    )}
+
+                    <div className="action-buttons">
+                      <button type="submit" className="confirm-btn"><Save size={14} /> Save Branch Staff</button>
+                    </div>
+                  </form>
                 </div>
               </motion.section>
             )}
@@ -619,6 +914,61 @@ const HeadOfficeDashboard = () => {
           </AnimatePresence>
         </main>
       </div>
+
+      <AnimatePresence>
+        {editingUser && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeEditUser}
+          >
+            <motion.div
+              className="field-card modal-card"
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.97 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                <h3 className="recent-jobs-title" style={{ margin: 0 }}>Edit User</h3>
+                <button className="table-action-btn" onClick={closeEditUser} title="Close"><X size={16} /></button>
+              </div>
+
+              <form onSubmit={handleSaveEditUser}>
+                <div className="input-row-group">
+                  <label>Full Name *</label>
+                  <input name="fullName" className="input-field" value={editUserForm.fullName} onChange={handleEditUserFormChange} required />
+                </div>
+                <div className="input-row-group">
+                  <label>Email Address *</label>
+                  <input type="email" name="email" className="input-field" value={editUserForm.email} onChange={handleEditUserFormChange} required />
+                </div>
+                <div className="input-row-group">
+                  <label>Phone Number</label>
+                  <input type="tel" inputMode="numeric" maxLength={10} name="phoneNo" className="input-field" value={editUserForm.phoneNo} onChange={handleEditUserFormChange} />
+                </div>
+                <div className="input-row-group">
+                  <label>Employee ID</label>
+                  <input className="input-field" value={editingUser.employeeId} disabled style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+                </div>
+
+                {editUserMessage && (
+                  <div className={`alert-banner alert-${editUserMessage.type === 'success' ? 'success' : 'error'}`} style={{ margin: '4px 0 16px' }}>
+                    {editUserMessage.text}
+                  </div>
+                )}
+
+                <div className="action-buttons">
+                  <button type="submit" className="confirm-btn"><Save size={14} /> Save Changes</button>
+                  <button type="button" className="cancel-btn" onClick={closeEditUser}><X size={14} /> Cancel</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

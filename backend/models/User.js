@@ -8,17 +8,24 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: {
     type: String,
-    enum: ["admin", "engineer", "division_assistant", "user", "clerk"],
+    enum: ["admin", "engineer", "division_assistant", "user", "clerk", "headoffice_admin", "branch_engineer", "branch_director"],
     default: "engineer",
     required: true
   },
   division: {
     type: String,
     required: function () {
-      return this.role !== 'admin';
+      return !['admin', 'headoffice_admin', 'branch_engineer', 'branch_director'].includes(this.role);
     }
   },
   dsDivision: { type: String, default: '' },
+  branch: {
+    type: String,
+    enum: ['design', 'branch-a', 'branch-b', 'branch-c', 'branch-d'],
+    required: function () {
+      return this.role === 'branch_engineer' || this.role === 'branch_director';
+    }
+  },
   phoneNo: { type: String, default: '' },
   profilePic: { type: String, default: '' },
 }, { timestamps: true });
@@ -33,6 +40,18 @@ UserSchema.pre("save", async function () {
     });
     if (existingEngineer) {
       throw new Error(`Division "${this.division}" already has an assigned engineer.`);
+    }
+  }
+
+  // Ensure a branch has only one director (a branch can have many engineers under that director)
+  if (this.role === "branch_director" && this.branch && (this.isNew || this.isModified("role") || this.isModified("branch"))) {
+    const existingDirector = await this.constructor.findOne({
+      role: "branch_director",
+      branch: this.branch,
+      _id: { $ne: this._id }
+    });
+    if (existingDirector) {
+      throw new Error(`Branch "${this.branch}" already has an assigned Director.`);
     }
   }
 

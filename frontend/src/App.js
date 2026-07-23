@@ -18,11 +18,17 @@ import AdminLogin from './pages/admin/Login';
 import HeadOfficeLogin from './pages/HeadOffice/Login';
 import HeadOfficeDashboard from './pages/HeadOffice/Dashboard';
 
-// Head Office → Design Section Pages (preview dashboards, fixed demo credentials)
-import DesignEngineerLogin from './pages/Design/Engineer/Login';
+// Head Office → Branch Dashboards (login is unified through /headoffice/login)
 import DesignEngineerDashboard from './pages/Design/Engineer/Dashboard';
-import DesignDirectorLogin from './pages/Design/Director/Login';
 import DesignDirectorDashboard from './pages/Design/Director/Dashboard';
+import BranchAEngineerDashboard from './pages/BranchA/Engineer/Dashboard';
+import BranchADirectorDashboard from './pages/BranchA/Director/Dashboard';
+import BranchBEngineerDashboard from './pages/BranchB/Engineer/Dashboard';
+import BranchBDirectorDashboard from './pages/BranchB/Director/Dashboard';
+import BranchCEngineerDashboard from './pages/BranchC/Engineer/Dashboard';
+import BranchCDirectorDashboard from './pages/BranchC/Director/Dashboard';
+import BranchDEngineerDashboard from './pages/BranchD/Engineer/Dashboard';
+import BranchDDirectorDashboard from './pages/BranchD/Director/Dashboard';
 
 // Engineer Pages
 import EngineerDashboard from './pages/engineer/Dashboard'; 
@@ -44,14 +50,64 @@ function App() {
         <Route path="/" element={<><Portal /><Footer /></>} />
         <Route path="/division/login" element={<DivisionLogin />} />
         <Route path="/headoffice/login" element={<HeadOfficeLogin />} />
-        <Route path="/headoffice/dashboard" element={<HeadOfficeDashboard />} />
+        <Route path="/headoffice/dashboard" element={
+          <ProtectedRoute allowedRoles={['headoffice_admin']}>
+            <HeadOfficeDashboard />
+          </ProtectedRoute>
+        } />
 
-        {/* Head Office → Design Section Routes (preview dashboards) */}
-        <Route path="/design/engineer/login" element={<DesignEngineerLogin />} />
-        <Route path="/design/engineer/dashboard" element={<DesignEngineerDashboard />} />
-        <Route path="/design/director/login" element={<DesignDirectorLogin />} />
-        <Route path="/design/director/dashboard" element={<DesignDirectorDashboard />} />
-        
+        {/* Head Office → Branch Dashboard Routes (one Engineer + one Director per branch) */}
+        <Route path="/design/engineer/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_engineer']} requiredBranch="design">
+            <DesignEngineerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/design/director/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_director']} requiredBranch="design">
+            <DesignDirectorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-a/engineer/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_engineer']} requiredBranch="branch-a">
+            <BranchAEngineerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-a/director/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_director']} requiredBranch="branch-a">
+            <BranchADirectorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-b/engineer/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_engineer']} requiredBranch="branch-b">
+            <BranchBEngineerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-b/director/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_director']} requiredBranch="branch-b">
+            <BranchBDirectorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-c/engineer/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_engineer']} requiredBranch="branch-c">
+            <BranchCEngineerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-c/director/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_director']} requiredBranch="branch-c">
+            <BranchCDirectorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-d/engineer/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_engineer']} requiredBranch="branch-d">
+            <BranchDEngineerDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/branch-d/director/dashboard" element={
+          <ProtectedRoute allowedRoles={['branch_director']} requiredBranch="branch-d">
+            <BranchDDirectorDashboard />
+          </ProtectedRoute>
+        } />
+
         {/* Admin Routes */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={
