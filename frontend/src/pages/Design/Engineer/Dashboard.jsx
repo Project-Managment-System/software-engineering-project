@@ -4,15 +4,130 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   HardHat, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
   AlertTriangle, Paperclip, Send, BarChart3, Settings, User,
-  Save, X, Camera
+  Save, X, Camera, Wallet, Building2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {
+  ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
+} from 'recharts';
 import '../../shared/BranchDashboard.css';
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
   exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
+};
+
+const CustomTooltip = ({ active, payload, formatValue }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    const label = data.payload?.name ?? data.name;
+    const value = formatValue ? formatValue(data.value) : data.value;
+    return (
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-base)',
+        padding: '12px 16px', borderRadius: '8px', boxShadow: 'var(--shadow-card)',
+        fontFamily: "'Inter', sans-serif"
+      }}>
+        <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{label}</p>
+        <p style={{ margin: '4px 0 0', fontWeight: 900, color: data.payload?.color || 'var(--accent-primary)', fontSize: '1.25rem' }}>
+          {value}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const SummaryItem = ({ label, value }) => (
+  <div style={{ padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--border-base)', background: 'var(--bg-subtle)' }}>
+    <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginBottom: '6px' }}>{label}</div>
+    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{value}</div>
+  </div>
+);
+
+const DIVISION_COLOR_PALETTE = [
+  'var(--accent-primary)', 'var(--info)', 'var(--warning)', 'var(--accent-2)',
+  'var(--success)', 'var(--gold)', 'var(--accent-3)', 'var(--danger)',
+];
+
+const DivisionStatRow = ({ color, name, amount, percentage, icon: Icon = Building2 }) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '12px 16px', borderRadius: '12px', background: 'var(--bg-subtle)', border: '1px solid var(--border-base)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `color-mix(in srgb, ${color} 16%, transparent)`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={17} />
+      </div>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>{amount}</div>
+      </div>
+    </div>
+    <div style={{ fontSize: '1rem', fontWeight: 800, color, flexShrink: 0 }}>{percentage.toFixed(1)}%</div>
+  </div>
+);
+
+// Donut (with center total) + per-item stat rows + horizontal comparison bar —
+// the shared layout for every breakdown chart on this page.
+const BreakdownSection = ({ title, subtitle, data, centerLabel, centerValue, formatValue = (v) => v, barTickFormatter }) => {
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  return (
+    <div className="recent-jobs-card" style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '20px' }}>
+        <h3 className="recent-jobs-title" style={{ marginBottom: '2px' }}>{title}</h3>
+        {subtitle && <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-muted)' }}>{subtitle}</p>}
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'center', marginBottom: '24px' }}>
+        <div style={{ position: 'relative', width: '260px', height: '260px', flexShrink: 0, margin: '0 auto' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={70} outerRadius={110} paddingAngle={3} dataKey="value">
+                {data.map((entry, i) => (
+                  <Cell key={`donut-${i}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <RechartsTooltip content={<CustomTooltip formatValue={formatValue} />} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+            <div style={{ fontSize: '0.62rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)' }}>{centerLabel}</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: 'var(--text-primary)', lineHeight: 1.3 }}>{centerValue}</div>
+          </div>
+        </div>
+
+        <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '10px', minWidth: '260px' }}>
+          {data.map((d) => (
+            <DivisionStatRow
+              key={d.name}
+              color={d.color}
+              name={d.name}
+              amount={formatValue(d.value)}
+              percentage={total > 0 ? (d.value / total) * 100 : 0}
+              icon={d.icon}
+            />
+          ))}
+        </div>
+      </div>
+
+      <h4 style={{ margin: '0 0 12px', fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)' }}>
+        Comparison
+      </h4>
+      <ResponsiveContainer width="100%" height={Math.max(160, data.length * 50)}>
+        <BarChart data={data} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" horizontal={false} />
+          <XAxis type="number" stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={!barTickFormatter} tickFormatter={barTickFormatter} />
+          <YAxis type="category" dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 11, fontWeight: 600 }} width={110} />
+          <RechartsTooltip content={<CustomTooltip formatValue={formatValue} />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+          <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={18}>
+            {data.map((entry, i) => (
+              <Cell key={`hbar-${i}`} fill={entry.color} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
 };
 
 const THEME_OPTIONS = [
@@ -110,6 +225,43 @@ const DesignEngineerDashboard = () => {
   const pendingJobs = jobs.filter(j => j.drawingWorkflowStatus === 'PendingEngineerDesign');
   const completedJobs = jobs.filter(j => ['PendingDirectorDesign', 'Completed'].includes(j.drawingWorkflowStatus));
   const recentJobs = [...pendingJobs, ...completedJobs].slice(0, 5);
+
+  // Overview analytics — every job that has reached the design pipeline (attached, awaiting
+  // approval, or approved), used for the charts and summary below.
+  const awaitingApprovalJobs = jobs.filter(j => j.drawingWorkflowStatus === 'PendingDirectorDesign');
+  const approvedJobs = jobs.filter(j => j.drawingWorkflowStatus === 'Completed');
+  const relevantJobs = [...pendingJobs, ...awaitingApprovalJobs, ...approvedJobs];
+
+  const parseAmount = (val) => {
+    if (val === undefined || val === null || val === '') return 0;
+    const num = parseFloat(String(val).replace(/,/g, ''));
+    return Number.isFinite(num) ? num : 0;
+  };
+  const formatCurrency = (val) => `Rs. ${Math.round(val).toLocaleString()}`;
+
+  const totalAllocation = relevantJobs.reduce((sum, j) => sum + parseAmount(j.allocation), 0);
+  const totalEstimatedValue = relevantJobs.reduce((sum, j) => sum + (parseAmount(j.finalEstimateCost) || parseAmount(j.fieldEstimateAmount)), 0);
+  const divisionsCovered = new Set(relevantJobs.map(j => j.division).filter(Boolean)).size;
+
+  const workflowStatusData = [
+    { name: 'Awaiting Attachment', value: pendingJobs.length, color: 'var(--warning)', icon: Clock },
+    { name: 'Awaiting Approval', value: awaitingApprovalJobs.length, color: 'var(--info)', icon: Send },
+    { name: 'Approved', value: approvedJobs.length, color: 'var(--success)', icon: CheckCircle },
+  ].filter(d => d.value > 0);
+
+  const divisionNames = [...new Set(relevantJobs.map(j => j.division).filter(Boolean))].sort();
+  const jobsByDivision = divisionNames.map((div, i) => ({
+    name: div,
+    value: relevantJobs.filter(j => j.division === div).length,
+    color: DIVISION_COLOR_PALETTE[i % DIVISION_COLOR_PALETTE.length],
+  })).filter(d => d.value > 0);
+  const estimateByDivision = divisionNames.map((div, i) => ({
+    name: div,
+    value: relevantJobs
+      .filter(j => j.division === div)
+      .reduce((sum, j) => sum + (parseAmount(j.finalEstimateCost) || parseAmount(j.fieldEstimateAmount)), 0),
+    color: DIVISION_COLOR_PALETTE[i % DIVISION_COLOR_PALETTE.length],
+  })).filter(d => d.value > 0);
 
   const handleAttach = async (jobNo) => {
     const file = selectedFiles[jobNo];
@@ -247,35 +399,93 @@ const DesignEngineerDashboard = () => {
                   </div>
                 </div>
 
-                <div className="analytics-dashboard-grid" style={{ marginBottom: '24px' }}>
-                  <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--warning-soft)', color: 'var(--warning)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <Clock size={22} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{pendingJobs.length}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Pending Jobs</div>
-                    </div>
+                {relevantJobs.length === 0 ? (
+                  <div className="placeholder-content" style={{ height: '260px' }}>
+                    <AlertTriangle size={32} style={{ opacity: 0.35 }} />
+                    <span>{loading ? 'Loading data...' : 'No drawing jobs yet.'}</span>
                   </div>
-                  <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--success-soft)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <CheckCircle size={22} />
+                ) : (
+                  <>
+                    <div className="analytics-dashboard-grid" style={{ marginBottom: '24px' }}>
+                      <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--warning-soft)', color: 'var(--warning)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Clock size={22} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{pendingJobs.length}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Awaiting Attachment</div>
+                        </div>
+                      </div>
+                      <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--info-soft)', color: 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Send size={22} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{awaitingApprovalJobs.length}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Awaiting Approval</div>
+                        </div>
+                      </div>
+                      <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--success-soft)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <CheckCircle size={22} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{approvedJobs.length}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Approved Projects</div>
+                        </div>
+                      </div>
+                      <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Wallet size={22} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '1.3rem', fontWeight: 800, lineHeight: 1 }}>{formatCurrency(totalEstimatedValue)}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Total Estimated Value</div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{completedJobs.length}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Completed Jobs</div>
+
+                    <BreakdownSection
+                      title="Drawing Status Breakdown"
+                      subtitle="Where every drawing job currently stands in the approval pipeline"
+                      data={workflowStatusData}
+                      centerLabel="Total Jobs"
+                      centerValue={relevantJobs.length}
+                    />
+
+                    <BreakdownSection
+                      title="Jobs by Division"
+                      subtitle="How drawing jobs are distributed across divisions"
+                      data={jobsByDivision}
+                      centerLabel="Total Jobs"
+                      centerValue={relevantJobs.length}
+                    />
+
+                    {estimateByDivision.length > 0 && (
+                      <BreakdownSection
+                        title="Estimated Value by Division"
+                        subtitle="How the total estimated drawing value breaks down across divisions"
+                        data={estimateByDivision}
+                        centerLabel="Total Value"
+                        centerValue={formatCurrency(totalEstimatedValue)}
+                        formatValue={formatCurrency}
+                        barTickFormatter={(v) => `${Math.round(v / 1000)}k`}
+                      />
+                    )}
+
+                    <div className="recent-jobs-card" style={{ marginBottom: '24px' }}>
+                      <h3 className="recent-jobs-title">Project Summary</h3>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                        <SummaryItem label="All Completed Projects" value={approvedJobs.length} />
+                        <SummaryItem label="Awaiting Your Attachment" value={pendingJobs.length} />
+                        <SummaryItem label="Awaiting Director Approval" value={awaitingApprovalJobs.length} />
+                        <SummaryItem label="Divisions Covered" value={divisionsCovered} />
+                        <SummaryItem label="Total Allocated Budget" value={formatCurrency(totalAllocation)} />
+                        <SummaryItem label="Total Estimated Value" value={formatCurrency(totalEstimatedValue)} />
+                      </div>
                     </div>
-                  </div>
-                  <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--info-soft)', color: 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <HardHat size={22} />
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{pendingJobs.length + completedJobs.length}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Total Handled</div>
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 <div className="recent-jobs-card">
                   <h3 className="recent-jobs-title">Recent Jobs</h3>
