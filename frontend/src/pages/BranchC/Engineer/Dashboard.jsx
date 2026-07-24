@@ -56,7 +56,7 @@ const CustomTooltip = ({ active, payload }) => {
 const BranchCEngineerDashboard = () => {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'emerald');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 

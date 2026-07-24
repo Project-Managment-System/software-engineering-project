@@ -7,7 +7,7 @@ import {
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3,
   Sun, Moon, Camera, TrendingUp, Activity,
   FileText, Globe, Filter, MessageSquare, Send,
-  Bell, ClipboardCheck, RotateCcw
+  Bell, RotateCcw, FileSpreadsheet, Printer
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -15,6 +15,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import DivisionChat from '../../components/DivisionChat';
 
 /* ─── Animation variants ─── */
@@ -92,7 +94,7 @@ const DivisionalAssistantDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'ocean');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
@@ -113,10 +115,7 @@ const DivisionalAssistantDashboard = () => {
   const [divisionJobs, setDivisionJobs] = useState([]);
 
   /* ─── Job filter ─── */
-  const [jobFilter, setJobFilter] = useState({ ministry: '', status: '' });
-
-  /* ─── Review Submissions filter ─── */
-  const [reviewStatusFilter, setReviewStatusFilter] = useState('Actionable');
+  const [jobFilter, setJobFilter] = useState({ ministry: '', division: '', status: '' });
 
   /* ─── Change password state ─── */
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -130,6 +129,125 @@ const DivisionalAssistantDashboard = () => {
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
+
+  /* ─── Table exports — PDF, Excel, Print ─── */
+  const handleExport = (title, headers, rows, type) => {
+    if (type === 'excel') {
+      try {
+        let csvContent = "";
+        csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+        rows.forEach(row => {
+          csvContent += row.map(cell => {
+            const val = cell !== undefined && cell !== null ? String(cell) : "";
+            return `"${val.replace(/"/g, '""')}"`;
+          }).join(",") + "\n";
+        });
+        const blob = new Blob(["﻿" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${title.toLowerCase().replace(/\s+/g, '_')}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        addToast(`${title} exported to Excel successfully!`, 'success');
+      } catch (err) {
+        console.error("Excel export error:", err);
+        addToast("Failed to export Excel.", 'error');
+      }
+    } else if (type === 'pdf') {
+      try {
+        const doc = new jsPDF();
+        doc.setFont("Helvetica");
+        doc.setFontSize(14);
+        doc.text(title, 14, 15);
+        doc.setFontSize(8);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()} · Division: ${currentDivision || 'N/A'}`, 14, 21);
+
+        autoTable(doc, {
+          head: [headers],
+          body: rows,
+          startY: 25,
+          theme: 'striped',
+          headStyles: { fillColor: [8, 145, 178] },
+          styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+        });
+        doc.save(`${title.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+        addToast(`${title} exported to PDF successfully!`, 'success');
+      } catch (err) {
+        console.error("PDF export error:", err);
+        addToast("Failed to export PDF.", 'error');
+      }
+    } else if (type === 'print') {
+      try {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          addToast("Popup blocked! Please allow popups to print.", 'warning');
+          return;
+        }
+        const tableHTML = `
+          <table style="width:100%; border-collapse:collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; margin-top: 15px;">
+            <thead>
+              <tr style="background-color:#0891b2; color:white;">
+                ${headers.map(h => `<th style="padding:8px 10px; border:1px solid #ddd; text-align:left; font-weight: 700;">${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((row, rIdx) => `
+                <tr style="background-color: ${rIdx % 2 === 0 ? '#f9fafb' : '#ffffff'};">
+                  ${row.map(cell => `<td style="padding:8px 10px; border:1px solid #ddd; color: #374151;">${cell ?? ''}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print - ${title}</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 30px; color: #1f2937; }
+                h2 { margin: 0 0 4px 0; color: #111827; font-size: 20px; }
+                .meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
+                @media print {
+                  body { margin: 15px; }
+                  thead { display: table-header-group; }
+                }
+              </style>
+            </head>
+            <body>
+              <h2>${title}</h2>
+              <div class="meta">Generated on: ${new Date().toLocaleString()} ${currentDivision ? `· Division: ${currentDivision}` : ''}</div>
+              ${tableHTML}
+              <script>
+                window.onload = function() {
+                  window.print();
+                  window.close();
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } catch (err) {
+        console.error("Print error:", err);
+        addToast("Failed to initiate print.", 'error');
+      }
+    }
+  };
+
+  const renderExportButtons = (title, headers, rows) => (
+    <div className="table-export-actions">
+      <button onClick={() => handleExport(title, headers, rows, 'pdf')} className="export-btn pdf-export" title="Download PDF">
+        <FileText size={13} /> PDF
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'excel')} className="export-btn excel-export" title="Download Excel">
+        <FileSpreadsheet size={13} /> Excel
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'print')} className="export-btn print-export" title="Print Table">
+        <Printer size={13} /> Print
+      </button>
+    </div>
+  );
 
   const fetchUserProfile = async () => {
     try {
@@ -184,6 +302,11 @@ const DivisionalAssistantDashboard = () => {
     }
   };
 
+  const handleRefreshUsers = async () => {
+    await fetchUsers();
+    addToast('Division users refreshed successfully!', 'success');
+  };
+
   const fetchJobs = async () => {
     try {
       const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
@@ -198,83 +321,67 @@ const DivisionalAssistantDashboard = () => {
   };
 
 
-  /* ─── Review Submissions handlers ─── */
-  // Jobs a user has finished estimating (finalEstimateCost set) — this DA's review queue
-  const submittedJobs = divisionJobs.filter(j => j.finalEstimateCost != null);
-  // Needs DA action: a fresh submission, or one DA already approved that the Engineer bounced back.
-  // A DA rejection is a final decision (until Undo/resubmit) regardless of any older engineerReviewStatus value.
-  const isActionable = (j) => {
-    const da = j.daReviewStatus || 'Pending';
-    if (da === 'Pending') return true;
-    if (da === 'Approved' && j.engineerReviewStatus === 'Rejected') return true;
-    return false;
-  };
-  const reviewQueue = submittedJobs.filter(j => {
-    if (reviewStatusFilter === 'All') return true;
-    if (reviewStatusFilter === 'Actionable') return isActionable(j);
-    if (reviewStatusFilter === 'Approved') return j.daReviewStatus === 'Approved' && j.engineerReviewStatus !== 'Rejected';
-    if (reviewStatusFilter === 'Rejected') return j.daReviewStatus === 'Rejected';
-    return true;
-  });
-  const pendingReviewCount = submittedJobs.filter(isActionable).length;
+  /* ─── Drawing request handlers: User -> DA -> Design Engineer -> Design Director -> User ─── */
+  const drawingRequests = divisionJobs.filter(j => j.drawingWorkflowStatus === 'PendingDA');
 
-  const handleDaApprove = async (jobNo) => {
+  const handleDrawingApprove = async (jobNo) => {
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
-        daReviewStatus: 'Approved',
-        daReviewedAt: new Date().toISOString(),
-        daReviewedBy: profileData.name,
-        daReviewNote: '',
-        // Reopens the Engineer's queue too, in case this is a re-approval after an Engineer rejection
-        engineerReviewStatus: 'Pending',
-        engineerReviewedAt: null,
-        engineerReviewNote: ''
+        drawingDaStatus: 'Approved',
+        drawingDaReviewedAt: new Date().toISOString(),
+        drawingDaNote: ''
       });
-      addToast('Submission approved and sent to the Engineer for review!', 'success');
+      addToast('Drawing request approved — ready to forward to Head Office!', 'success');
       fetchJobs();
     } catch (err) {
       console.error(err);
-      addToast('Failed to approve submission.', 'error');
+      addToast('Failed to approve drawing request.', 'error');
     }
   };
 
-  const handleDaReject = async (jobNo) => {
-    const note = window.prompt('Add a review summary for the user (optional):', '');
+  const handleDrawingReject = async (jobNo) => {
+    const note = window.prompt('Add a review note for the user (optional):', '');
     if (note === null) return; // cancelled
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
-        daReviewStatus: 'Rejected',
-        daReviewedAt: new Date().toISOString(),
-        daReviewedBy: profileData.name,
-        daReviewNote: note,
-        engineerReviewStatus: 'Pending',
-        engineerReviewedAt: null,
-        engineerReviewNote: ''
+        drawingDaStatus: 'Rejected',
+        drawingDaReviewedAt: new Date().toISOString(),
+        drawingDaNote: note
       });
-      addToast('Submission rejected.', 'info');
+      addToast('Drawing request rejected.', 'info');
       fetchJobs();
     } catch (err) {
       console.error(err);
-      addToast('Failed to reject submission.', 'error');
+      addToast('Failed to reject drawing request.', 'error');
     }
   };
 
-  // Reopen a job DA already decided on, without waiting for the user to resubmit
-  const handleDaUndo = async (jobNo) => {
+  const handleDrawingUndo = async (jobNo) => {
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
-        daReviewStatus: 'Pending',
-        daReviewedAt: null,
-        daReviewNote: '',
-        engineerReviewStatus: 'Pending',
-        engineerReviewedAt: null,
-        engineerReviewNote: ''
+        drawingDaStatus: 'Pending',
+        drawingDaReviewedAt: null,
+        drawingDaNote: ''
       });
       addToast('Review reopened — Approve/Reject are available again.', 'info');
       fetchJobs();
     } catch (err) {
       console.error(err);
-      addToast('Failed to reopen submission.', 'error');
+      addToast('Failed to reopen drawing request.', 'error');
+    }
+  };
+
+  const handleForwardDrawing = async (jobNo) => {
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        drawingWorkflowStatus: 'PendingEngineerDesign',
+        daDrawingForwardedAt: new Date().toISOString()
+      });
+      addToast('Drawing request forwarded to Head Office — Design Branch!', 'success');
+      fetchJobs();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to forward drawing request.', 'error');
     }
   };
 
@@ -413,11 +520,13 @@ const DivisionalAssistantDashboard = () => {
   /* ─── Filtered jobs ─── */
   const filteredJobs = divisionJobs.filter(j => {
     if (jobFilter.ministry && j.ministry !== jobFilter.ministry) return false;
+    if (jobFilter.division && j.division !== jobFilter.division) return false;
     if (jobFilter.status && j.status !== jobFilter.status) return false;
     return true;
   });
 
   const ministryOptions = [...new Set(divisionJobs.map(j => j.ministry).filter(Boolean))].sort();
+  const jobDivisionOptions = [...new Set(divisionJobs.map(j => j.division).filter(Boolean))].sort();
 
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
@@ -509,7 +618,7 @@ const DivisionalAssistantDashboard = () => {
               { id: 'overview', icon: BarChart3, label: 'Overview' },
               { id: 'my-users', icon: Users, label: 'My Users' },
               { id: 'view-jobs', icon: Briefcase, label: 'View Jobs' },
-              { id: 'review-submissions', icon: ClipboardCheck, label: 'Review Submissions' },
+              { id: 'drawing-requests', icon: Send, label: 'Drawing Requests' },
               { id: 'messages', icon: MessageSquare, label: 'Messages' },
               { id: 'profile', icon: Edit3, label: 'Profile' },
               { id: 'settings', icon: Settings, label: 'Settings' },
@@ -526,8 +635,8 @@ const DivisionalAssistantDashboard = () => {
                 {item.id === 'messages' && totalUnread > 0 && (
                   <span className="nav-unread-badge">{totalUnread > 99 ? '99+' : totalUnread}</span>
                 )}
-                {item.id === 'review-submissions' && pendingReviewCount > 0 && (
-                  <span className="nav-unread-badge">{pendingReviewCount > 99 ? '99+' : pendingReviewCount}</span>
+                {item.id === 'drawing-requests' && drawingRequests.length > 0 && (
+                  <span className="nav-unread-badge">{drawingRequests.length > 99 ? '99+' : drawingRequests.length}</span>
                 )}
               </button>
             ))}
@@ -781,11 +890,18 @@ const DivisionalAssistantDashboard = () => {
                 </div>
 
                 <div className="recent-jobs-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>Division Users ({divisionUsers.length})</h3>
-                    <button className="confirm-btn" style={{ fontSize: '0.8rem', padding: '8px 16px' }} onClick={fetchUsers}>
-                      <TrendingUp size={14} /> Refresh
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      {renderExportButtons(
+                        "Division Users",
+                        ["#", "Employee ID", "Full Name", "Email", "Division", "Role"],
+                        divisionUsers.map((u, idx) => [idx + 1, u.employeeId, u.fullName, u.email || '—', u.division, formatRoleName(u.role)])
+                      )}
+                      <button className="confirm-btn" style={{ fontSize: '0.8rem', padding: '8px 16px' }} onClick={handleRefreshUsers}>
+                        <TrendingUp size={14} /> Refresh
+                      </button>
+                    </div>
                   </div>
 
                   {divisionUsers.length === 0 ? (
@@ -847,6 +963,22 @@ const DivisionalAssistantDashboard = () => {
                 </div>
 
                 <div className="recent-jobs-card">
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+                    {renderExportButtons(
+                      "Division Jobs",
+                      ["Job No", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
+                      filteredJobs.map(j => [
+                        j.jobNo,
+                        j.jobName,
+                        j.ministry,
+                        j.department,
+                        j.division,
+                        j.allocation,
+                        j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
+                        j.status || 'Pending'
+                      ])
+                    )}
+                  </div>
                   {/* Filters */}
                   <div className="table-filters-row" style={{ marginBottom: '16px' }}>
                     <div className="input-row-group">
@@ -854,6 +986,13 @@ const DivisionalAssistantDashboard = () => {
                       <select value={jobFilter.ministry} onChange={e => setJobFilter(f => ({ ...f, ministry: e.target.value }))} className="input-field">
                         <option value="">All Ministries</option>
                         {ministryOptions.map(m => (<option key={m} value={m}>{m}</option>))}
+                      </select>
+                    </div>
+                    <div className="input-row-group">
+                      <label><Filter size={12} /> Filter by Division</label>
+                      <select value={jobFilter.division} onChange={e => setJobFilter(f => ({ ...f, division: e.target.value }))} className="input-field">
+                        <option value="">All Divisions</option>
+                        {jobDivisionOptions.map(dv => (<option key={dv} value={dv}>{dv}</option>))}
                       </select>
                     </div>
                     <div className="input-row-group">
@@ -865,8 +1004,8 @@ const DivisionalAssistantDashboard = () => {
                         <option value="Rejected">Rejected</option>
                       </select>
                     </div>
-                    {(jobFilter.ministry || jobFilter.status) && (
-                      <button className="cancel-btn" onClick={() => setJobFilter({ ministry: '', status: '' })}>
+                    {(jobFilter.ministry || jobFilter.division || jobFilter.status) && (
+                      <button className="cancel-btn" onClick={() => setJobFilter({ ministry: '', division: '', status: '' })}>
                         <X size={14} /> Clear
                       </button>
                     )}
@@ -917,44 +1056,28 @@ const DivisionalAssistantDashboard = () => {
               </motion.div>
             )}
 
-            {/* ── Review Submissions Tab ── */}
-            {activeTab === 'review-submissions' && (
-              <motion.section key="review-submissions" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+            {/* ── Drawing Requests Tab: User -> DA -> Design Engineer -> Design Director -> User ── */}
+            {activeTab === 'drawing-requests' && (
+              <motion.section key="drawing-requests" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                      <ClipboardCheck size={22} />
+                      <Send size={22} />
                     </div>
                     <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Review Submissions</h2>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Drawing Requests</h2>
                       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        Final structural estimates submitted by users in {currentDivision || 'your division'} — approve to forward to the Engineer
+                        Structural drawing requests from users in {currentDivision || 'your division'} — forward to the Head Office Engineer
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="recent-jobs-card">
-                  <div className="table-filters-row" style={{ marginBottom: '16px' }}>
-                    <div className="input-row-group">
-                      <label><Filter size={12} /> Filter by Review Status</label>
-                      <select value={reviewStatusFilter} onChange={e => setReviewStatusFilter(e.target.value)} className="input-field">
-                        <option value="Actionable">Needs Action</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                        <option value="All">All</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {reviewQueue.length === 0 ? (
+                  {drawingRequests.length === 0 ? (
                     <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
-                      <ClipboardCheck size={32} style={{ opacity: 0.35 }} />
-                      <span>
-                        {submittedJobs.length === 0
-                          ? 'No users have submitted a final estimate yet.'
-                          : `No ${reviewStatusFilter.toLowerCase()} submissions.`}
-                      </span>
+                      <Send size={32} style={{ opacity: 0.35 }} />
+                      <span>No pending drawing requests.</span>
                     </div>
                   ) : (
                     <div className="table-scroll-wrapper">
@@ -963,54 +1086,50 @@ const DivisionalAssistantDashboard = () => {
                           <tr>
                             <th>Job No</th>
                             <th>Activity</th>
-                            <th>Submitted By</th>
-                            <th>Estimate Cost (LKR)</th>
-                            <th>Alignment Date</th>
-                            <th>Review Status</th>
-                            <th>Actions</th>
+                            <th>Division</th>
+                            <th>Requested On</th>
+                            <th>Action</th>
+                            <th>Forward to Head Office</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {reviewQueue.map(j => {
-                            const daStatus = j.daReviewStatus || 'Pending';
-                            const isReopened = daStatus === 'Approved' && j.engineerReviewStatus === 'Rejected';
+                          {drawingRequests.map(j => {
+                            const drawingStatus = j.drawingDaStatus || 'Pending';
                             return (
                               <tr key={j._id}>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
-                                <td>{j.assignee || '—'}</td>
-                                <td className="font-bold">{j.finalEstimateCost?.toLocaleString()}</td>
-                                <td>{j.finalEstimateDate ? j.finalEstimateDate.split('T')[0] : 'N/A'}</td>
+                                <td>{j.division}</td>
+                                <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
                                 <td>
-                                  <span className={`status-badge status-${isReopened ? 'rejected' : daStatus.toLowerCase()}`}>
-                                    {isReopened ? 'Reopened by Engineer' : daStatus}
-                                  </span>
-                                  {daStatus === 'Rejected' && j.daReviewNote && (
-                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '220px' }}>"{j.daReviewNote}"</div>
-                                  )}
-                                  {isReopened && j.engineerReviewNote && (
-                                    <div style={{ fontSize: '0.72rem', color: 'var(--danger)', marginTop: '4px', maxWidth: '220px' }}>Engineer: "{j.engineerReviewNote}"</div>
-                                  )}
-                                </td>
-                                <td>
-                                  {isActionable(j) ? (
+                                  {drawingStatus === 'Pending' ? (
                                     <div style={{ display: 'flex', gap: '6px' }}>
-                                      <button className="approve-btn" onClick={() => handleDaApprove(j.jobNo)} title="Approve & send to Engineer">
+                                      <button className="approve-btn" onClick={() => handleDrawingApprove(j.jobNo)} title="Approve drawing request">
                                         <CheckCircle size={15} /> Approve
                                       </button>
-                                      <button className="reject-btn" onClick={() => handleDaReject(j.jobNo)} title="Reject">
+                                      <button className="reject-btn" onClick={() => handleDrawingReject(j.jobNo)} title="Reject drawing request">
                                         <XCircle size={15} /> Reject
                                       </button>
                                     </div>
                                   ) : (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                        {j.daReviewedAt ? new Date(j.daReviewedAt).toLocaleDateString() : '—'}
-                                      </span>
-                                      <button className="edit-btn" onClick={() => handleDaUndo(j.jobNo)} title="Undo — reopen for Approve/Reject" style={{ padding: '4px 8px', minWidth: 'auto' }}>
-                                        <RotateCcw size={13} />
+                                      <span className={`status-badge status-${drawingStatus.toLowerCase()}`}>{drawingStatus}</span>
+                                      <button className="edit-btn" onClick={() => handleDrawingUndo(j.jobNo)} title="Undo — reopen for Approve/Reject" style={{ padding: '4px 8px', minWidth: 'auto' }}>
+                                        <RotateCcw size={13} /> Undo
                                       </button>
                                     </div>
+                                  )}
+                                  {drawingStatus === 'Rejected' && j.drawingDaNote && (
+                                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '220px' }}>"{j.drawingDaNote}"</div>
+                                  )}
+                                </td>
+                                <td>
+                                  {drawingStatus === 'Approved' ? (
+                                    <button className="approve-btn" onClick={() => handleForwardDrawing(j.jobNo)} title="Forward to Head Office — Design Branch">
+                                      <Send size={14} /> Forward to Head Office
+                                    </button>
+                                  ) : (
+                                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Awaiting approval</span>
                                   )}
                                 </td>
                               </tr>

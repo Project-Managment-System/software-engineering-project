@@ -1227,6 +1227,66 @@ select.input-field option {
 }
 
 /* ============================================================
+   17b. TABLE EXPORTS - PDF, Excel, Print
+   ============================================================ */
+#cems-user-dashboard .table-export-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+#cems-user-dashboard .export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#cems-user-dashboard .export-btn.pdf-export {
+  color: #ef4444;
+}
+#cems-user-dashboard .export-btn.pdf-export:hover {
+  background: #fef2f2;
+  border-color: #fee2e2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
+}
+
+#cems-user-dashboard .export-btn.excel-export {
+  color: #10b981;
+}
+#cems-user-dashboard .export-btn.excel-export:hover {
+  background: #ecfdf5;
+  border-color: #d1fae5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+#cems-user-dashboard .export-btn.print-export {
+  color: var(--accent-primary);
+}
+#cems-user-dashboard .export-btn.print-export:hover {
+  background: var(--accent-soft);
+  border-color: rgba(225, 29, 72, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.12);
+}
+
+#cems-user-dashboard.dark-mode .export-btn:hover {
+  background: var(--bg-input) !important;
+  border-color: var(--border-base) !important;
+}
+
+/* ============================================================
    18. CUSTOM SCROLLBARS
    ============================================================ */
 .dashboard-content::-webkit-scrollbar {
@@ -1440,4 +1500,79 @@ select.input-field option {
   0%   { transform: scale(0.4); opacity: 0; }
   70%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
+}
+
+/* ============================================================
+   PREMIUM ENHANCEMENT LAYER
+   Visual-only refinements — action-button backfill (previously
+   unstyled), accessibility focus states, tactile press feedback.
+   ============================================================ */
+
+/* .approve-btn / .reject-btn are used across the app (job review
+   rows, clerk approvals) but had no matching rule in this file,
+   so they rendered as unstyled native buttons. Backfilled to
+   match the same pattern already used elsewhere in the app. */
+#cems-user-dashboard .approve-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  margin-right: 6px;
+}
+#cems-user-dashboard .approve-btn:hover {
+  background: var(--success);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+#cems-user-dashboard .reject-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+#cems-user-dashboard .reject-btn:hover {
+  background: var(--danger);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+/* Keyboard accessibility — visible focus ring on every interactive element */
+#cems-user-dashboard button:focus-visible,
+#cems-user-dashboard a:focus-visible,
+#cems-user-dashboard input:focus-visible,
+#cems-user-dashboard select:focus-visible,
+#cems-user-dashboard textarea:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Tactile press feedback — every action button settles with a soft press */
+#cems-user-dashboard .approve-btn:active,
+#cems-user-dashboard .reject-btn:active,
+#cems-user-dashboard .inactive-btn:active,
+#cems-user-dashboard .save-btn:active:not(:disabled),
+#cems-user-dashboard .cancel-btn:active {
+  transform: scale(0.96) !important;
+  transition-duration: 0.1s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cems-user-dashboard * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

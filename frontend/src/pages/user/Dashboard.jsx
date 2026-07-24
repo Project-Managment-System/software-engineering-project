@@ -5,7 +5,7 @@ import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
   Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
   FileText, MessageSquare, Bell, RotateCcw, Check, Download, Hash, Layers,
-  LayoutDashboard, Activity, BarChart3
+  LayoutDashboard, Activity, BarChart3, FileSpreadsheet, Printer
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -13,6 +13,8 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import DivisionChat from '../../components/DivisionChat';
 
 /* ─── Custom Tooltip for Charts ─── */
@@ -140,6 +142,125 @@ const UserDashboard = () => {
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
+
+  /* ─── Table exports — PDF, Excel, Print ─── */
+  const handleExport = (title, headers, rows, type) => {
+    if (type === 'excel') {
+      try {
+        let csvContent = "";
+        csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+        rows.forEach(row => {
+          csvContent += row.map(cell => {
+            const val = cell !== undefined && cell !== null ? String(cell) : "";
+            return `"${val.replace(/"/g, '""')}"`;
+          }).join(",") + "\n";
+        });
+        const blob = new Blob(["﻿" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${title.toLowerCase().replace(/\s+/g, '_')}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        addToast(`${title} exported to Excel successfully!`, 'success');
+      } catch (err) {
+        console.error("Excel export error:", err);
+        addToast("Failed to export Excel.", 'error');
+      }
+    } else if (type === 'pdf') {
+      try {
+        const doc = new jsPDF();
+        doc.setFont("Helvetica");
+        doc.setFontSize(14);
+        doc.text(title, 14, 15);
+        doc.setFontSize(8);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 21);
+
+        autoTable(doc, {
+          head: [headers],
+          body: rows,
+          startY: 25,
+          theme: 'striped',
+          headStyles: { fillColor: [124, 58, 237] },
+          styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+        });
+        doc.save(`${title.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+        addToast(`${title} exported to PDF successfully!`, 'success');
+      } catch (err) {
+        console.error("PDF export error:", err);
+        addToast("Failed to export PDF.", 'error');
+      }
+    } else if (type === 'print') {
+      try {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          addToast("Popup blocked! Please allow popups to print.", 'warning');
+          return;
+        }
+        const tableHTML = `
+          <table style="width:100%; border-collapse:collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; margin-top: 15px;">
+            <thead>
+              <tr style="background-color:#7c3aed; color:white;">
+                ${headers.map(h => `<th style="padding:8px 10px; border:1px solid #ddd; text-align:left; font-weight: 700;">${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((row, rIdx) => `
+                <tr style="background-color: ${rIdx % 2 === 0 ? '#f9fafb' : '#ffffff'};">
+                  ${row.map(cell => `<td style="padding:8px 10px; border:1px solid #ddd; color: #374151;">${cell ?? ''}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print - ${title}</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 30px; color: #1f2937; }
+                h2 { margin: 0 0 4px 0; color: #111827; font-size: 20px; }
+                .meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
+                @media print {
+                  body { margin: 15px; }
+                  thead { display: table-header-group; }
+                }
+              </style>
+            </head>
+            <body>
+              <h2>${title}</h2>
+              <div class="meta">Generated on: ${new Date().toLocaleString()}</div>
+              ${tableHTML}
+              <script>
+                window.onload = function() {
+                  window.print();
+                  window.close();
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } catch (err) {
+        console.error("Print error:", err);
+        addToast("Failed to initiate print.", 'error');
+      }
+    }
+  };
+
+  const renderExportButtons = (title, headers, rows) => (
+    <div className="table-export-actions">
+      <button onClick={() => handleExport(title, headers, rows, 'pdf')} className="export-btn pdf-export" title="Download PDF">
+        <FileText size={13} /> PDF
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'excel')} className="export-btn excel-export" title="Download Excel">
+        <FileSpreadsheet size={13} /> Excel
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'print')} className="export-btn print-export" title="Print Table">
+        <Printer size={13} /> Print
+      </button>
+    </div>
+  );
 
   const toggleDarkMode = () => {
     const nextDark = !isDark;
@@ -355,13 +476,27 @@ const UserDashboard = () => {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
         fieldVisitedDate: visitDate,
         estimateSubmitted: true,
-        estimateSubmittedAt: new Date().toISOString()
+        estimateSubmittedAt: new Date().toISOString(),
+        drawingWorkflowStatus: 'PendingDA',
+        drawingRequestedAt: new Date().toISOString()
       });
-      addToast('Estimate details sent to Head Office!', 'success');
+
+      const newNotification = {
+        id: Date.now(),
+        jobNo: selectedJob.jobNo,
+        jobName: selectedJob.jobName,
+        title: "Drawing Requested 📐",
+        message: `Your drawing request for Job: ${selectedJob.jobNo} was sent to your Divisional Assistant for review.`,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        read: false
+      };
+      setNotifications(prev => [newNotification, ...prev]);
+
+      addToast('Drawing request sent to your Divisional Assistant!', 'success');
       fetchData();
     } catch (err) {
       console.error(err);
-      addToast('Failed to submit estimate details.', 'error');
+      addToast('Failed to submit drawing request.', 'error');
     }
   };
 
@@ -370,9 +505,11 @@ const UserDashboard = () => {
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
         estimateSubmitted: false,
-        estimateSubmittedAt: null
+        estimateSubmittedAt: null,
+        drawingWorkflowStatus: 'NotRequested',
+        drawingRequestedAt: null
       });
-      addToast('Estimate submission undone.', 'info');
+      addToast('Drawing request undone.', 'info');
       fetchData();
     } catch (err) {
       console.error(err);
@@ -390,6 +527,7 @@ const UserDashboard = () => {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
         finalEstimateCost: Number(finalEstimateCost),
         finalEstimateDate: finalEstimateDate,
+        finalEstimateSubmittedAt: new Date().toISOString(),
         daReviewStatus: 'Pending',
         daReviewedAt: null,
         daReviewNote: '',
@@ -402,36 +540,6 @@ const UserDashboard = () => {
     } catch (err) {
       console.error(err);
       addToast('Failed to save final estimate details.', 'error');
-    }
-  };
-
-  const handleSimulateReceiveDrawing = async () => {
-    if (!selectedJobId || !selectedJob) return;
-    try {
-      const mockDrawingUrl = "data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iagogIDw8L1R5cGUvQ2F0YWxvZy9QYWdlcyAyIDAgUj4+CmVuZG9iagoyIDAgb2JqCiAgPDwvVHlwZS9QYWdlcy9LaWRzWzMgMCBSXS9Db3VudCAxPj4KZW5kb2JqCjMgMCBvYmoKICA8PC9UeXBlL1BhZ2UvUGFyZW50IDIgMCBSL01lZGlhQm94WzAgMCA1OTUgODQyXS9Db250ZW50cyA0IDAgUj4+CmVuZG9iago0IDAgb2JqCiAgPDwvTGVuZ3RoIDU5Pj4Kc3RyZWFtCkJUCiAgL0YxIDE4IFRmCiAgNTQgNzIwIFRkCiAgKFN0cnVjdHVyYWwgRHJhd2luZyBmb3IgQ0VNUyBKb2IpIFRqCkUKZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgNQowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMTUgMDAwMDAgbiAKMDAwMDAwMDA2MCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIGYgCjAwMDAwMDAyMDEgMDAwMDAgbiAKdHJhaWxlcgogIDw8L1NpemUgNS9Sb290IDEgMCBSPj4Kc3RhcnR4cmVmCjMxMAolJUVPRgo=";
-      const payload = {
-        drawingReceived: true,
-        drawingReceivedAt: new Date(),
-        drawingFileUrl: mockDrawingUrl
-      };
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, payload);
-
-      const newNotification = {
-        id: Date.now(),
-        jobNo: selectedJob.jobNo,
-        jobName: selectedJob.jobName,
-        title: "Drawing Received 📐",
-        message: `Head office has sent the structural drawing for Job: ${selectedJob.jobNo}`,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        read: false
-      };
-
-      setNotifications(prev => [newNotification, ...prev]);
-      addToast("Drawing received from Head Office!", "success");
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      addToast("Simulation failed", "error");
     }
   };
 
@@ -796,16 +904,23 @@ const UserDashboard = () => {
             {activeTab === 'my-jobs' && (
               <motion.section key="my-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
                 <div className="field-card" style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                    <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
-                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Division Allocated Jobs</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Division Allocated Jobs</h3>
+                    </div>
+                    {renderExportButtons(
+                      "My Division Allocated Jobs",
+                      ["Serial No", "Estimation Number", "Job Name", "Allocation", "Assign Date", "Timeline Limit"],
+                      myJobs.map((job, index) => [index + 1, job.estimationNo || '—', job.jobName, job.allocation, job.assignDate, job.deadline])
+                    )}
                   </div>
                   <div className="table-scroll-wrapper">
                     <table className="project-table">
                       <thead>
                         <tr>
                           <th>Serial No</th>
-                          <th>Job No</th>
+                          <th>Estimation Number</th>
                           <th>Job Name</th>
                           <th>Allocation</th>
                           <th>Assign Date</th>
@@ -826,7 +941,7 @@ const UserDashboard = () => {
                           myJobs.map((job, index) => (
                             <tr key={job.jobNo}>
                               <td>{index + 1}</td>
-                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.allocation}</td>
                               <td>{job.assignDate}</td>
@@ -975,40 +1090,42 @@ const UserDashboard = () => {
                                   className={`tick-checkbox ${selectedJob.estimateSubmitted ? 'checked' : ''}`}
                                   onClick={handleSubmitEstimate}
                                   disabled={selectedJob.estimateSubmitted}
-                                  title="Send estimate details to Head Office"
+                                  title="Drawing Required — request the structural drawing (routed to your Divisional Assistant first)"
                                 >
                                   {selectedJob.estimateSubmitted && <Check size={20} strokeWidth={3} />}
                                 </button>
                                 <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                                  {selectedJob.estimateSubmitted ? 'Sent to Head Office' : 'Tick to send to Head Office'}
+                                  {selectedJob.estimateSubmitted ? 'Drawing Requested' : 'Drawing Required'}
                                 </span>
                               </div>
                               <button
                                 type="button"
                                 className="undo-btn"
                                 onClick={handleUndoEstimate}
-                                disabled={!selectedJob.estimateSubmitted || selectedJob.drawingReceived}
-                                title={selectedJob.drawingReceived ? 'Cannot undo after the drawing has been received' : 'Undo the estimate submission'}
+                                disabled={!selectedJob.estimateSubmitted || ['PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'].includes(selectedJob.drawingWorkflowStatus) || selectedJob.drawingReceived}
+                                title={selectedJob.drawingReceived ? 'Cannot undo after the drawing has been received' : 'Undo the drawing request'}
                               >
                                 <RotateCcw size={16} /> Undo
                               </button>
                             </div>
 
-                            {/* Status indicator */}
-                            <div style={{ margin: '0 0 14px', padding: '12px', borderRadius: '8px', background: 'var(--bg-input)', border: '1px solid var(--border-base)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-label)', fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
-                              <span style={{ fontWeight: 800, color: selectedJob.drawingReceived ? 'var(--success)' : 'var(--warning)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem' }}>
-                                {selectedJob.drawingReceived ? (
-                                  <><CheckCircle size={16} /> Received Drawing</>
-                                ) : (
-                                  <><Clock size={16} /> {(() => {
-                                    if (!selectedJob.estimateSubmittedAt) return 'Pending (0 days)';
-                                    const diff = Math.floor(Math.abs(new Date() - new Date(selectedJob.estimateSubmittedAt)) / (1000 * 60 * 60 * 24));
-                                    return `Pending (${diff} day${diff === 1 ? '' : 's'})`;
-                                  })()}</>
-                                )}
-                              </span>
-                            </div>
+                            {/* Status indicator — only shown once the "Drawing Required" tick has been submitted */}
+                            {selectedJob.estimateSubmitted && (
+                              <div style={{ margin: '0 0 14px', padding: '12px', borderRadius: '8px', background: 'var(--bg-input)', border: '1px solid var(--border-base)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-label)', fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
+                                <span style={{ fontWeight: 800, color: selectedJob.drawingReceived ? 'var(--success)' : 'var(--warning)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem' }}>
+                                  {selectedJob.drawingReceived ? (
+                                    <><CheckCircle size={16} /> Received Drawing</>
+                                  ) : (
+                                    <><Clock size={16} /> {(() => {
+                                      if (!selectedJob.estimateSubmittedAt) return 'Pending (0 days)';
+                                      const diff = Math.floor(Math.abs(new Date() - new Date(selectedJob.estimateSubmittedAt)) / (1000 * 60 * 60 * 24));
+                                      return `Pending (${diff} day${diff === 1 ? '' : 's'})`;
+                                    })()}</>
+                                  )}
+                                </span>
+                              </div>
+                            )}
 
                             {/* Drawing download */}
                             {selectedJob.drawingReceived && selectedJob.drawingFileUrl && (
@@ -1019,21 +1136,8 @@ const UserDashboard = () => {
                               </div>
                             )}
 
-                            {/* Dev simulation panel — only relevant before drawing received */}
-                            {!selectedJob.drawingReceived && (
-                              <div className="simulation-panel" style={{ marginBottom: '14px' }}>
-                                <div className="simulation-title">Developer Simulation Panel</div>
-                                <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '0 0 10px 0' }}>
-                                  Simulate Head Office sending the drawing for this job.
-                                </p>
-                                <button className="action-btn-pill primary" onClick={handleSimulateReceiveDrawing}>
-                                  <Send size={12} /> Send Drawing from Head Office
-                                </button>
-                              </div>
-                            )}
-
-                            {/* ─── Sub-field: Final Estimate Cost & Drawing Alignment (only once drawing is received) ─── */}
-                            {selectedJob.drawingReceived && (() => {
+                            {/* ─── Sub-field: Final Estimate Cost & Drawing Alignment — always available, independent of the drawing-required tick ─── */}
+                            {(() => {
                               const daStatus = selectedJob.daReviewStatus || 'Pending';
                               const isSubmitted = selectedJob.finalEstimateCost != null;
                               const isLocked = isSubmitted && daStatus !== 'Rejected';
@@ -1128,13 +1232,28 @@ const UserDashboard = () => {
                 {submittedEstimates.length > 0 && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ marginTop: '30px' }}>
                     <div className="field-card" style={{ padding: '24px' }}>
-                      <h3 className="recent-jobs-title" style={{ marginBottom: '20px' }}>Submitted Structural Estimates</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
+                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Submitted Structural Estimates</h3>
+                        {renderExportButtons(
+                          "Submitted Structural Estimates",
+                          ["No", "Estimation Number", "Job Name", "To Name", "Allocation", "Estimate (LKR)", "Approval Flow"],
+                          submittedEstimates.map(estimate => [
+                            estimate.no,
+                            estimate.estimationNo || '—',
+                            estimate.jobName,
+                            estimate.toName,
+                            estimate.allocation,
+                            estimate.estimatedAmount,
+                            estimate.sendApproval || 'Pending'
+                          ])
+                        )}
+                      </div>
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
                           <thead>
                             <tr>
                               <th>No</th>
-                              <th>Job No</th>
+                              <th>Estimation Number</th>
                               <th>Job Name</th>
                               <th>To Name</th>
                               <th>Allocation</th>
@@ -1147,7 +1266,7 @@ const UserDashboard = () => {
                             {submittedEstimates.map((estimate) => (
                               <tr key={estimate.no}>
                                 <td>{estimate.no}</td>
-                                <td className="font-mono">{estimate.jobNo}</td>
+                                <td className="font-mono">{estimate.estimationNo || '—'}</td>
                                 <td className="font-bold">{estimate.jobName}</td>
                                 <td>{estimate.toName}</td>
                                 <td>{estimate.allocation}</td>

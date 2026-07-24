@@ -594,6 +594,41 @@
 }
 
 /* ============================================================
+   14b. NAV UNREAD/COUNT BADGE
+   ============================================================ */
+#cems-user-dashboard .nav-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+#cems-user-dashboard .nav-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-2, var(--accent-primary)));
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-left: auto;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  animation: badgeBounceIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
+@keyframes badgeBounceIn {
+  0%   { transform: scale(0.4); opacity: 0; }
+  70%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* ============================================================
    15. RESPONSIVE
    ============================================================ */
 @media (max-width: 768px) {
@@ -601,4 +636,39 @@
   .sidebar { width: 220px; min-width: 220px; }
   .content-shifted-open { margin-left: 220px; }
   .analytics-dashboard-grid { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   16. PREMIUM ENHANCEMENT LAYER
+   Visual-only refinements — accessibility focus states and
+   tactile press feedback, layered on top of existing styles.
+   Shared by Design Engineer/Director and Branch A-D Engineer/
+   Director dashboards.
+   ============================================================ */
+
+#cems-user-dashboard button:focus-visible,
+#cems-user-dashboard a:focus-visible,
+#cems-user-dashboard input:focus-visible,
+#cems-user-dashboard select:focus-visible,
+#cems-user-dashboard textarea:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+#cems-user-dashboard .approve-btn:active,
+#cems-user-dashboard .reject-btn:active,
+#cems-user-dashboard .edit-btn:active,
+#cems-user-dashboard .confirm-btn:active:not(:disabled),
+#cems-user-dashboard .save-btn:active:not(:disabled),
+#cems-user-dashboard .cancel-btn:active {
+  transform: scale(0.96) !important;
+  transition-duration: 0.1s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cems-user-dashboard * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }

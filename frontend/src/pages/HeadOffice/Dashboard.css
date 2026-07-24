@@ -803,3 +803,34 @@
   .content-shifted-open { margin-left: 220px; }
   .analytics-dashboard-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   16. PREMIUM ENHANCEMENT LAYER
+   Visual-only refinements — accessibility focus states and
+   tactile press feedback, layered on top of existing styles.
+   ============================================================ */
+
+#cems-user-dashboard button:focus-visible,
+#cems-user-dashboard a:focus-visible,
+#cems-user-dashboard input:focus-visible,
+#cems-user-dashboard select:focus-visible,
+#cems-user-dashboard textarea:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+#cems-user-dashboard .confirm-btn:active:not(:disabled),
+#cems-user-dashboard .save-btn:active:not(:disabled),
+#cems-user-dashboard .cancel-btn:active,
+#cems-user-dashboard .table-action-btn:active {
+  transform: scale(0.96) !important;
+  transition-duration: 0.1s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cems-user-dashboard * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

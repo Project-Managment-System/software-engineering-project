@@ -54,6 +54,29 @@ const ProjectSchema = new mongoose.Schema({
     drawingFileUrl: { type: String, default: '' },
     finalEstimateCost: { type: Number },
     finalEstimateDate: { type: Date },
+    // Timestamp for when the user's final estimate reaches the Divisional Assistant's review queue
+    finalEstimateSubmittedAt: { type: Date },
+
+    // Drawing request pipeline: User -> Divisional Assistant -> Design Engineer -> Design Director -> User
+    drawingWorkflowStatus: {
+        type: String,
+        enum: ['NotRequested', 'PendingDA', 'PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'],
+        default: 'NotRequested'
+    },
+    drawingRequestedAt: { type: Date },
+    daDrawingForwardedAt: { type: Date },
+    drawingAttachedAt: { type: Date },
+    directorApprovedAt: { type: Date },
+
+    // Divisional Assistant's approve/reject decision on the drawing request itself,
+    // before it can be forwarded to the Head Office Design Engineers
+    drawingDaStatus: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected'],
+        default: 'Pending'
+    },
+    drawingDaReviewedAt: { type: Date },
+    drawingDaNote: { type: String, default: '' },
 
     // Divisional Assistant review of the user's final estimate submission
     daReviewStatus: {

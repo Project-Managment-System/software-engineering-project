@@ -1494,3 +1494,98 @@
   70%  { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); }
 }
+
+/* ============================================================
+   PREMIUM ENHANCEMENT LAYER
+   Visual-only refinements — card/title backfill (previously
+   unstyled), accessibility focus states, tactile press feedback.
+   ============================================================ */
+
+/* .field-card / .recent-jobs-card were used throughout the JSX
+   (Team Resource Summary, Allocation Suggestions, DA Submissions,
+   Status Breakdown, Jobs by Ministry, etc.) but had no matching
+   rule in this file, so they rendered unstyled. Backfilled here
+   to match the card language already used across the app. */
+#cems-user-dashboard .field-card {
+  background: var(--bg-card);
+  padding: 24px 26px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-base);
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
+}
+#cems-user-dashboard .field-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-2) 60%, transparent 100%);
+}
+#cems-user-dashboard .field-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+#cems-user-dashboard .recent-jobs-card {
+  background: var(--bg-card);
+  padding: 24px 26px 28px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-base);
+  box-shadow: var(--shadow-card);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#cems-user-dashboard .recent-jobs-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: -0.02em;
+}
+#cems-user-dashboard .recent-jobs-title::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-2));
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* Keyboard accessibility — visible focus ring on every interactive element */
+#cems-user-dashboard button:focus-visible,
+#cems-user-dashboard a:focus-visible,
+#cems-user-dashboard input:focus-visible,
+#cems-user-dashboard select:focus-visible,
+#cems-user-dashboard textarea:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Tactile press feedback — every action button settles with a soft press */
+#cems-user-dashboard .approve-btn:active,
+#cems-user-dashboard .reject-btn:active,
+#cems-user-dashboard .edit-btn:active,
+#cems-user-dashboard .delete-btn:active,
+#cems-user-dashboard .confirm-btn:active:not(:disabled),
+#cems-user-dashboard .save-btn:active:not(:disabled),
+#cems-user-dashboard .cancel-btn:active {
+  transform: scale(0.96) !important;
+  transition-duration: 0.1s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cems-user-dashboard * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
