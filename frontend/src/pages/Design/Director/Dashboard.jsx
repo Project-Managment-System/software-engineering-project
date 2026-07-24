@@ -438,14 +438,19 @@ const DesignDirectorDashboard = () => {
                         </thead>
                         <tbody>
                           {completedJobs.map(j => (
-                            <tr key={j._id}>
+                            <tr
+                              key={j._id}
+                              onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view full job details"
+                            >
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>
                                 {j.drawingFileUrl ? (
                                   <button
                                     type="button"
-                                    onClick={() => openAttachment(j.drawingFileUrl)}
+                                    onClick={(e) => { e.stopPropagation(); openAttachment(j.drawingFileUrl); }}
                                     className="cancel-btn"
                                     style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                   >

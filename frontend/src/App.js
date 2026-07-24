@@ -21,6 +21,7 @@ import HeadOfficeDashboard from './pages/HeadOffice/Dashboard';
 // Head Office → Branch Dashboards (login is unified through /headoffice/login)
 import DesignEngineerDashboard from './pages/Design/Engineer/Dashboard';
 import DesignDirectorDashboard from './pages/Design/Director/Dashboard';
+import DesignJobDetails from './pages/Design/JobDetails';
 import BranchAEngineerDashboard from './pages/BranchA/Engineer/Dashboard';
 import BranchADirectorDashboard from './pages/BranchA/Director/Dashboard';
 import BranchBEngineerDashboard from './pages/BranchB/Engineer/Dashboard';
@@ -65,6 +66,11 @@ function App() {
         <Route path="/design/director/dashboard" element={
           <ProtectedRoute allowedRoles={['branch_director']} requiredBranch="design">
             <DesignDirectorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/design/job/:jobNo" element={
+          <ProtectedRoute allowedRoles={['branch_engineer', 'branch_director']} requiredBranch="design">
+            <DesignJobDetails />
           </ProtectedRoute>
         } />
         <Route path="/branch-a/engineer/dashboard" element={
