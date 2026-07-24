@@ -5,13 +5,16 @@ import {
   Save, Briefcase, User, Settings, X, Edit, Trash2,
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
-  FileText, MessageSquare, Lock, Bell, Check, Users, Layers
+  FileText, MessageSquare, Lock, Bell, Check, Users, Layers,
+  FileSpreadsheet, Printer
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import DivisionChat from '../../components/DivisionChat';
 import './Dashboard.css';
 
@@ -130,7 +133,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'rose');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [jobs, setJobs] = useState([]);
@@ -152,6 +155,125 @@ const AdminDashboard = () => {
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
+
+  /* ─── Table exports — PDF, Excel, Print ─── */
+  const handleExport = (title, headers, rows, type) => {
+    if (type === 'excel') {
+      try {
+        let csvContent = "";
+        csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+        rows.forEach(row => {
+          csvContent += row.map(cell => {
+            const val = cell !== undefined && cell !== null ? String(cell) : "";
+            return `"${val.replace(/"/g, '""')}"`;
+          }).join(",") + "\n";
+        });
+        const blob = new Blob(["﻿" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${title.toLowerCase().replace(/\s+/g, '_')}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        addToast(`${title} exported to Excel successfully!`, 'success');
+      } catch (err) {
+        console.error("Excel export error:", err);
+        addToast("Failed to export Excel.", 'error');
+      }
+    } else if (type === 'pdf') {
+      try {
+        const doc = new jsPDF();
+        doc.setFont("Helvetica");
+        doc.setFontSize(14);
+        doc.text(title, 14, 15);
+        doc.setFontSize(8);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 21);
+
+        autoTable(doc, {
+          head: [headers],
+          body: rows,
+          startY: 25,
+          theme: 'striped',
+          headStyles: { fillColor: [225, 29, 72] },
+          styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+        });
+        doc.save(`${title.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+        addToast(`${title} exported to PDF successfully!`, 'success');
+      } catch (err) {
+        console.error("PDF export error:", err);
+        addToast("Failed to export PDF.", 'error');
+      }
+    } else if (type === 'print') {
+      try {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          addToast("Popup blocked! Please allow popups to print.", 'warning');
+          return;
+        }
+        const tableHTML = `
+          <table style="width:100%; border-collapse:collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; margin-top: 15px;">
+            <thead>
+              <tr style="background-color:#e11d48; color:white;">
+                ${headers.map(h => `<th style="padding:8px 10px; border:1px solid #ddd; text-align:left; font-weight: 700;">${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((row, rIdx) => `
+                <tr style="background-color: ${rIdx % 2 === 0 ? '#f9fafb' : '#ffffff'};">
+                  ${row.map(cell => `<td style="padding:8px 10px; border:1px solid #ddd; color: #374151;">${cell ?? ''}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print - ${title}</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 30px; color: #1f2937; }
+                h2 { margin: 0 0 4px 0; color: #111827; font-size: 20px; }
+                .meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
+                @media print {
+                  body { margin: 15px; }
+                  thead { display: table-header-group; }
+                }
+              </style>
+            </head>
+            <body>
+              <h2>${title}</h2>
+              <div class="meta">Generated on: ${new Date().toLocaleString()}</div>
+              ${tableHTML}
+              <script>
+                window.onload = function() {
+                  window.print();
+                  window.close();
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } catch (err) {
+        console.error("Print error:", err);
+        addToast("Failed to initiate print.", 'error');
+      }
+    }
+  };
+
+  const renderExportButtons = (title, headers, rows) => (
+    <div className="table-export-actions">
+      <button onClick={() => handleExport(title, headers, rows, 'pdf')} className="export-btn pdf-export" title="Download PDF">
+        <FileText size={13} /> PDF
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'excel')} className="export-btn excel-export" title="Download Excel">
+        <FileSpreadsheet size={13} /> Excel
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'print')} className="export-btn print-export" title="Print Table">
+        <Printer size={13} /> Print
+      </button>
+    </div>
+  );
 
   /* ─── Clerk rejection notifications (persisted per-user; flags jobs an engineer just rejected) ─── */
   const [notifications, setNotifications] = useState(() => {
@@ -920,7 +1042,28 @@ const AdminDashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15, duration: 0.3 }}
                 >
-                  <h3 className="recent-jobs-title">Recent Jobs</h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '4px' }}>
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Recent Jobs</h3>
+                    {renderExportButtons(
+                      "Recent Jobs",
+                      ["Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status"],
+                      filteredJobs.map(j => [
+                        j.estimationNo || '—',
+                        j.jobName,
+                        j.ministry,
+                        j.department,
+                        j.institute,
+                        j.deptIdNo || '—',
+                        j.source || '—',
+                        j.dsDivision || '—',
+                        j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
+                        j.allocation,
+                        j.remark || '',
+                        j.submitDate ? j.submitDate.split('T')[0] : 'N/A',
+                        j.status || 'Pending'
+                      ])
+                    )}
+                  </div>
 
                   <div className="table-filters-row">
                     <div className="input-row-group">
@@ -964,13 +1107,13 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Est. No</th><th>Job No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
+                          <th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={15}>
+                            <td colSpan={14}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{jobs.length === 0 ? 'No jobs added yet.' : 'No jobs match the selected filters.'}</span>
@@ -982,7 +1125,6 @@ const AdminDashboard = () => {
                             return (
                               <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
                                 <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
-                                <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.ministry}</td>
                                 <td>{j.department}</td>
@@ -1182,14 +1324,6 @@ const AdminDashboard = () => {
                         ))}
                       </select>
                     </div>
-
-                    <div className="input-row-group">
-                      <label><Filter size={12} /> Filter by Department</label>
-                      <select name="department" value={filters.department} onChange={handleFilterChange} className="input-field">
-                        <option value="">All Departments</option>
-                        {departmentOptions.map((d) => (<option key={d} value={d}>{d}</option>))}
-                      </select>
-                    </div>
                     <div className="input-row-group">
                       <label><Filter size={12} /> Filter by Division</label>
                       <select name="division" value={filters.division} onChange={handleFilterChange} className="input-field">
@@ -1333,6 +1467,104 @@ const AdminDashboard = () => {
 
                   </div>
                 )}
+
+                {/* ── Full Jobs Table (same as New Job tab, plus pipeline-stage columns) ── */}
+                <motion.div
+                  className="recent-jobs-card"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15, duration: 0.3 }}
+                  style={{ marginTop: '24px' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '4px' }}>
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>All Jobs</h3>
+                    {renderExportButtons(
+                      "All Jobs",
+                      ["Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status", "Submitted Date to TO", "Submitted to DA", "Submitted to Engineer"],
+                      filteredJobs.map(j => [
+                        j.estimationNo || '—',
+                        j.jobName,
+                        j.ministry,
+                        j.department,
+                        j.institute,
+                        j.deptIdNo || '—',
+                        j.source || '—',
+                        j.dsDivision || '—',
+                        j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
+                        j.allocation,
+                        j.remark || '',
+                        j.submitDate ? j.submitDate.split('T')[0] : 'N/A',
+                        j.status || 'Pending',
+                        j.estimateSubmittedAt ? j.estimateSubmittedAt.split('T')[0] : '—',
+                        j.finalEstimateSubmittedAt ? j.finalEstimateSubmittedAt.split('T')[0] : '—',
+                        j.daReviewStatus === 'Approved' && j.daReviewedAt ? j.daReviewedAt.split('T')[0] : '—'
+                      ])
+                    )}
+                  </div>
+
+                  <div className="table-scroll-wrapper">
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th><th>Submitted Date to TO</th><th>Submitted to DA</th><th>Submitted to Engineer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredJobs.length === 0 ? (
+                          <tr>
+                            <td colSpan={17}>
+                              <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
+                                <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                                <span>{jobs.length === 0 ? 'No jobs added yet.' : 'No jobs match the selected filters.'}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          filteredJobs.map((j) => (
+                            <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                              <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
+                              <td className="font-bold">{j.jobName}</td>
+                              <td>{j.ministry}</td>
+                              <td>{j.department}</td>
+                              <td>{j.institute}</td>
+                              <td>{j.deptIdNo || '—'}</td>
+                              <td>{j.source || '—'}</td>
+                              <td>{j.dsDivision || '—'}</td>
+                              <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
+                              <td className="font-bold">{j.allocation}</td>
+                              <td>{j.remark}</td>
+                              <td>{j.submitDate ? j.submitDate.split('T')[0] : 'N/A'}</td>
+                              <td>
+                                {j.status === 'Approved' && userRole === 'clerk' ? (
+                                  <button className="inactive-btn" disabled title="Locked — job already approved by Engineer">
+                                    <Lock size={14} /> Inactive
+                                  </button>
+                                ) : (
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit">
+                                      <Edit size={15} />
+                                    </button>
+                                    <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete">
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                              <td>
+                                <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
+                                  {j.status || 'Pending'}
+                                </span>
+                              </td>
+                              <td>{j.estimateSubmittedAt ? j.estimateSubmittedAt.split('T')[0] : '—'}</td>
+                              <td>{j.finalEstimateSubmittedAt ? j.finalEstimateSubmittedAt.split('T')[0] : '—'}</td>
+                              <td>{j.daReviewStatus === 'Approved' && j.daReviewedAt ? j.daReviewedAt.split('T')[0] : '—'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </motion.div>
               </motion.section>
             )}
 

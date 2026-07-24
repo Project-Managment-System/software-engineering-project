@@ -64,7 +64,7 @@ const CustomTooltip = ({ active, payload }) => {
 const HeadOfficeDashboard = () => {
   const navigate = useNavigate();
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'ocean');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -844,6 +844,67 @@ const HeadOfficeDashboard = () => {
                     </div>
                   </form>
                 </div>
+
+                {(() => {
+                  const allBranchUsers = users
+                    .filter(u => u.role === 'branch_director' || u.role === 'branch_engineer')
+                    .sort((a, b) => a.role === 'branch_director' ? -1 : b.role === 'branch_director' ? 1 : 0);
+
+                  return (
+                    <motion.div
+                      className="recent-jobs-card"
+                      style={{ marginTop: '28px' }}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05, duration: 0.3 }}
+                    >
+                      <h3 className="recent-jobs-title" style={{ margin: '0 0 16px' }}>Staff Register ({allBranchUsers.length})</h3>
+
+                      {allBranchUsers.length === 0 ? (
+                        <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
+                          <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                          <span>No branch staff added yet.</span>
+                        </div>
+                      ) : (
+                        <div className="table-scroll-wrapper">
+                          <table className="project-table">
+                            <thead>
+                              <tr>
+                                <th>Full Name</th>
+                                <th>Position</th>
+                                <th>Branch</th>
+                                <th>Username (Employee ID)</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {allBranchUsers.map(u => (
+                                <tr key={u._id}>
+                                  <td className="font-bold">{u.fullName}</td>
+                                  <td>
+                                    <span className={`status-badge ${u.role === 'branch_director' ? 'status-director' : 'status-engineer'}`}>
+                                      {u.role === 'branch_director' ? 'Director' : 'Engineer'}
+                                    </span>
+                                  </td>
+                                  <td>{BRANCHES.find(b => b.slug === u.branch)?.label || u.branch || '—'}</td>
+                                  <td className="font-mono">{u.employeeId}</td>
+                                  <td>{u.email || '—'}</td>
+                                  <td>{u.phoneNo || '—'}</td>
+                                  <td>
+                                    <button className="table-action-btn edit" title="Edit user" onClick={() => openEditUser(u)}><Edit3 size={14} /></button>
+                                    <button className="table-action-btn delete" title="Delete user" onClick={() => handleDeleteUser(u)}><Trash2 size={14} /></button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })()}
               </motion.section>
             )}
 

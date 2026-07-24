@@ -792,3 +792,96 @@
   transform: translateY(-1px);
 }
 
+/* ============================================================
+   TABLE EXPORTS - PDF, Excel, Print
+   ============================================================ */
+#cems-user-dashboard .table-export-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+#cems-user-dashboard .export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#cems-user-dashboard .export-btn.pdf-export {
+  color: #ef4444;
+}
+#cems-user-dashboard .export-btn.pdf-export:hover {
+  background: #fef2f2;
+  border-color: #fee2e2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.12);
+}
+
+#cems-user-dashboard .export-btn.excel-export {
+  color: #10b981;
+}
+#cems-user-dashboard .export-btn.excel-export:hover {
+  background: #ecfdf5;
+  border-color: #d1fae5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+#cems-user-dashboard .export-btn.print-export {
+  color: var(--accent-primary);
+}
+#cems-user-dashboard .export-btn.print-export:hover {
+  background: var(--accent-soft);
+  border-color: rgba(8, 145, 178, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.12);
+}
+
+#cems-user-dashboard.dark-mode .export-btn:hover {
+  background: var(--bg-input) !important;
+  border-color: var(--border-base) !important;
+}
+
+/* ============================================================
+   PREMIUM ENHANCEMENT LAYER
+   Visual-only refinements — accessibility focus states and
+   tactile press feedback, layered on top of existing styles.
+   ============================================================ */
+
+#cems-user-dashboard button:focus-visible,
+#cems-user-dashboard a:focus-visible,
+#cems-user-dashboard input:focus-visible,
+#cems-user-dashboard select:focus-visible,
+#cems-user-dashboard textarea:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+#cems-user-dashboard .approve-btn:active,
+#cems-user-dashboard .reject-btn:active,
+#cems-user-dashboard .edit-btn:active,
+#cems-user-dashboard .confirm-btn:active:not(:disabled),
+#cems-user-dashboard .save-btn:active:not(:disabled),
+#cems-user-dashboard .cancel-btn:active {
+  transform: scale(0.96) !important;
+  transition-duration: 0.1s !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cems-user-dashboard * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+

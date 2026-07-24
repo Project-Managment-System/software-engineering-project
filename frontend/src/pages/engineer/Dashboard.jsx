@@ -113,7 +113,7 @@ const EngineerDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'ocean');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('overview');
   const [jobSubTab, setJobSubTab] = useState('approvals');
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
@@ -680,6 +680,9 @@ const EngineerDashboard = () => {
   const approvedCount = approvalData.filter(j => j.status === 'Approved').length;
   const rejectedCount = approvalData.filter(j => j.status === 'Rejected').length;
 
+  /* ─── Assignee table only shows jobs approved in the Approval Requests tab ─── */
+  const trackedJobs = jobTrackingData.filter(j => j.status === 'Approved');
+
   /* ─── DA-approved submissions awaiting Engineer review ─── */
   const daApprovedJobs = approvalData.filter(j => j.daReviewStatus === 'Approved');
   const pendingDaReviewCount = daApprovedJobs.filter(j => (j.engineerReviewStatus || 'Pending') === 'Pending').length;
@@ -1042,13 +1045,13 @@ const EngineerDashboard = () => {
                     <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                       {renderExportButtons(
                         "Approval Requests",
-                        ["No", "Job No", "Job Name", "Date of Request", "Allocation", "Status"],
-                        approvalData.map(job => [job.sNo, job.jobNo, job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
+                        ["No", "Estimation Number", "Job Name", "Date of Request", "Allocation", "Status"],
+                        approvalData.map(job => [job.sNo, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
                       )}
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
                           <thead>
-                            <tr><th>No</th><th>Job No</th><th>Job Name</th><th>Date of Request</th><th>Allocation</th><th>Approval</th></tr>
+                            <tr><th>No</th><th>Estimation Number</th><th>Job Name</th><th>Date of Request</th><th>Allocation</th><th>Approval</th></tr>
                           </thead>
                           <tbody>
                             {approvalData.length === 0 ? (
@@ -1064,7 +1067,7 @@ const EngineerDashboard = () => {
                               approvalData.map((job) => (
                                 <tr key={job.jobNo}>
                                   <td>{job.sNo}</td>
-                                  <td className="font-mono">{job.jobNo}</td>
+                                  <td className="font-mono">{job.estimationNo || '—'}</td>
                                   <td className="font-bold">{job.jobName}</td>
                                   <td>{formatDate(job.dateReq)}</td>
                                   <td>{job.allocation}</td>
@@ -1103,16 +1106,16 @@ const EngineerDashboard = () => {
                     <motion.div key="tracking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                       {renderExportButtons(
                         "Assignee Tracking",
-                        ["No", "Job No", "Division", "Job Name", "Allocation", "Assignee"],
-                        jobTrackingData.map(job => [job.sNo, job.jobNo, job.division, job.jobName, job.allocation, job.assignee || 'Unassigned'])
+                        ["No", "Estimation Number", "Division", "Job Name", "Allocation", "Assignee"],
+                        trackedJobs.map(job => [job.sNo, job.estimationNo || '—', job.division, job.jobName, job.allocation, job.assignee || 'Unassigned'])
                       )}
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
                           <thead>
-                            <tr><th>No</th><th>Job No</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr>
+                            <tr><th>No</th><th>Estimation Number</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr>
                           </thead>
                           <tbody>
-                            {jobTrackingData.length === 0 ? (
+                            {trackedJobs.length === 0 ? (
                               <tr>
                                 <td colSpan={7}>
                                   <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
@@ -1122,10 +1125,10 @@ const EngineerDashboard = () => {
                                 </td>
                               </tr>
                             ) : (
-                              jobTrackingData.map((job) => (
+                              trackedJobs.map((job) => (
                                 <tr key={job.jobNo}>
                                   <td>{job.sNo}</td>
-                                  <td className="font-mono">{job.jobNo}</td>
+                                  <td className="font-mono">{job.estimationNo || '—'}</td>
                                   <td>{job.division}</td>
                                   <td className="font-bold">{job.jobName}</td>
                                   <td>{job.allocation}</td>
@@ -1199,8 +1202,8 @@ const EngineerDashboard = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                       {renderExportButtons(
                         "All Division Jobs",
-                        ["No", "Job No", "Job Name", "Ministry", "Department", "Allocation", "Assignee", "Status"],
-                        approvalData.map(job => [job.sNo, job.jobNo, job.jobName, job.ministry, job.department, job.allocation, job.assignee || 'Unassigned', job.status || 'Pending'])
+                        ["No", "Estimation Number", "Job Name", "Ministry", "Department", "Allocation", "Assignee", "Status"],
+                        approvalData.map(job => [job.sNo, job.estimationNo || '—', job.jobName, job.ministry, job.department, job.allocation, job.assignee || 'Unassigned', job.status || 'Pending'])
                       )}
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
                         Showing {approvalData.length} job{approvalData.length !== 1 ? 's' : ''} for your division
@@ -1213,7 +1216,7 @@ const EngineerDashboard = () => {
                       <thead>
                         <tr>
                           <th>No</th>
-                          <th>Job No</th>
+                          <th>Estimation Number</th>
                           <th>Job Name</th>
                           <th>Ministry</th>
                           <th>Department</th>
@@ -1236,7 +1239,7 @@ const EngineerDashboard = () => {
                           approvalData.map((job) => (
                             <tr key={job.jobNo}>
                               <td>{job.sNo}</td>
-                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.ministry}</td>
                               <td>{job.department}</td>
@@ -1272,16 +1275,31 @@ const EngineerDashboard = () => {
                       <ClipboardCheck size={20} style={{ color: 'var(--accent-primary)' }} />
                       <h3 className="recent-jobs-title" style={{ margin: 0 }}>Review DA Submissions</h3>
                     </div>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      Final estimates approved by the Divisional Assistant, awaiting your review
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                        Final estimates approved by the Divisional Assistant, awaiting your review
+                      </span>
+                      {renderExportButtons(
+                        "Review DA Submissions",
+                        ["Estimation Number", "Job Name", "Submitted By", "Estimate Cost (LKR)", "Alignment Date", "DA Reviewed On", "Engineer Review"],
+                        daApprovedJobs.map(job => [
+                          job.estimationNo || '—',
+                          job.jobName,
+                          job.assignee || '—',
+                          job.finalEstimateCost?.toLocaleString() || '',
+                          job.finalEstimateDate ? formatDate(job.finalEstimateDate) : 'N/A',
+                          job.daReviewedAt ? formatDate(job.daReviewedAt) : 'N/A',
+                          job.engineerReviewStatus || 'Pending'
+                        ])
+                      )}
+                    </div>
                   </div>
 
                   <div className="table-scroll-wrapper">
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Job No</th>
+                          <th>Estimation Number</th>
                           <th>Job Name</th>
                           <th>Submitted By</th>
                           <th>Estimate Cost (LKR)</th>
@@ -1303,7 +1321,7 @@ const EngineerDashboard = () => {
                         ) : (
                           daApprovedJobs.map((job) => (
                             <tr key={job.jobNo}>
-                              <td className="font-mono">{job.jobNo}</td>
+                              <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.assignee || '—'}</td>
                               <td className="font-bold">{job.finalEstimateCost?.toLocaleString()}</td>
@@ -1361,19 +1379,6 @@ const EngineerDashboard = () => {
                     <input type="password" name="password" value={userFormData.password} onChange={handleUserFormChange} required />
                     <label>Division *</label>
                     <input name="division" value={userFormData.division} disabled className="input-field" style={{ opacity: 0.7, cursor: 'not-allowed', maxWidth: '220px', width: '220px' }} />
-                    <label>DS Division</label>
-                    <select
-                      name="dsDivision"
-                      value={userFormData.dsDivision}
-                      onChange={handleUserFormChange}
-                      className="job-select-dropdown"
-                      style={{ maxWidth: '260px' }}
-                    >
-                      <option value="">Select DS Division</option>
-                      {(DIVISION_DS_DIVISIONS[userFormData.division] || []).map((ds) => (
-                        <option key={ds} value={ds}>{ds}</option>
-                      ))}
-                    </select>
                     <label>Position *</label>
                     <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
                       <option value="" disabled>Select Position</option>
@@ -1401,8 +1406,8 @@ const EngineerDashboard = () => {
                     </h3>
                     {renderExportButtons(
                       "System Users",
-                      ["#", "Employee ID", "Name", "Email", "Division", "DS Division", "Position"],
-                      allSystemUsers.map((user, i) => [i + 1, user.employeeId, user.fullName, user.email, user.division, user.dsDivision || '—', formatRoleName(user.role)])
+                      ["#", "Employee ID", "Name", "Email", "Division", "Position"],
+                      allSystemUsers.map((user, i) => [i + 1, user.employeeId, user.fullName, user.email, user.division, formatRoleName(user.role)])
                     )}
                   </div>
                   <div className="table-scroll-wrapper">
@@ -1414,7 +1419,6 @@ const EngineerDashboard = () => {
                           <th>Name</th>
                           <th>Email</th>
                           <th>Division</th>
-                          <th>DS Division</th>
                           <th>Position</th>
                           <th>Action</th>
                         </tr>
@@ -1422,7 +1426,7 @@ const EngineerDashboard = () => {
                       <tbody>
                         {allSystemUsers.length === 0 ? (
                           <tr>
-                            <td colSpan={8}>
+                            <td colSpan={7}>
                               <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
                                 <Users size={24} style={{ opacity: 0.35 }} />
                                 <span>No users in system yet</span>
@@ -1469,20 +1473,6 @@ const EngineerDashboard = () => {
                                     style={{ opacity: 0.7, cursor: 'not-allowed' }}
                                   />
                                 ) : user.division}
-                              </td>
-                              <td>
-                                {editingUser === user._id ? (
-                                  <select
-                                    value={editUserForm.dsDivision || ''}
-                                    onChange={e => setEditUserForm({ ...editUserForm, dsDivision: e.target.value })}
-                                    className="job-select-dropdown"
-                                  >
-                                    <option value="">Select DS Division</option>
-                                    {(DIVISION_DS_DIVISIONS[editUserForm.division] || []).map((ds) => (
-                                      <option key={ds} value={ds}>{ds}</option>
-                                    ))}
-                                  </select>
-                                ) : (user.dsDivision || '—')}
                               </td>
                               <td>
                                 {editingUser === user._id ? (

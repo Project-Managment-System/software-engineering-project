@@ -1,29 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Briefcase, LogOut, Menu, BarChart3, Landmark, Clock, CheckCircle,
-  XCircle, Filter, X, AlertTriangle, Settings, Sun, Moon,
-  Table2, Layers, Wallet
+  Briefcase, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
+  AlertTriangle, Eye, BarChart3, Settings, User, Save, X, Camera
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid
-} from 'recharts';
 import '../../shared/BranchDashboard.css';
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
   exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
-};
-
-const staggerContainer = { visible: { transition: { staggerChildren: 0.08 } } };
-
-const cardVariant = {
-  hidden: { opacity: 0, y: 16, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
 };
 
 const THEME_OPTIONS = [
@@ -34,40 +22,49 @@ const THEME_OPTIONS = [
   { id: 'amber', label: 'Amber', swatch: '#d97706' },
 ];
 
-const CustomTooltip = ({ active, payload }) => {
-  if (active && payload && payload.length) {
-    const data = payload[0];
-    return (
-      <div style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border-base)',
-        padding: '12px 16px', borderRadius: '8px', boxShadow: 'var(--shadow-card)',
-        fontFamily: "'Inter', sans-serif"
-      }}>
-        <p style={{ margin: 0, fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{data.name}</p>
-        <p style={{ margin: '4px 0 0', fontWeight: 900, color: data.payload?.color || 'var(--accent-primary)', fontSize: '1.25rem' }}>
-          {data.value}
-        </p>
-      </div>
-    );
+// Data URLs can't be opened via target="_blank" (Chrome blocks it with
+// "about:blank#blocked"), so convert to a Blob URL before opening.
+const openAttachment = (dataUrl) => {
+  try {
+    const [header, base64] = dataUrl.split(',');
+    const mimeMatch = header.match(/data:(.*?);base64/);
+    const mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    const binary = atob(base64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+  } catch (err) {
+    console.error('Failed to open attachment:', err);
+    alert('Failed to open the attachment.');
   }
-  return null;
-};
-
-const parseAllocation = (val) => {
-  const num = parseFloat(String(val ?? '0').replace(/,/g, ''));
-  return isNaN(num) ? 0 : num;
 };
 
 const DesignDirectorDashboard = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
-  const [activeTab, setActiveTab] = useState('Overview');
+  const [activeTab, setActiveTab] = useState('Pending');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ ministry: '', status: '' });
+  const [approvingJobNo, setApprovingJobNo] = useState(null);
+  const [seenCompletedIds, setSeenCompletedIds] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('designDirectorSeenCompleted') || '[]'); } catch { return []; }
+  });
+
+  const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
+  const [profileData, setProfileData] = useState({
+    name: localStorage.getItem('fullName') || 'Design Director',
+    reg: localStorage.getItem('employeeId') || '',
+    email: localStorage.getItem('email') || '',
+    phone: localStorage.getItem('phoneNo') || ''
+  });
+  const [profileForm, setProfileForm] = useState(profileData);
+  const [profileMessage, setProfileMessage] = useState(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -81,7 +78,34 @@ const DesignDirectorDashboard = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  const fetchUserProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+      const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+      const user = res.data;
+      if (user) {
+        const fetchedProfile = {
+          name: user.fullName || 'Design Director',
+          reg: user.employeeId || '',
+          email: user.email || '',
+          phone: user.phoneNo || ''
+        };
+        setProfileData(fetchedProfile);
+        setProfileForm(fetchedProfile);
+        setProfilePic(user.profilePic || null);
+        localStorage.setItem('fullName', user.fullName || '');
+        localStorage.setItem('employeeId', user.employeeId || '');
+        localStorage.setItem('email', user.email || '');
+        localStorage.setItem('phoneNo', user.phoneNo || '');
+        localStorage.setItem('profilePic', user.profilePic || '');
+      }
+    } catch (err) {
+      console.error('Error fetching director profile:', err);
+    }
+  };
+
+  useEffect(() => { fetchData(); fetchUserProfile(); }, []);
 
   const toggleDarkMode = () => {
     const nextDark = !isDark;
@@ -96,46 +120,86 @@ const DesignDirectorDashboard = () => {
     navigate('/');
   };
 
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  // Director "pending" = drawing attached by the Engineer but not yet approved
+  const pendingJobs = jobs.filter(j => j.drawingWorkflowStatus === 'PendingDirectorDesign');
+  // Director "completed" = approved
+  const completedJobs = jobs.filter(j => j.drawingWorkflowStatus === 'Completed');
+  const recentJobs = [...pendingJobs, ...completedJobs].slice(0, 5);
+
+  // Notification badge on "Completed Jobs" only counts jobs not yet viewed —
+  // it clears once the Completed Jobs tab has been opened.
+  const unseenCompletedCount = completedJobs.filter(j => !seenCompletedIds.includes(j._id)).length;
+
+  useEffect(() => {
+    if (activeTab !== 'Completed' || completedJobs.length === 0) return;
+    const allIds = completedJobs.map(j => j._id);
+    const merged = Array.from(new Set([...seenCompletedIds, ...allIds]));
+    if (merged.length !== seenCompletedIds.length) {
+      setSeenCompletedIds(merged);
+      localStorage.setItem('designDirectorSeenCompleted', JSON.stringify(merged));
+    }
+    // eslint-disable-next-line
+  }, [activeTab, jobs]);
+
+  const handleApprove = async (jobNo) => {
+    setApprovingJobNo(jobNo);
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        drawingWorkflowStatus: 'Completed',
+        directorApprovedAt: new Date().toISOString(),
+        drawingReceived: true,
+        drawingReceivedAt: new Date().toISOString()
+      });
+      await fetchData();
+    } catch (err) {
+      console.error('Approve failed:', err);
+      alert('Failed to approve drawing.');
+    } finally {
+      setApprovingJobNo(null);
+    }
   };
-  const handleClearFilters = () => setFilters({ ministry: '', status: '' });
 
-  const getUniqueValues = (key) => {
-    const values = jobs.map((j) => j[key]).filter((v) => v !== undefined && v !== null && v !== '');
-    return [...new Set(values)].sort();
+  const handleSaveProfile = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) { setProfileMessage({ type: 'error', text: 'User session not found.' }); return; }
+      const payload = { fullName: profileForm.name, email: profileForm.email, phoneNo: profileForm.phone };
+      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      setProfileData(profileForm);
+      localStorage.setItem('fullName', profileForm.name);
+      localStorage.setItem('email', profileForm.email);
+      localStorage.setItem('phoneNo', profileForm.phone);
+      setProfileMessage({ type: 'success', text: 'Profile updated successfully!' });
+    } catch (err) {
+      setProfileMessage({ type: 'error', text: err.response?.data?.error || 'Failed to update profile.' });
+    }
   };
-  const ministryOptions = getUniqueValues('ministry');
-  const divisionOptions = getUniqueValues('division');
 
-  const filteredJobs = jobs.filter((j) => {
-    if (filters.ministry && j.ministry !== filters.ministry) return false;
-    if (filters.status && (j.status || 'Pending') !== filters.status) return false;
-    return true;
-  });
-
-  const totalJobs = jobs.length;
-  const pendingJobs = jobs.filter(j => !j.status || j.status === 'Pending').length;
-  const approvedJobs = jobs.filter(j => j.status === 'Approved').length;
-  const rejectedJobs = jobs.filter(j => j.status === 'Rejected').length;
-  const totalAllocation = jobs.reduce((sum, j) => sum + parseAllocation(j.allocation), 0);
-  const totalMinistries = ministryOptions.length;
-  const totalDivisions = divisionOptions.length;
-
-  const statCards = [
-    { label: 'Total Allocation (Rs.)', value: totalAllocation.toLocaleString('en-US', { maximumFractionDigits: 0 }), icon: Wallet, color: 'var(--accent-primary)' },
-    { label: 'Total Jobs', value: totalJobs, icon: Briefcase, color: 'var(--info)' },
-    { label: 'Ministries', value: totalMinistries, icon: Landmark, color: 'var(--gold)' },
-    { label: 'Divisions', value: totalDivisions, icon: Layers, color: 'var(--success)' },
-    { label: 'Pending', value: pendingJobs, icon: Clock, color: 'var(--warning)' },
-    { label: 'Rejected', value: rejectedJobs, icon: XCircle, color: 'var(--danger)' },
-  ];
-
-  const allocationPerMinistry = ministryOptions.map((m) => ({
-    name: m,
-    total: jobs.filter(j => j.ministry === m).reduce((sum, j) => sum + parseAllocation(j.allocation), 0),
-  }));
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setProfileMessage({ type: 'error', text: 'Only image files are allowed (JPG, PNG, GIF, WebP, etc.)' });
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = reader.result;
+      setProfilePic(base64Data);
+      localStorage.setItem('profilePic', base64Data);
+      try {
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, { profilePic: base64Data });
+          setProfileMessage({ type: 'success', text: 'Profile photo updated!' });
+        }
+      } catch (err) {
+        setProfileMessage({ type: 'error', text: 'Failed to sync photo.' });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
@@ -146,16 +210,18 @@ const DesignDirectorDashboard = () => {
       <div className="user-dashboard-layout">
         <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
-            <div className="profile-photo"><Briefcase size={32} /></div>
+            <div className="profile-photo">
+              {profilePic ? <img src={profilePic} alt="Profile" /> : <Briefcase size={32} />}
+            </div>
             <div className="profile-info">
-              <h3>Director</h3>
+              <h3>{profileData.name}</h3>
               <p className="reg-number">Design Branch</p>
               <span className="role-title" style={{
                 fontSize: '0.68rem', color: '#ffffff', backgroundColor: 'var(--accent-primary)',
                 fontWeight: '800', padding: '3px 10px', borderRadius: '12px', marginTop: '6px',
                 textTransform: 'uppercase', letterSpacing: '0.05em', display: 'inline-block'
               }}>
-                Director
+                Design Director
               </span>
             </div>
           </div>
@@ -163,11 +229,16 @@ const DesignDirectorDashboard = () => {
           <nav className="sidebar-nav">
             {[
               { id: 'Overview', icon: BarChart3, label: 'Overview' },
-              { id: 'Records', icon: Table2, label: 'All Records' },
+              { id: 'Pending', icon: Clock, label: 'Pending Jobs', count: pendingJobs.length },
+              { id: 'Completed', icon: CheckCircle, label: 'Completed Jobs', count: unseenCompletedCount },
+              { id: 'Profile', icon: User, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
               <button key={item.id} className={`nav-item ${activeTab === item.id ? 'active' : ''}`} onClick={() => setActiveTab(item.id)}>
                 <item.icon size={18} /> {item.label}
+                {item.count > 0 && (
+                  <span className="nav-unread-badge">{item.count > 99 ? '99+' : item.count}</span>
+                )}
               </button>
             ))}
 
@@ -185,180 +256,283 @@ const DesignDirectorDashboard = () => {
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
           <header className="content-header"><div className="header-left" /></header>
 
-          <motion.div className="stat-cards-grid" variants={staggerContainer} initial="hidden" animate="visible">
-            {statCards.map((stat) => (
-              <motion.div key={stat.label} variants={cardVariant} className="field-card" style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: '10px',
-                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                  }}>
-                    <stat.icon size={20} />
-                  </div>
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.6rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
           <AnimatePresence mode="wait">
             {activeTab === 'Overview' && (
-              <motion.section key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
+              <motion.section key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                     <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                      <Landmark size={22} />
+                      <BarChart3 size={22} />
                     </div>
                     <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Executive Overview</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Budget allocation and status breakdown across every ministry</p>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Overview</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Your drawing approval workload at a glance</p>
                     </div>
                   </div>
                 </div>
 
-                {totalJobs === 0 ? (
-                  <div className="placeholder-content" style={{ height: '300px' }}>
-                    <AlertTriangle size={36} style={{ opacity: 0.35 }} />
-                    <span>{loading ? 'Loading data...' : 'No job records found.'}</span>
-                  </div>
-                ) : (
-                  <div className="analytics-dashboard-grid">
-                    <div className="field-card" style={{ padding: '24px 26px 28px' }}>
-                      <h3 className="recent-jobs-title">Status Breakdown</h3>
-                      <div style={{ position: 'relative', width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={[
-                                { name: 'Approved', value: approvedJobs, color: 'var(--success)' },
-                                { name: 'Pending', value: pendingJobs, color: 'var(--warning)' },
-                                { name: 'Rejected', value: rejectedJobs, color: 'var(--danger)' },
-                              ].filter(d => d.value > 0)}
-                              cx="50%" cy="50%" innerRadius={65} outerRadius={95} paddingAngle={4} dataKey="value"
-                            >
-                              {[
-                                { name: 'Approved', value: approvedJobs, color: 'var(--success)' },
-                                { name: 'Pending', value: pendingJobs, color: 'var(--warning)' },
-                                { name: 'Rejected', value: rejectedJobs, color: 'var(--danger)' },
-                              ].filter(d => d.value > 0).map((entry, i) => (
-                                <Cell key={`cell-${i}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <RechartsTooltip content={<CustomTooltip />} />
-                            <Legend verticalAlign="bottom" height={36} formatter={(value) => (
-                              <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem' }}>{value}</span>
-                            )} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div style={{ position: 'absolute', top: '44%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                          <div style={{ fontSize: '2.4rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>{totalJobs}</div>
-                          <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>Total Jobs</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="field-card" style={{ padding: '24px 26px 28px' }}>
-                      <h3 className="recent-jobs-title">Allocation by Ministry (Rs.)</h3>
-                      <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={allocationPerMinistry} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
-                            <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 10, fontWeight: 600 }} interval={0} angle={-25} textAnchor="end" height={70} />
-                            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
-                            <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                            <Bar dataKey="total" radius={[6, 6, 0, 0]} fill="var(--accent-primary)" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </motion.section>
-            )}
-
-            {activeTab === 'Records' && (
-              <motion.section key="records" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
-                <div style={{ marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                      <Table2 size={22} />
+                <div className="analytics-dashboard-grid" style={{ marginBottom: '24px' }}>
+                  <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--warning-soft)', color: 'var(--warning)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Clock size={22} />
                     </div>
                     <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>All Records</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Every job across every ministry and division</p>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{pendingJobs.length}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Pending Approval</div>
+                    </div>
+                  </div>
+                  <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--success-soft)', color: 'var(--success)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle size={22} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{completedJobs.length}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Approved Jobs</div>
+                    </div>
+                  </div>
+                  <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--info-soft)', color: 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Briefcase size={22} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{pendingJobs.length + completedJobs.length}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Total Handled</div>
                     </div>
                   </div>
                 </div>
 
-                <motion.div className="recent-jobs-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.3 }}>
-                  <h3 className="recent-jobs-title">Job Register ({filteredJobs.length} of {totalJobs})</h3>
-
-                  <div className="table-filters-row">
-                    <div className="input-row-group">
-                      <label><Filter size={12} /> Ministry</label>
-                      <select name="ministry" value={filters.ministry} onChange={handleFilterChange} className="input-field">
-                        <option value="">All Ministries</option>
-                        {ministryOptions.map((m) => (<option key={m} value={m}>{m}</option>))}
-                      </select>
+                <div className="recent-jobs-card">
+                  <h3 className="recent-jobs-title">Recent Jobs</h3>
+                  {recentJobs.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
+                      <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                      <span>{loading ? 'Loading...' : 'No drawing jobs yet.'}</span>
                     </div>
-                    <div className="input-row-group">
-                      <label><Filter size={12} /> Status</label>
-                      <select name="status" value={filters.status} onChange={handleFilterChange} className="input-field">
-                        <option value="">All Statuses</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                      </select>
-                    </div>
-                    {(filters.ministry || filters.status) && (
-                      <button className="cancel-btn" onClick={handleClearFilters}><X size={14} /> Clear</button>
-                    )}
-                  </div>
-
-                  <div className="table-scroll-wrapper">
-                    <table className="project-table">
-                      <thead>
-                        <tr>
-                          <th>Job No</th><th>Activity</th><th>Ministry</th><th>Division</th>
-                          <th>Allocation</th><th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredJobs.length === 0 ? (
+                  ) : (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
                           <tr>
-                            <td colSpan={6}>
-                              <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
-                                <AlertTriangle size={28} style={{ opacity: 0.4 }} />
-                                <span>{loading ? 'Loading records...' : jobs.length === 0 ? 'No records available.' : 'No records match the selected filters.'}</span>
-                              </div>
-                            </td>
+                            <th>Division</th>
+                            <th>Job Name</th>
+                            <th>Status</th>
                           </tr>
-                        ) : (
-                          filteredJobs.map((j) => (
-                            <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                              <td className="font-mono">{j.jobNo}</td>
-                              <td className="font-bold">{j.jobName}</td>
-                              <td>{j.ministry}</td>
+                        </thead>
+                        <tbody>
+                          {recentJobs.map(j => (
+                            <tr key={j._id}>
                               <td>{j.division}</td>
-                              <td className="font-bold">{j.allocation}</td>
+                              <td className="font-bold">{j.jobName}</td>
                               <td>
-                                <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
-                                  {j.status || 'Pending'}
+                                <span className={`status-badge ${j.drawingWorkflowStatus === 'Completed' ? 'status-approved' : 'status-pending'}`}>
+                                  {j.drawingWorkflowStatus === 'Completed' ? 'Approved by Director' : 'Awaiting Director Approval'}
                                 </span>
                               </td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'Pending' && (
+              <motion.section key="pending" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <Clock size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Pending Jobs</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Drawings attached by the Engineer, awaiting your approval</p>
+                    </div>
                   </div>
-                </motion.div>
+                </div>
+
+                <div className="recent-jobs-card">
+                  {pendingJobs.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
+                      <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                      <span>{loading ? 'Loading...' : 'No drawings pending approval.'}</span>
+                    </div>
+                  ) : (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
+                          <tr>
+                            <th>Division</th>
+                            <th>Job Name</th>
+                            <th>Attachment</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingJobs.map(j => (
+                            <tr key={j._id}>
+                              <td>{j.division}</td>
+                              <td className="font-bold">{j.jobName}</td>
+                              <td>
+                                {j.drawingFileUrl ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openAttachment(j.drawingFileUrl)}
+                                    className="cancel-btn"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                  >
+                                    <Eye size={13} /> View
+                                  </button>
+                                ) : '—'}
+                              </td>
+                              <td>
+                                <button
+                                  className="save-btn"
+                                  disabled={approvingJobNo === j.jobNo}
+                                  onClick={() => handleApprove(j.jobNo)}
+                                >
+                                  <CheckCircle size={13} /> {approvingJobNo === j.jobNo ? 'Approving...' : 'Approve'}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'Completed' && (
+              <motion.section key="completed" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <CheckCircle size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Completed Jobs</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Drawings you've approved — now available to the user</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="recent-jobs-card">
+                  {completedJobs.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
+                      <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                      <span>{loading ? 'Loading...' : 'No approved drawings yet.'}</span>
+                    </div>
+                  ) : (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
+                          <tr>
+                            <th>Division</th>
+                            <th>Job Name</th>
+                            <th>Attachment</th>
+                            <th>Approved On</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {completedJobs.map(j => (
+                            <tr
+                              key={j._id}
+                              onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view full job details"
+                            >
+                              <td>{j.division}</td>
+                              <td className="font-bold">{j.jobName}</td>
+                              <td>
+                                {j.drawingFileUrl ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); openAttachment(j.drawingFileUrl); }}
+                                    className="cancel-btn"
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                  >
+                                    <Eye size={13} /> View
+                                  </button>
+                                ) : '—'}
+                              </td>
+                              <td>{j.directorApprovedAt ? new Date(j.directorApprovedAt).toLocaleDateString() : 'N/A'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'Profile' && (
+              <motion.section key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="profile-view">
+                <div className="field-card" style={{ maxWidth: '600px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+                    <div style={{ position: 'relative', width: '90px', height: '90px', flexShrink: 0 }}>
+                      <div className="profile-photo" style={{ width: '100%', height: '100%', margin: 0, position: 'relative' }}>
+                        {profilePic ? <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Briefcase size={40} />}
+                      </div>
+                      <button
+                        onClick={() => fileInputRef.current.click()}
+                        style={{
+                          position: 'absolute', bottom: 0, right: 0, width: '32px', height: '32px', borderRadius: '50%',
+                          backgroundColor: 'var(--accent-primary)', color: '#fff', border: '3px solid var(--bg-card)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0
+                        }}
+                        title="Change profile photo"
+                      >
+                        <Camera size={14} />
+                      </button>
+                      <input type="file" ref={fileInputRef} onChange={handleImageChange} accept="image/*" style={{ display: 'none' }} />
+                    </div>
+                    <div>
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Personal Details</h3>
+                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '4px 0 0' }}>Update your profile information</p>
+                    </div>
+                  </div>
+
+                  {profileMessage && (
+                    <div className={`alert-banner alert-${profileMessage.type === 'success' ? 'success' : 'error'}`} style={{ marginBottom: '16px' }}>
+                      {profileMessage.text}
+                    </div>
+                  )}
+
+                  <div className="vertical-form">
+                    <div className="input-row-group">
+                      <label>Full Name</label>
+                      <input className="input-field" value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Employee ID</label>
+                      <input className="input-field" value={profileForm.reg} disabled style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Email</label>
+                      <input className="input-field" value={profileForm.email || ''} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} />
+                    </div>
+                    <div className="input-row-group">
+                      <label>Phone</label>
+                      <input
+                        className="input-field"
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={10}
+                        value={profileForm.phone || ''}
+                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                    <button className="confirm-btn" onClick={handleSaveProfile}><Save size={14} /> Save Profile</button>
+                    <button className="cancel-btn" onClick={() => setProfileForm(profileData)}><X size={14} /> Reset</button>
+                  </div>
+                </div>
               </motion.section>
             )}
 
