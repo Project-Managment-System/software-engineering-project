@@ -47,6 +47,10 @@ const ProjectSchema = new mongoose.Schema({
     // User Portal Estimate & Drawing Fields
     fieldVisitedDate: { type: Date },
     fieldEstimateAmount: { type: Number },
+    // Whether the user needs a structural drawing for this job at all — null means the
+    // user hasn't chosen yet. When false, the whole drawing-request pipeline is skipped
+    // and the final estimate can be submitted to the Engineer straight away.
+    drawingNeeded: { type: Boolean, default: null },
     estimateSubmitted: { type: Boolean, default: false },
     estimateSubmittedAt: { type: Date },
     drawingReceived: { type: Boolean, default: false },
