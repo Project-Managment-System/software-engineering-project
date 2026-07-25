@@ -1077,16 +1077,29 @@ const DivisionalAssistantDashboard = () => {
             {activeTab === 'drawing-requests' && (
               <motion.section key="drawing-requests" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                      <Send size={22} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                        <Send size={22} />
+                      </div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Drawing Requests</h2>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Structural drawing requests from users in {currentDivision || 'your division'} — forward to the Head Office Engineer
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Drawing Requests</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        Structural drawing requests from users in {currentDivision || 'your division'} — forward to the Head Office Engineer
-                      </p>
-                    </div>
+                    {renderExportButtons(
+                      "Drawing Requests",
+                      ["Job No", "Activity", "Division", "Requested On", "Status"],
+                      drawingRequests.map(j => [
+                        j.jobNo,
+                        j.jobName,
+                        j.division,
+                        j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A',
+                        j.drawingDaStatus || 'Pending'
+                      ])
+                    )}
                   </div>
                 </div>
 
@@ -1164,16 +1177,31 @@ const DivisionalAssistantDashboard = () => {
             {activeTab === 'drawing-tracking' && (
               <motion.section key="drawing-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                      <Clock size={22} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                        <Clock size={22} />
+                      </div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Drawing Tracking</h2>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Progress of every drawing request in {currentDivision || 'your division'}, from your review through to the user receiving it
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Drawing Tracking</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        Progress of every drawing request in {currentDivision || 'your division'}, from your review through to the user receiving it
-                      </p>
-                    </div>
+                    {renderExportButtons(
+                      "Drawing Tracking",
+                      ["Job No", "Job Name", "Requested On", "Status"],
+                      drawingTracking.map(j => {
+                        const info = getDrawingTrackingInfo(j);
+                        return [
+                          j.jobNo,
+                          j.jobName,
+                          j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A',
+                          info.label
+                        ];
+                      })
+                    )}
                   </div>
                 </div>
 

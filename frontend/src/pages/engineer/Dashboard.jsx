@@ -1293,11 +1293,26 @@ const EngineerDashboard = () => {
             {activeTab === 'drawing-tracking' && (
               <motion.div key="drawing-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div className="field-card" style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                    <Clock size={20} style={{ color: 'var(--accent-primary)' }} />
-                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>
-                      {currentDivision ? `${currentDivision} – Drawing Tracking` : 'Drawing Tracking'}
-                    </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Clock size={20} style={{ color: 'var(--accent-primary)' }} />
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>
+                        {currentDivision ? `${currentDivision} – Drawing Tracking` : 'Drawing Tracking'}
+                      </h3>
+                    </div>
+                    {renderExportButtons(
+                      "Drawing Tracking",
+                      ["Estimation Number", "Job Name", "Requested On", "Status"],
+                      drawingTrackingJobs.map(job => {
+                        const info = getDrawingTrackingInfo(job);
+                        return [
+                          job.estimationNo || '—',
+                          job.jobName,
+                          job.drawingRequestedAt ? new Date(job.drawingRequestedAt).toLocaleDateString() : 'N/A',
+                          info.label
+                        ];
+                      })
+                    )}
                   </div>
                   <p style={{ margin: '-14px 0 16px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                     Progress of every drawing request in your division, from the initial request through to the user receiving it
