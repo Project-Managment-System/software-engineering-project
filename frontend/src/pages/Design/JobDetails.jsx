@@ -4,7 +4,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
-  Briefcase, Eye, CheckCircle, Clock, AlertTriangle, Sun, Moon, ArrowLeft, HardHat, User as UserIcon, PenTool, Download
+  Briefcase, Eye, CheckCircle, Clock, AlertTriangle, ArrowLeft, HardHat, User as UserIcon, PenTool, Download
 } from 'lucide-react';
 import '../shared/BranchDashboard.css';
 
@@ -92,7 +92,7 @@ const JobDetailsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const preloadedJob = location.state?.job;
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
+  const [isDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [accentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [job, setJob] = useState(preloadedJob || null);
   const [divisionStaff, setDivisionStaff] = useState([]);
@@ -134,12 +134,6 @@ const JobDetailsPage = () => {
     };
     fetchStaff();
   }, [job?.division]);
-
-  const toggleDarkMode = () => {
-    const nextDark = !isDark;
-    setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
-  };
 
   const isApproved = job?.drawingWorkflowStatus === 'Completed';
   const statusLabel = {
@@ -237,9 +231,6 @@ const JobDetailsPage = () => {
                 <Download size={14} /> Download PDF
               </button>
             )}
-            <button className="cancel-btn" onClick={toggleDarkMode} title="Toggle theme">
-              {isDark ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
             <button className="cancel-btn" onClick={() => navigate(-1)}>
               <ArrowLeft size={14} /> Back
             </button>
