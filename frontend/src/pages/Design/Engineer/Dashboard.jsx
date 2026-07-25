@@ -247,7 +247,12 @@ const DesignEngineerDashboard = () => {
   const unreadNotifCount = notifications.filter(n => !n.read).length;
 
   const handleNotificationClick = (notif) => {
-    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    // Write straight to localStorage (not just via the persist effect) — navigate() below
+    // unmounts this dashboard in the same tick, which can skip the effect entirely and
+    // leave the notification looking unread again next time this page loads.
+    const updated = notifications.map(n => n.id === notif.id ? { ...n, read: true } : n);
+    setNotifications(updated);
+    localStorage.setItem('designEngineerNotifications', JSON.stringify(updated));
     if (notif.jobNo) navigate(`/design/job/${notif.jobNo}`);
   };
 
