@@ -483,8 +483,15 @@ const UserDashboard = () => {
     }
   };
 
+  // Writes straight to localStorage (not just via the persist effect) so the read/dismiss
+  // state can never be lost to a timing gap between a state update and any later unmount.
+  const persistNotifications = (updated) => {
+    localStorage.setItem('user_notifications', JSON.stringify(updated));
+    return updated;
+  };
+
   const handleNotificationClick = (notif) => {
-    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === notif.id ? { ...n, read: true } : n)));
     if (!notif.jobNo) return;
     handleSelectionChange(notif.jobNo);
     setActiveTab('update-progress');
@@ -1346,7 +1353,7 @@ const UserDashboard = () => {
                       <button
                         className="action-btn-pill secondary"
                         onClick={() => {
-                          setNotifications(notifications.map(n => ({ ...n, read: true })));
+                          setNotifications(persistNotifications(notifications.map(n => ({ ...n, read: true }))));
                           addToast("All notifications marked as read", "success");
                         }}
                       >
@@ -1382,7 +1389,7 @@ const UserDashboard = () => {
                               <button
                                 className="action-btn-pill primary"
                                 onClick={() => {
-                                  setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                                  setNotifications(persistNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n)));
                                   addToast("Notification marked as read", "info");
                                 }}
                               >
@@ -1392,7 +1399,7 @@ const UserDashboard = () => {
                             <button
                               className="action-btn-pill secondary"
                               onClick={() => {
-                                setNotifications(notifications.filter(n => n.id !== notif.id));
+                                setNotifications(persistNotifications(notifications.filter(n => n.id !== notif.id)));
                                 addToast("Notification dismissed", "info");
                               }}
                             >

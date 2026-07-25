@@ -1255,7 +1255,12 @@ const EngineerDashboard = () => {
                           </tr>
                         ) : (
                           approvalData.map((job) => (
-                            <tr key={job.jobNo}>
+                            <tr
+                              key={job.jobNo}
+                              onClick={() => navigate(`/design/job/${job.jobNo}`, { state: { job } })}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view full job details"
+                            >
                               <td>{job.sNo}</td>
                               <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import {
-  Briefcase, Eye, CheckCircle, Clock, AlertTriangle, Sun, Moon, ArrowLeft, HardHat, User as UserIcon, PenTool
+  Briefcase, Eye, CheckCircle, Clock, AlertTriangle, Sun, Moon, ArrowLeft, HardHat, User as UserIcon, PenTool, Download
 } from 'lucide-react';
 import '../shared/BranchDashboard.css';
 
@@ -151,6 +153,70 @@ const JobDetailsPage = () => {
     ? divisionStaff.find(u => u.role === 'user' && u.fullName === job.assignee)
     : null;
 
+  const handleDownloadPdf = () => {
+    if (!job) return;
+    const doc = new jsPDF();
+    doc.setFont('Helvetica');
+    doc.setFontSize(15);
+    doc.text(job.jobName || 'Job Details', 14, 16);
+    doc.setFontSize(9);
+    doc.text(`Status: ${statusLabel}`, 14, 23);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 28);
+
+    autoTable(doc, {
+      head: [['Job Information', '']],
+      body: JOB_FIELDS.map(f => [f.label, f.format ? String(f.format(job[f.key])) : (job[f.key] ?? '—')]),
+      startY: 34,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241] },
+      styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+    });
+
+    autoTable(doc, {
+      head: [['Assigned Personnel', 'Name']],
+      body: [
+        ['Division Engineer', divisionEngineer?.fullName || '—'],
+        ['Assigned User (Field Visit)', assignedUser?.fullName || job.assignee || '—'],
+        ['Assigned Design Engineer', job.assignedDesignEngineerName || '—'],
+      ],
+      startY: doc.lastAutoTable.finalY + 8,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241] },
+      styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+    });
+
+    autoTable(doc, {
+      head: [['Drawing Approval Timeline', '']],
+      body: DRAWING_TIMELINE_FIELDS.map(f => [f.label, f.format(job[f.key])]),
+      startY: doc.lastAutoTable.finalY + 8,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241] },
+      styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+      columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+    });
+
+    if (job.finalEstimateCost != null) {
+      autoTable(doc, {
+        head: [['Final Estimate', '']],
+        body: [
+          ['Estimate Cost', `Rs. ${job.finalEstimateCost}`],
+          ['Submitted On', formatDateTime(job.finalEstimateSubmittedAt)],
+          ['Engineer Review Status', job.engineerReviewStatus || 'Pending'],
+          ['Engineer Reviewed On', formatDateTime(job.engineerReviewedAt)],
+        ],
+        startY: doc.lastAutoTable.finalY + 8,
+        theme: 'striped',
+        headStyles: { fillColor: [99, 102, 241] },
+        styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 60 } },
+      });
+    }
+
+    doc.save(`${job.jobNo || 'job'}_details.pdf`);
+  };
+
   return (
     <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
       <div style={{ maxWidth: '840px', margin: '0 auto', padding: '32px 24px 60px' }}>
@@ -165,6 +231,11 @@ const JobDetailsPage = () => {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
+            {job && (
+              <button className="save-btn" onClick={handleDownloadPdf}>
+                <Download size={14} /> Download PDF
+              </button>
+            )}
             <button className="cancel-btn" onClick={toggleDarkMode} title="Toggle theme">
               {isDark ? <Sun size={14} /> : <Moon size={14} />}
             </button>

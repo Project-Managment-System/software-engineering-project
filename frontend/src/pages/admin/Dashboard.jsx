@@ -296,6 +296,14 @@ const AdminDashboard = () => {
     localStorage.setItem(`clerk_notifications_${uid}`, JSON.stringify(notifications));
   }, [notifications]);
 
+  // Writes straight to localStorage (not just via the persist effect above) so the
+  // read/dismiss state can never be lost to a timing gap between a state update and any later unmount.
+  const persistNotifications = (updated) => {
+    const uid = localStorage.getItem('userId');
+    if (uid) localStorage.setItem(`clerk_notifications_${uid}`, JSON.stringify(updated));
+    return updated;
+  };
+
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
@@ -1667,7 +1675,7 @@ const AdminDashboard = () => {
                     {notifications.length > 0 && (
                       <button
                         className="cancel-btn"
-                        onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                        onClick={() => setNotifications(persistNotifications(notifications.map(n => ({ ...n, read: true }))))}
                         style={{ minHeight: '32px', padding: '6px 16px' }}
                       >
                         <Check size={12} /> Mark all read
@@ -1697,14 +1705,14 @@ const AdminDashboard = () => {
                             {!notif.read && (
                               <button
                                 className="action-btn-pill secondary"
-                                onClick={() => setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n))}
+                                onClick={() => setNotifications(persistNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n)))}
                               >
                                 <Check size={12} /> Read
                               </button>
                             )}
                             <button
                               className="action-btn-pill secondary"
-                              onClick={() => setNotifications(notifications.filter(n => n.id !== notif.id))}
+                              onClick={() => setNotifications(persistNotifications(notifications.filter(n => n.id !== notif.id)))}
                             >
                               <X size={12} /> Dismiss
                             </button>
