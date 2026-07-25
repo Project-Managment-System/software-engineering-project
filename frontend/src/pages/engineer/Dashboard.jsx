@@ -1044,14 +1044,12 @@ const EngineerDashboard = () => {
                   <button
                     className={jobSubTab === 'approvals' ? 'active-sub-tab' : ''}
                     onClick={() => setJobSubTab('approvals')}
-                    style={jobSubTab === 'approvals' ? { background: 'var(--accent-soft)', color: 'var(--accent-primary)', borderBottom: '3px solid var(--accent-primary)', fontWeight: 700 } : {}}
                   >
                     <CheckCircle size={14} style={{ marginRight: '6px' }} /> Approval Requests
                   </button>
                   <button
                     className={jobSubTab === 'tracking' ? 'active-sub-tab' : ''}
                     onClick={() => setJobSubTab('tracking')}
-                    style={jobSubTab === 'tracking' ? { background: 'var(--accent-soft)', color: 'var(--accent-primary)', borderBottom: '3px solid var(--accent-primary)', fontWeight: 700 } : {}}
                   >
                     <Users size={14} style={{ marginRight: '6px' }} /> Assignee
                   </button>
