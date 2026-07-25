@@ -960,14 +960,15 @@ const EngineerDashboard = () => {
                       </div>
                       {renderExportButtons(
                         "Team Resource Summary",
-                        ["User Name", "Position", "Division", "Active Jobs"],
-                        usersWithJobs.map(u => [u.displayName, formatRoleName(u.role), u.division || 'Head Office', u.jobCount])
+                        ["Serial No", "User Name", "Position", "Division", "Active Jobs"],
+                        usersWithJobs.map((u, index) => [index + 1, u.displayName, formatRoleName(u.role), u.division || 'Head Office', u.jobCount])
                       )}
                     </div>
                     <div className="table-scroll-wrapper">
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>User Name</th>
                             <th>Position</th>
                             <th>Division</th>
@@ -977,15 +978,16 @@ const EngineerDashboard = () => {
                         <tbody>
                           {usersWithJobs.length === 0 ? (
                             <tr>
-                              <td colSpan={4}>
+                              <td colSpan={5}>
                                 <div className="placeholder-content" style={{ height: '100px', border: 'none' }}>
                                   <span>No system users registered.</span>
                                 </div>
                               </td>
                             </tr>
                           ) : (
-                            usersWithJobs.map((user) => (
+                            usersWithJobs.map((user, index) => (
                               <tr key={user._id}>
+                                <td>{index + 1}</td>
                                 <td className="font-bold">{user.displayName}</td>
                                 <td>
                                   <span className={`status-badge ${getRoleBadgeClass(user.role)}`}>
@@ -1124,18 +1126,18 @@ const EngineerDashboard = () => {
                     <motion.div key="tracking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                       {renderExportButtons(
                         "Assignee Tracking",
-                        ["No", "Estimation Number", "Division", "Job Name", "Allocation", "Assignee"],
-                        trackedJobs.map(job => [job.sNo, job.estimationNo || '—', job.division, job.jobName, job.allocation, job.assignee || 'Unassigned'])
+                        ["Serial No", "No", "Estimation Number", "Division", "Job Name", "Allocation", "Assignee"],
+                        trackedJobs.map((job, index) => [index + 1, job.sNo, job.estimationNo || '—', job.division, job.jobName, job.allocation, job.assignee || 'Unassigned'])
                       )}
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
                           <thead>
-                            <tr><th>No</th><th>Estimation Number</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr>
+                            <tr><th>Serial No</th><th>No</th><th>Estimation Number</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr>
                           </thead>
                           <tbody>
                             {trackedJobs.length === 0 ? (
                               <tr>
-                                <td colSpan={7}>
+                                <td colSpan={8}>
                                   <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
                                     <AlertTriangle size={24} style={{ opacity: 0.35 }} />
                                     <span>No jobs to track</span>
@@ -1143,8 +1145,9 @@ const EngineerDashboard = () => {
                                 </td>
                               </tr>
                             ) : (
-                              trackedJobs.map((job) => (
+                              trackedJobs.map((job, index) => (
                                 <tr key={job.jobNo}>
+                                  <td>{index + 1}</td>
                                   <td>{job.sNo}</td>
                                   <td className="font-mono">{job.estimationNo || '—'}</td>
                                   <td>{job.division}</td>
@@ -1297,10 +1300,11 @@ const EngineerDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Tracking",
-                      ["Estimation Number", "Job Name", "Requested On", "Status"],
-                      drawingTrackingJobs.map(job => {
+                      ["Serial No", "Estimation Number", "Job Name", "Requested On", "Status"],
+                      drawingTrackingJobs.map((job, index) => {
                         const info = getDrawingTrackingInfo(job);
                         return [
+                          index + 1,
                           job.estimationNo || '—',
                           job.jobName,
                           job.drawingRequestedAt ? new Date(job.drawingRequestedAt).toLocaleDateString() : 'N/A',
@@ -1317,6 +1321,7 @@ const EngineerDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
+                          <th>Serial No</th>
                           <th>Estimation Number</th>
                           <th>Job Name</th>
                           <th>Requested On</th>
@@ -1326,7 +1331,7 @@ const EngineerDashboard = () => {
                       <tbody>
                         {drawingTrackingJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={4}>
+                            <td colSpan={5}>
                               <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
                                 <AlertTriangle size={24} style={{ opacity: 0.35 }} />
                                 <span>No drawing requests yet.</span>
@@ -1334,10 +1339,11 @@ const EngineerDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          drawingTrackingJobs.map((job) => {
+                          drawingTrackingJobs.map((job, index) => {
                             const info = getDrawingTrackingInfo(job);
                             return (
                               <tr key={job.jobNo}>
+                                <td>{index + 1}</td>
                                 <td className="font-mono">{job.estimationNo || '—'}</td>
                                 <td className="font-bold">{job.jobName}</td>
                                 <td>{job.drawingRequestedAt ? new Date(job.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
@@ -1368,8 +1374,9 @@ const EngineerDashboard = () => {
                       </span>
                       {renderExportButtons(
                         "Review Final Estimates",
-                        ["Estimation Number", "Job Name", "Submitted By", "Estimate Cost (LKR)", "Alignment Date", "Drawing Approved On", "Design Engineer", "Engineer Review"],
-                        daApprovedJobs.map(job => [
+                        ["Serial No", "Estimation Number", "Job Name", "Submitted By", "Estimate Cost (LKR)", "Alignment Date", "Drawing Approved On", "Design Engineer", "Engineer Review"],
+                        daApprovedJobs.map((job, index) => [
+                          index + 1,
                           job.estimationNo || '—',
                           job.jobName,
                           job.assignee || '—',
@@ -1387,6 +1394,7 @@ const EngineerDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
+                          <th>Serial No</th>
                           <th>Estimation Number</th>
                           <th>Job Name</th>
                           <th>Submitted By</th>
@@ -1400,7 +1408,7 @@ const EngineerDashboard = () => {
                       <tbody>
                         {daApprovedJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={8}>
+                            <td colSpan={9}>
                               <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
                                 <ClipboardCheck size={24} style={{ opacity: 0.35 }} />
                                 <span>No submitted final estimates waiting for review.</span>
@@ -1408,13 +1416,14 @@ const EngineerDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          daApprovedJobs.map((job) => (
+                          daApprovedJobs.map((job, index) => (
                             <tr
                               key={job.jobNo}
                               onClick={() => navigate(`/design/job/${job.jobNo}`, { state: { job } })}
                               style={{ cursor: 'pointer' }}
                               title="Click to view full job details"
                             >
+                              <td>{index + 1}</td>
                               <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.assignee || '—'}</td>

@@ -1273,8 +1273,9 @@ const UserDashboard = () => {
                         <h3 className="recent-jobs-title" style={{ margin: 0 }}>Submitted Structural Estimates</h3>
                         {renderExportButtons(
                           "Submitted Structural Estimates",
-                          ["No", "Estimation Number", "Job Name", "To Name", "Allocation", "Estimate (LKR)", "Approval Flow"],
-                          submittedEstimates.map(estimate => [
+                          ["Serial No", "No", "Estimation Number", "Job Name", "To Name", "Allocation", "Estimate (LKR)", "Approval Flow"],
+                          submittedEstimates.map((estimate, index) => [
+                            index + 1,
                             estimate.no,
                             estimate.estimationNo || '—',
                             estimate.jobName,
@@ -1289,6 +1290,7 @@ const UserDashboard = () => {
                         <table className="project-table">
                           <thead>
                             <tr>
+                              <th>Serial No</th>
                               <th>No</th>
                               <th>Estimation Number</th>
                               <th>Job Name</th>
@@ -1300,8 +1302,9 @@ const UserDashboard = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {submittedEstimates.map((estimate) => (
+                            {submittedEstimates.map((estimate, index) => (
                               <tr key={estimate.no}>
+                                <td>{index + 1}</td>
                                 <td>{estimate.no}</td>
                                 <td className="font-mono">{estimate.estimationNo || '—'}</td>
                                 <td className="font-bold">{estimate.jobName}</td>

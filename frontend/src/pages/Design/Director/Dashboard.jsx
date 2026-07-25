@@ -426,13 +426,14 @@ const DesignDirectorDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Status</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {recentJobs.map(j => {
+                          {recentJobs.map((j, index) => {
                             const statusMeta = j.drawingWorkflowStatus === 'Completed'
                               ? { badge: 'status-approved', label: 'Approved by Director' }
                               : j.drawingWorkflowStatus === 'PendingDirectorAssignment'
@@ -447,6 +448,7 @@ const DesignDirectorDashboard = () => {
                                 style={{ cursor: 'pointer' }}
                                 title="Click to view full job details"
                               >
+                                <td>{index + 1}</td>
                                 <td>{j.division}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>
@@ -551,6 +553,7 @@ const DesignDirectorDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Requested On</th>
@@ -559,13 +562,14 @@ const DesignDirectorDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {assignJobs.map(j => (
+                          {assignJobs.map((j, index) => (
                             <tr
                               key={j._id}
                               onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
                               style={{ cursor: 'pointer' }}
                               title="Click to view full job details"
                             >
+                              <td>{index + 1}</td>
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
@@ -625,6 +629,7 @@ const DesignDirectorDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Attachment</th>
@@ -632,13 +637,14 @@ const DesignDirectorDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {pendingJobs.map(j => (
+                          {pendingJobs.map((j, index) => (
                             <tr
                               key={j._id}
                               onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
                               style={{ cursor: 'pointer' }}
                               title="Click to view full job details"
                             >
+                              <td>{index + 1}</td>
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td onClick={(e) => e.stopPropagation()}>
@@ -697,6 +703,7 @@ const DesignDirectorDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Attachment</th>
@@ -704,13 +711,14 @@ const DesignDirectorDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {completedJobs.map(j => (
+                          {completedJobs.map((j, index) => (
                             <tr
                               key={j._id}
                               onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
                               style={{ cursor: 'pointer' }}
                               title="Click to view full job details"
                             >
+                              <td>{index + 1}</td>
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>

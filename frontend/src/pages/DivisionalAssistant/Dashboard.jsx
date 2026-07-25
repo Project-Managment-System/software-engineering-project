@@ -983,8 +983,9 @@ const DivisionalAssistantDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                     {renderExportButtons(
                       "Division Jobs",
-                      ["Job No", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
-                      filteredJobs.map(j => [
+                      ["Serial No", "Job No", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
+                      filteredJobs.map((j, idx) => [
+                        idx + 1,
                         j.jobNo,
                         j.jobName,
                         j.ministry,
@@ -1038,6 +1039,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Job No</th>
                             <th>Activity</th>
                             <th>Ministry</th>
@@ -1049,8 +1051,9 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredJobs.map(j => (
+                          {filteredJobs.map((j, idx) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                              <td>{idx + 1}</td>
                               <td className="font-mono">{j.jobNo}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
@@ -1091,8 +1094,9 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Requests",
-                      ["Job No", "Activity", "Division", "Requested On", "Status"],
-                      drawingRequests.map(j => [
+                      ["Serial No", "Job No", "Activity", "Division", "Requested On", "Status"],
+                      drawingRequests.map((j, idx) => [
+                        idx + 1,
                         j.jobNo,
                         j.jobName,
                         j.division,
@@ -1114,6 +1118,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Job No</th>
                             <th>Activity</th>
                             <th>Division</th>
@@ -1123,10 +1128,11 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingRequests.map(j => {
+                          {drawingRequests.map((j, idx) => {
                             const drawingStatus = j.drawingDaStatus || 'Pending';
                             return (
                               <tr key={j._id}>
+                                <td>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.division}</td>
@@ -1191,10 +1197,11 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Tracking",
-                      ["Job No", "Job Name", "Requested On", "Status"],
-                      drawingTracking.map(j => {
+                      ["Serial No", "Job No", "Job Name", "Requested On", "Status"],
+                      drawingTracking.map((j, idx) => {
                         const info = getDrawingTrackingInfo(j);
                         return [
+                          idx + 1,
                           j.jobNo,
                           j.jobName,
                           j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A',
@@ -1216,6 +1223,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Job No</th>
                             <th>Job Name</th>
                             <th>Requested On</th>
@@ -1223,7 +1231,7 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingTracking.map(j => {
+                          {drawingTracking.map((j, idx) => {
                             const info = getDrawingTrackingInfo(j);
                             return (
                               <tr
@@ -1232,6 +1240,7 @@ const DivisionalAssistantDashboard = () => {
                                 style={{ cursor: 'pointer' }}
                                 title="Click to view full job details"
                               >
+                                <td>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
