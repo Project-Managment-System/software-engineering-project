@@ -132,6 +132,8 @@ const formatRoleName = (role) => {
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const jobFormRef = useRef(null);
+  const jobTableRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
@@ -139,6 +141,8 @@ const AdminDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [users, setUsers] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const [isSavingJob, setIsSavingJob] = useState(false);
+  const [deletingJobNo, setDeletingJobNo] = useState(null);
   const [formData, setFormData] = useState({
     jobName: '', ministry: '', department: '', division: '',
     work: 'N', allocation: '', dateReq: '', ref: '', institute: '',
@@ -517,6 +521,8 @@ const AdminDashboard = () => {
   };
 
   const handleAddJob = async () => {
+    if (isSavingJob) return;
+    setIsSavingJob(true);
     try {
       if (editingId) {
         await axios.put(`http://127.0.0.1:5000/api/projects/update/${editingId}`, formData);
@@ -528,6 +534,7 @@ const AdminDashboard = () => {
       const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
       setJobs(res.data);
       handleCancel();
+      jobTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
       console.dir(err);
       if (err.response) {
@@ -535,11 +542,15 @@ const AdminDashboard = () => {
       } else {
         addToast('Error: ' + err.message, 'error');
       }
+    } finally {
+      setIsSavingJob(false);
     }
   };
 
   const handleDeleteJob = async (jobNo) => {
+    if (deletingJobNo) return;
     if (window.confirm("Are you sure you want to delete this job?")) {
+      setDeletingJobNo(jobNo);
       try {
         await axios.delete(`http://127.0.0.1:5000/api/projects/delete/${jobNo}`);
         await fetchData();
@@ -547,14 +558,20 @@ const AdminDashboard = () => {
       } catch (error) {
         console.error("Delete Error:", error);
         addToast('Delete failed! Check console.', 'error');
+      } finally {
+        setDeletingJobNo(null);
       }
     }
   };
 
   const handleEditJob = (job) => {
-    setEditingId(job._id);
-    setFormData(job);
+    setEditingId(job.jobNo);
+    setFormData({
+      ...job,
+      dateReq: job.dateReq ? job.dateReq.split('T')[0] : ''
+    });
     addToast('Editing job: ' + job.jobNo, 'info');
+    jobFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleCancel = () => {
@@ -837,7 +854,7 @@ const AdminDashboard = () => {
                 className="project-table-section"
               >
                 {/* ── Job Form ── */}
-                <div className="field-card">
+                <div className="field-card" ref={jobFormRef}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                     <Shield size={20} style={{ color: 'var(--accent-primary)' }} />
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>
@@ -1026,8 +1043,8 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="form-action-row">
-                    <button className="save-btn" onClick={handleAddJob} disabled={!isFormValid()}>
-                      <Save size={14} /> {editingId ? 'Update' : 'OK'}
+                    <button className="save-btn" onClick={handleAddJob} disabled={!isFormValid() || isSavingJob}>
+                      <Save size={14} /> {isSavingJob ? 'Saving...' : (editingId ? 'Update' : 'OK')}
                     </button>
                     <button className="cancel-btn" onClick={handleCancel}>
                       <X size={14} /> Cancel
@@ -1038,6 +1055,7 @@ const AdminDashboard = () => {
                 {/* ── Jobs Table ── */}
                 <motion.div
                   className="recent-jobs-card"
+                  ref={jobTableRef}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15, duration: 0.3 }}
@@ -1143,10 +1161,10 @@ const AdminDashboard = () => {
                                     </button>
                                   ) : (
                                     <div style={{ display: 'flex', gap: '6px' }}>
-                                      <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit">
+                                      <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit" disabled={deletingJobNo === j.jobNo}>
                                         <Edit size={15} />
                                       </button>
-                                      <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete">
+                                      <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete" disabled={deletingJobNo === j.jobNo} style={deletingJobNo === j.jobNo ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>
                                         <Trash2 size={15} />
                                       </button>
                                     </div>
@@ -1541,10 +1559,10 @@ const AdminDashboard = () => {
                                   </button>
                                 ) : (
                                   <div style={{ display: 'flex', gap: '6px' }}>
-                                    <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit">
+                                    <button className="approve-btn" onClick={() => handleEditJob(j)} title="Edit" disabled={deletingJobNo === j.jobNo}>
                                       <Edit size={15} />
                                     </button>
-                                    <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete">
+                                    <button className="reject-btn" onClick={() => handleDeleteJob(j.jobNo)} title="Delete" disabled={deletingJobNo === j.jobNo} style={deletingJobNo === j.jobNo ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}>
                                       <Trash2 size={15} />
                                     </button>
                                   </div>

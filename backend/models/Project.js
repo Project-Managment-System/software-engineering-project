@@ -57,10 +57,11 @@ const ProjectSchema = new mongoose.Schema({
     // Timestamp for when the user's final estimate reaches the Divisional Assistant's review queue
     finalEstimateSubmittedAt: { type: Date },
 
-    // Drawing request pipeline: User -> Divisional Assistant -> Design Engineer -> Design Director -> User
+    // Drawing request pipeline: User -> Divisional Assistant -> Design Director (assigns an
+    // engineer) -> Design Engineer -> Design Director (approves) -> User
     drawingWorkflowStatus: {
         type: String,
-        enum: ['NotRequested', 'PendingDA', 'PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'],
+        enum: ['NotRequested', 'PendingDA', 'PendingDirectorAssignment', 'PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'],
         default: 'NotRequested'
     },
     drawingRequestedAt: { type: Date },
@@ -69,7 +70,7 @@ const ProjectSchema = new mongoose.Schema({
     directorApprovedAt: { type: Date },
 
     // Divisional Assistant's approve/reject decision on the drawing request itself,
-    // before it can be forwarded to the Head Office Design Engineers
+    // before it can be forwarded to the Design Director
     drawingDaStatus: {
         type: String,
         enum: ['Pending', 'Approved', 'Rejected'],
@@ -77,6 +78,11 @@ const ProjectSchema = new mongoose.Schema({
     },
     drawingDaReviewedAt: { type: Date },
     drawingDaNote: { type: String, default: '' },
+
+    // The specific Design Engineer the Design Director assigns to produce this job's drawing
+    assignedDesignEngineerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    assignedDesignEngineerName: { type: String, default: '' },
+    assignedDesignEngineerAt: { type: Date },
 
     // Divisional Assistant review of the user's final estimate submission
     daReviewStatus: {

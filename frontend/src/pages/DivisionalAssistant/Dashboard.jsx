@@ -321,8 +321,24 @@ const DivisionalAssistantDashboard = () => {
   };
 
 
-  /* ─── Drawing request handlers: User -> DA -> Design Engineer -> Design Director -> User ─── */
+  /* ─── Drawing request handlers: User -> DA -> Design Director (assigns engineer) -> Design Engineer -> Design Director -> User ─── */
   const drawingRequests = divisionJobs.filter(j => j.drawingWorkflowStatus === 'PendingDA');
+  const drawingTracking = divisionJobs.filter(j => j.drawingWorkflowStatus && j.drawingWorkflowStatus !== 'NotRequested');
+
+  const getDrawingTrackingInfo = (j) => {
+    if (j.drawingWorkflowStatus === 'PendingDA') {
+      if (j.drawingDaStatus === 'Rejected') return { label: 'Rejected by You', badge: 'status-rejected' };
+      if (j.drawingDaStatus === 'Approved') return { label: 'Approved — Ready to Forward', badge: 'status-pending' };
+      return { label: 'Pending Your Review', badge: 'status-pending' };
+    }
+    if (j.drawingWorkflowStatus === 'PendingDirectorAssignment') return { label: 'With Design Director', badge: 'status-pending' };
+    if (j.drawingWorkflowStatus === 'PendingEngineerDesign') {
+      return { label: j.assignedDesignEngineerName ? `Assigned to ${j.assignedDesignEngineerName}` : 'Assigned to Engineer', badge: 'status-pending' };
+    }
+    if (j.drawingWorkflowStatus === 'PendingDirectorDesign') return { label: 'Awaiting Director Approval', badge: 'status-pending' };
+    if (j.drawingWorkflowStatus === 'Completed') return { label: 'Drawing Sent to User', badge: 'status-approved' };
+    return { label: 'Not Requested', badge: 'status-pending' };
+  };
 
   const handleDrawingApprove = async (jobNo) => {
     try {
@@ -374,10 +390,10 @@ const DivisionalAssistantDashboard = () => {
   const handleForwardDrawing = async (jobNo) => {
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
-        drawingWorkflowStatus: 'PendingEngineerDesign',
+        drawingWorkflowStatus: 'PendingDirectorAssignment',
         daDrawingForwardedAt: new Date().toISOString()
       });
-      addToast('Drawing request forwarded to Head Office — Design Branch!', 'success');
+      addToast('Drawing request forwarded to the Design Director!', 'success');
       fetchJobs();
     } catch (err) {
       console.error(err);
@@ -619,6 +635,7 @@ const DivisionalAssistantDashboard = () => {
               { id: 'my-users', icon: Users, label: 'My Users' },
               { id: 'view-jobs', icon: Briefcase, label: 'View Jobs' },
               { id: 'drawing-requests', icon: Send, label: 'Drawing Requests' },
+              { id: 'drawing-tracking', icon: Clock, label: 'Drawing Tracking' },
               { id: 'messages', icon: MessageSquare, label: 'Messages' },
               { id: 'profile', icon: Edit3, label: 'Profile' },
               { id: 'settings', icon: Settings, label: 'Settings' },
@@ -1125,13 +1142,72 @@ const DivisionalAssistantDashboard = () => {
                                 </td>
                                 <td>
                                   {drawingStatus === 'Approved' ? (
-                                    <button className="approve-btn" onClick={() => handleForwardDrawing(j.jobNo)} title="Forward to Head Office — Design Branch">
-                                      <Send size={14} /> Forward to Head Office
+                                    <button className="approve-btn" onClick={() => handleForwardDrawing(j.jobNo)} title="Forward to the Design Director">
+                                      <Send size={14} /> Forward to Design Director
                                     </button>
                                   ) : (
                                     <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Awaiting approval</span>
                                   )}
                                 </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {/* ── Drawing Tracking Tab: read-only view of every drawing request's progress ── */}
+            {activeTab === 'drawing-tracking' && (
+              <motion.section key="drawing-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <Clock size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Drawing Tracking</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        Progress of every drawing request in {currentDivision || 'your division'}, from your review through to the user receiving it
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="recent-jobs-card">
+                  {drawingTracking.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
+                      <Clock size={32} style={{ opacity: 0.35 }} />
+                      <span>No drawing requests yet.</span>
+                    </div>
+                  ) : (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
+                          <tr>
+                            <th>Job No</th>
+                            <th>Job Name</th>
+                            <th>Requested On</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {drawingTracking.map(j => {
+                            const info = getDrawingTrackingInfo(j);
+                            return (
+                              <tr
+                                key={j._id}
+                                onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
+                                style={{ cursor: 'pointer' }}
+                                title="Click to view full job details"
+                              >
+                                <td className="font-mono">{j.jobNo}</td>
+                                <td className="font-bold">{j.jobName}</td>
+                                <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
+                                <td><span className={`status-badge ${info.badge}`}>{info.label}</span></td>
                               </tr>
                             );
                           })}

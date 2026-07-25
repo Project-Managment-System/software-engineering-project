@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Briefcase, Eye, CheckCircle, Clock, AlertTriangle, Sun, Moon, ArrowLeft, HardHat, User as UserIcon
+  Briefcase, Eye, CheckCircle, Clock, AlertTriangle, Sun, Moon, ArrowLeft, HardHat, User as UserIcon, PenTool
 } from 'lucide-react';
 import '../shared/BranchDashboard.css';
 
@@ -44,7 +44,8 @@ const JOB_FIELDS = [
 
 const DRAWING_TIMELINE_FIELDS = [
   { label: 'Drawing Requested', key: 'drawingRequestedAt', format: formatDateTime },
-  { label: 'Forwarded by Divisional Assistant', key: 'daDrawingForwardedAt', format: formatDateTime },
+  { label: 'Forwarded to Design Director', key: 'daDrawingForwardedAt', format: formatDateTime },
+  { label: 'Assigned to Engineer', key: 'assignedDesignEngineerAt', format: formatDateTime },
   { label: 'Drawing Attached by Engineer', key: 'drawingAttachedAt', format: formatDateTime },
   { label: 'Approved by Director', key: 'directorApprovedAt', format: formatDateTime },
 ];
@@ -138,6 +139,13 @@ const JobDetailsPage = () => {
   };
 
   const isApproved = job?.drawingWorkflowStatus === 'Completed';
+  const statusLabel = {
+    PendingDA: 'Pending Divisional Assistant Review',
+    PendingDirectorAssignment: 'Awaiting Engineer Assignment',
+    PendingEngineerDesign: 'Awaiting Drawing Attachment',
+    PendingDirectorDesign: 'Awaiting Director Approval',
+    Completed: 'Drawing Sent to User',
+  }[job?.drawingWorkflowStatus] || 'Not Requested';
   const divisionEngineer = divisionStaff.find(u => u.role === 'engineer');
   const assignedUser = job?.assignee
     ? divisionStaff.find(u => u.role === 'user' && u.fullName === job.assignee)
@@ -187,7 +195,7 @@ const JobDetailsPage = () => {
                 <h3 className="recent-jobs-title" style={{ margin: 0 }}>{job.jobName}</h3>
                 <span className={`status-badge ${isApproved ? 'status-approved' : 'status-pending'}`}>
                   {isApproved ? <CheckCircle size={12} /> : <Clock size={12} />}
-                  {isApproved ? 'Approved by Director' : 'Awaiting Director Approval'}
+                  {statusLabel}
                 </span>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '18px' }}>
@@ -202,6 +210,7 @@ const JobDetailsPage = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                 <PersonCard icon={HardHat} roleLabel="Division Engineer" person={divisionEngineer} />
                 <PersonCard icon={UserIcon} roleLabel="Assigned User (Field Visit)" person={assignedUser} fallbackName={job.assignee} />
+                <PersonCard icon={PenTool} roleLabel="Assigned Design Engineer" person={null} fallbackName={job.assignedDesignEngineerName} />
               </div>
             </div>
 
