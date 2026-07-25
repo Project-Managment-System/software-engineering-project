@@ -83,6 +83,15 @@ const DesignDirectorDashboard = () => {
       const list = res.data || [];
       setJobs(list);
 
+      // First time this browser has ever loaded this dashboard, treat every already-completed
+      // job as "seen" so the Completed Jobs badge only counts jobs completed from now on,
+      // instead of flagging every pre-existing completed job as a new arrival.
+      if (localStorage.getItem('designDirectorSeenCompleted') === null) {
+        const initialIds = list.filter(j => j.drawingWorkflowStatus === 'Completed').map(j => j._id);
+        setSeenCompletedIds(initialIds);
+        localStorage.setItem('designDirectorSeenCompleted', JSON.stringify(initialIds));
+      }
+
       // Notify the Director when a new request needs an engineer assignment, or when an
       // engineer has attached a drawing and it's ready for approval (skip the first load).
       if (prevJobStatusRef.current) {
@@ -651,6 +660,7 @@ const DesignDirectorDashboard = () => {
                           <tr>
                             <th>Division</th>
                             <th>Job Name</th>
+                            <th>Design Engineer</th>
                             <th>Attachment</th>
                             <th>Action</th>
                           </tr>
@@ -665,6 +675,7 @@ const DesignDirectorDashboard = () => {
                             >
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
+                              <td>{j.assignedDesignEngineerName || '—'}</td>
                               <td onClick={(e) => e.stopPropagation()}>
                                 <button
                                   type="button"
