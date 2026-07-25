@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   HardHat, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
   AlertTriangle, Paperclip, Send, BarChart3, Settings, User,
-  Save, X, Camera, Wallet, Building2, Bell, Trash2
+  Save, X, Camera, Wallet, Building2, Bell, Trash2, RotateCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -157,6 +157,7 @@ const DesignEngineerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedFiles, setSelectedFiles] = useState({});
   const [sendingJobNo, setSendingJobNo] = useState(null);
+  const [recallingJobNo, setRecallingJobNo] = useState(null);
 
   const [notifications, setNotifications] = useState(() => {
     try { return JSON.parse(localStorage.getItem('designEngineerNotifications') || '[]'); } catch { return []; }
@@ -337,6 +338,26 @@ const DesignEngineerDashboard = () => {
       alert('Failed to send attachment.');
     } finally {
       setSendingJobNo(null);
+    }
+  };
+
+  // Pulls a job back from "awaiting Director approval" to "awaiting attachment" so the
+  // engineer can replace the drawing before the Director reviews it. Only possible before
+  // the Director has actually approved it — once Completed, it's already with the user.
+  const handleRecallDrawing = async (jobNo) => {
+    setRecallingJobNo(jobNo);
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        drawingWorkflowStatus: 'PendingEngineerDesign',
+        drawingFileUrl: '',
+        drawingAttachedAt: null
+      });
+      await fetchData();
+    } catch (err) {
+      console.error('Recall failed:', err);
+      alert('Failed to recall the drawing.');
+    } finally {
+      setRecallingJobNo(null);
     }
   };
 
@@ -734,6 +755,7 @@ const DesignEngineerDashboard = () => {
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Status</th>
+                            <th>Action</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -750,6 +772,19 @@ const DesignEngineerDashboard = () => {
                                 <span className={`status-badge ${j.drawingWorkflowStatus === 'Completed' ? 'status-approved' : 'status-pending'}`}>
                                   {j.drawingWorkflowStatus === 'Completed' ? 'Drawing Sent to User' : 'Awaiting Director Approval'}
                                 </span>
+                              </td>
+                              <td onClick={(e) => e.stopPropagation()}>
+                                {j.drawingWorkflowStatus === 'PendingDirectorDesign' ? (
+                                  <button
+                                    type="button"
+                                    className="undo-btn"
+                                    disabled={recallingJobNo === j.jobNo}
+                                    onClick={() => handleRecallDrawing(j.jobNo)}
+                                    title="Pull the drawing back to replace it before the Director reviews it"
+                                  >
+                                    <RotateCcw size={13} /> {recallingJobNo === j.jobNo ? 'Recalling...' : 'Recall'}
+                                  </button>
+                                ) : '—'}
                               </td>
                             </tr>
                           ))}
