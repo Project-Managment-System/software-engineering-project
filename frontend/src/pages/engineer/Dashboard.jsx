@@ -1066,7 +1066,7 @@ const EngineerDashboard = () => {
                       {renderExportButtons(
                         "Approval Requests",
                         ["No", "Estimation Number", "Job Name", "Date of Request", "Allocation", "Status"],
-                        approvalData.map(job => [job.sNo, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
+                        approvalData.map((job, idx) => [idx + 1, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
                       )}
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
@@ -1084,9 +1084,9 @@ const EngineerDashboard = () => {
                                 </td>
                               </tr>
                             ) : (
-                              approvalData.map((job) => (
+                              approvalData.map((job, idx) => (
                                 <tr key={job.jobNo}>
-                                  <td>{job.sNo}</td>
+                                  <td>{idx + 1}</td>
                                   <td className="font-mono">{job.estimationNo || '—'}</td>
                                   <td className="font-bold">{job.jobName}</td>
                                   <td>{formatDate(job.dateReq)}</td>
@@ -1126,8 +1126,8 @@ const EngineerDashboard = () => {
                     <motion.div key="tracking" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                       {renderExportButtons(
                         "Assignee Tracking",
-                        ["Serial No", "No", "Estimation Number", "Division", "Job Name", "Allocation", "Assignee"],
-                        trackedJobs.map((job, index) => [index + 1, job.sNo, job.estimationNo || '—', job.division, job.jobName, job.allocation, job.assignee || 'Unassigned'])
+                        ["No", "Estimation Number", "Division", "Job Name", "Allocation", "Assignee"],
+                        trackedJobs.map((job, idx) => [idx + 1, job.estimationNo || '—', job.division, job.jobName, job.allocation, job.assignee || 'Unassigned'])
                       )}
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
@@ -1145,10 +1145,9 @@ const EngineerDashboard = () => {
                                 </td>
                               </tr>
                             ) : (
-                              trackedJobs.map((job, index) => (
+                              trackedJobs.map((job, idx) => (
                                 <tr key={job.jobNo}>
-                                  <td>{index + 1}</td>
-                                  <td>{job.sNo}</td>
+                                  <td>{idx + 1}</td>
                                   <td className="font-mono">{job.estimationNo || '—'}</td>
                                   <td>{job.division}</td>
                                   <td className="font-bold">{job.jobName}</td>
@@ -1258,7 +1257,12 @@ const EngineerDashboard = () => {
                           </tr>
                         ) : (
                           approvalData.map((job) => (
-                            <tr key={job.jobNo}>
+                            <tr
+                              key={job.jobNo}
+                              onClick={() => navigate(`/design/job/${job.jobNo}`, { state: { job } })}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view full job details"
+                            >
                               <td>{job.sNo}</td>
                               <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>

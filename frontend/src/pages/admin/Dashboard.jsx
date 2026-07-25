@@ -296,6 +296,14 @@ const AdminDashboard = () => {
     localStorage.setItem(`clerk_notifications_${uid}`, JSON.stringify(notifications));
   }, [notifications]);
 
+  // Writes straight to localStorage (not just via the persist effect above) so the
+  // read/dismiss state can never be lost to a timing gap between a state update and any later unmount.
+  const persistNotifications = (updated) => {
+    const uid = localStorage.getItem('userId');
+    if (uid) localStorage.setItem(`clerk_notifications_${uid}`, JSON.stringify(updated));
+    return updated;
+  };
+
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
@@ -1064,9 +1072,9 @@ const AdminDashboard = () => {
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>Recent Jobs</h3>
                     {renderExportButtons(
                       "Recent Jobs",
-                      ["Serial No", "Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status"],
-                      filteredJobs.map((j, index) => [
-                        index + 1,
+                      ["No", "Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status"],
+                      filteredJobs.map((j, idx) => [
+                        idx + 1,
                         j.estimationNo || '—',
                         j.jobName,
                         j.ministry,
@@ -1126,7 +1134,7 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Serial No</th><th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
+                          <th>No</th><th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1140,10 +1148,10 @@ const AdminDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredJobs.map((j, index) => {
+                          filteredJobs.map((j, idx) => {
                             return (
                               <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                                <td>{index + 1}</td>
+                                <td className="font-bold">{idx + 1}</td>
                                 <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.ministry}</td>
@@ -1671,7 +1679,7 @@ const AdminDashboard = () => {
                     {notifications.length > 0 && (
                       <button
                         className="cancel-btn"
-                        onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                        onClick={() => setNotifications(persistNotifications(notifications.map(n => ({ ...n, read: true }))))}
                         style={{ minHeight: '32px', padding: '6px 16px' }}
                       >
                         <Check size={12} /> Mark all read
@@ -1701,14 +1709,14 @@ const AdminDashboard = () => {
                             {!notif.read && (
                               <button
                                 className="action-btn-pill secondary"
-                                onClick={() => setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n))}
+                                onClick={() => setNotifications(persistNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n)))}
                               >
                                 <Check size={12} /> Read
                               </button>
                             )}
                             <button
                               className="action-btn-pill secondary"
-                              onClick={() => setNotifications(notifications.filter(n => n.id !== notif.id))}
+                              onClick={() => setNotifications(persistNotifications(notifications.filter(n => n.id !== notif.id)))}
                             >
                               <X size={12} /> Dismiss
                             </button>

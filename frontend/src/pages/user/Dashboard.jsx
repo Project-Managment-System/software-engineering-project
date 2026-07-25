@@ -132,6 +132,7 @@ const UserDashboard = () => {
 
   const [submittedEstimates, setSubmittedEstimates] = useState([]);
   const [jobData, setJobData] = useState([]);
+  const [downloadingDrawingJobNo, setDownloadingDrawingJobNo] = useState(null);
   const prevReviewStatusRef = useRef(null);
   const prevDrawingReceivedRef = useRef(null);
 
@@ -483,11 +484,37 @@ const UserDashboard = () => {
     }
   };
 
+  // Writes straight to localStorage (not just via the persist effect) so the read/dismiss
+  // state can never be lost to a timing gap between a state update and any later unmount.
+  const persistNotifications = (updated) => {
+    localStorage.setItem('user_notifications', JSON.stringify(updated));
+    return updated;
+  };
+
   const handleNotificationClick = (notif) => {
-    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === notif.id ? { ...n, read: true } : n)));
     if (!notif.jobNo) return;
     handleSelectionChange(notif.jobNo);
     setActiveTab('update-progress');
+  };
+
+  // jobData omits drawingFileUrl for performance, so the drawing is fetched on demand here.
+  const handleDownloadDrawing = async (jobNo) => {
+    setDownloadingDrawingJobNo(jobNo);
+    try {
+      const res = await axios.get(`http://127.0.0.1:5000/api/projects/job/${jobNo}`);
+      const fileUrl = res.data?.drawingFileUrl;
+      if (!fileUrl) { addToast('Drawing file not found.', 'error'); return; }
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `Drawing_${jobNo}.pdf`;
+      link.click();
+    } catch (err) {
+      console.error('Failed to download drawing:', err);
+      addToast('Failed to download the drawing.', 'error');
+    } finally {
+      setDownloadingDrawingJobNo(null);
+    }
   };
 
   const handleSaveJob = async () => {
@@ -546,6 +573,19 @@ const UserDashboard = () => {
     } catch (err) {
       console.error(err);
       addToast('Failed to undo submission.', 'error');
+    }
+  };
+
+  const handleSetDrawingNeeded = async (value) => {
+    if (!selectedJobId) return;
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+        drawingNeeded: value
+      });
+      fetchData();
+    } catch (err) {
+      console.error(err);
+      addToast('Failed to save your choice.', 'error');
     }
   };
 
@@ -1111,84 +1151,187 @@ const UserDashboard = () => {
 
                           {/* Content below — blurred until date confirmed */}
                           <div style={{ filter: isDateConfirmed ? 'none' : 'blur(5px)', transition: 'filter 0.4s ease', pointerEvents: isDateConfirmed ? 'auto' : 'none' }}>
-
-                            <div className="btn-group-estimation" style={{ marginBottom: '14px', alignItems: 'center' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <button
-                                  type="button"
-                                  className={`tick-checkbox ${selectedJob.estimateSubmitted ? 'checked' : ''}`}
-                                  onClick={handleSubmitEstimate}
-                                  disabled={selectedJob.estimateSubmitted}
-                                  title="Drawing Required — request the structural drawing (routed to your Divisional Assistant first)"
-                                >
-                                  {selectedJob.estimateSubmitted && <Check size={20} strokeWidth={3} />}
-                                </button>
-                                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                                  {selectedJob.estimateSubmitted ? 'Drawing Requested' : 'Drawing Required'}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                className="undo-btn"
-                                onClick={handleUndoEstimate}
-                                disabled={!selectedJob.estimateSubmitted || ['PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'].includes(selectedJob.drawingWorkflowStatus) || selectedJob.drawingReceived}
-                                title={selectedJob.drawingReceived ? 'Cannot undo after the drawing has been received' : 'Undo the drawing request'}
-                              >
-                                <RotateCcw size={16} /> Undo
-                              </button>
-                            </div>
-
-                            {/* Status indicator — only shown once the "Drawing Required" tick has been submitted */}
-                            {selectedJob.estimateSubmitted && (
-                              <div style={{ margin: '0 0 14px', padding: '12px', borderRadius: '8px', background: 'var(--bg-input)', border: '1px solid var(--border-base)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-label)', fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
-                                <span style={{ fontWeight: 800, color: selectedJob.drawingReceived ? 'var(--success)' : 'var(--warning)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem' }}>
-                                  {selectedJob.drawingReceived ? (
-                                    <><CheckCircle size={16} /> Received Drawing</>
-                                  ) : (
-                                    <><Clock size={16} /> {(() => {
-                                      if (!selectedJob.estimateSubmittedAt) return 'Pending (0 days)';
-                                      const diff = Math.floor(Math.abs(new Date() - new Date(selectedJob.estimateSubmittedAt)) / (1000 * 60 * 60 * 24));
-                                      return `Pending (${diff} day${diff === 1 ? '' : 's'})`;
-                                    })()}</>
-                                  )}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Drawing download */}
-                            {selectedJob.drawingReceived && selectedJob.drawingFileUrl && (
-                              <div style={{ marginBottom: '14px' }}>
-                                <a href={selectedJob.drawingFileUrl} download={`Drawing_${selectedJob.jobNo}.pdf`} className="download-pdf-btn">
-                                  <Download size={16} /> Download Drawing PDF
-                                </a>
-                              </div>
-                            )}
-
-                            {/* ─── Sub-field: Final Estimate Cost & Drawing Alignment — only unlocks once the
-                                 Design Branch Director has sent the structural drawing to this user ─── */}
                             {(() => {
-                              if (!selectedJob.drawingReceived) {
+                              // Legacy jobs that already had a drawing request in flight before this
+                              // choice existed are treated as "drawing needed" without re-asking.
+                              const drawingNeeded = selectedJob.drawingNeeded !== undefined && selectedJob.drawingNeeded !== null
+                                ? selectedJob.drawingNeeded
+                                : (selectedJob.estimateSubmitted ? true : null);
+                              const engineerStatus = selectedJob.engineerReviewStatus || 'Pending';
+                              const isSubmitted = selectedJob.finalEstimateCost != null;
+                              const isLocked = isSubmitted && engineerStatus !== 'Rejected';
+
+                              /* ─── Step 0: ask whether this job needs a structural drawing ─── */
+                              if (drawingNeeded === null) {
                                 return (
-                                  <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent-primary)' }}>
-                                      ↳ Final Estimate Cost &amp; Drawing Alignment
+                                  <div style={{ padding: '16px', borderRadius: '10px', background: 'var(--bg-subtle)', border: '1px solid var(--border-base)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                      Does this job need a structural drawing from the Design Branch?
                                     </span>
-                                    <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-subtle)', border: '1px solid var(--border-base)', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                                      This section unlocks once the Design Branch Director sends you the structural drawing.
+                                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                      <button type="button" className="tik-btn" onClick={() => handleSetDrawingNeeded(true)}>
+                                        Yes, drawing needed
+                                      </button>
+                                      <button type="button" className="cancel-btn" onClick={() => handleSetDrawingNeeded(false)}>
+                                        No, not needed
+                                      </button>
                                     </div>
                                   </div>
                                 );
                               }
-                              const engineerStatus = selectedJob.engineerReviewStatus || 'Pending';
-                              const isSubmitted = selectedJob.finalEstimateCost != null;
-                              const isLocked = isSubmitted && engineerStatus !== 'Rejected';
-                              return (
-                                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                  <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent-primary)' }}>
-                                    ↳ Final Estimate Cost &amp; Drawing Alignment
-                                  </span>
 
+                              /* ─── Path A: drawing needed — request → receive → final estimate ─── */
+                              if (drawingNeeded) {
+                                return (
+                                  <>
+                                    <div className="btn-group-estimation" style={{ marginBottom: '14px', alignItems: 'center' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        <button
+                                          type="button"
+                                          className={`tick-checkbox ${selectedJob.estimateSubmitted ? 'checked' : ''}`}
+                                          onClick={handleSubmitEstimate}
+                                          disabled={selectedJob.estimateSubmitted}
+                                          title="Drawing Required — request the structural drawing (routed to your Divisional Assistant first)"
+                                        >
+                                          {selectedJob.estimateSubmitted && <Check size={20} strokeWidth={3} />}
+                                        </button>
+                                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                          {selectedJob.estimateSubmitted ? 'Drawing Requested' : 'Drawing Required'}
+                                        </span>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="undo-btn"
+                                        onClick={handleUndoEstimate}
+                                        disabled={!selectedJob.estimateSubmitted || ['PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'].includes(selectedJob.drawingWorkflowStatus) || selectedJob.drawingReceived}
+                                        title={selectedJob.drawingReceived ? 'Cannot undo after the drawing has been received' : 'Undo the drawing request'}
+                                      >
+                                        <RotateCcw size={16} /> Undo
+                                      </button>
+                                    </div>
+
+                                    {/* Status indicator — only shown once the "Drawing Required" tick has been submitted */}
+                                    {selectedJob.estimateSubmitted && (
+                                      <div style={{ margin: '0 0 14px', padding: '12px', borderRadius: '8px', background: 'var(--bg-input)', border: '1px solid var(--border-base)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-label)', fontWeight: 700, textTransform: 'uppercase' }}>Status</span>
+                                        <span style={{ fontWeight: 800, color: selectedJob.drawingReceived ? 'var(--success)' : 'var(--warning)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.95rem' }}>
+                                          {selectedJob.drawingReceived ? (
+                                            <><CheckCircle size={16} /> Received Drawing</>
+                                          ) : (
+                                            <><Clock size={16} /> {(() => {
+                                              if (!selectedJob.estimateSubmittedAt) return 'Pending (0 days)';
+                                              const diff = Math.floor(Math.abs(new Date() - new Date(selectedJob.estimateSubmittedAt)) / (1000 * 60 * 60 * 24));
+                                              return `Pending (${diff} day${diff === 1 ? '' : 's'})`;
+                                            })()}</>
+                                          )}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {/* Drawing download */}
+                                    {selectedJob.drawingReceived && (
+                                      <div style={{ marginBottom: '14px' }}>
+                                        <button
+                                          type="button"
+                                          className="download-pdf-btn"
+                                          onClick={() => handleDownloadDrawing(selectedJob.jobNo)}
+                                          disabled={downloadingDrawingJobNo === selectedJob.jobNo}
+                                        >
+                                          <Download size={16} /> {downloadingDrawingJobNo === selectedJob.jobNo ? 'Preparing...' : 'Download Drawing PDF'}
+                                        </button>
+                                      </div>
+                                    )}
+
+                                    {/* ─── Sub-field: Final Estimate Cost & Drawing Alignment — only unlocks once the
+                                         Design Branch Director has sent the structural drawing to this user ─── */}
+                                    {!selectedJob.drawingReceived ? (
+                                      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent-primary)' }}>
+                                          ↳ Final Estimate Cost &amp; Drawing Alignment
+                                        </span>
+                                        <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--bg-subtle)', border: '1px solid var(--border-base)', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                                          This section unlocks once the Design Branch Director sends you the structural drawing.
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent-primary)' }}>
+                                          ↳ Final Estimate Cost &amp; Drawing Alignment
+                                        </span>
+
+                                        {isSubmitted && engineerStatus === 'Rejected' && (
+                                          <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--danger-soft)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }}>
+                                            <strong>Rejected by Engineer.</strong> {selectedJob.engineerReviewNote ? selectedJob.engineerReviewNote : 'Please review and resubmit.'}
+                                          </div>
+                                        )}
+                                        {isSubmitted && engineerStatus === 'Pending' && (
+                                          <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--warning-soft)', border: '1px solid var(--warning)', color: 'var(--warning)', fontSize: '0.8rem' }}>
+                                            Waiting for Engineer Approval.
+                                          </div>
+                                        )}
+                                        {isSubmitted && engineerStatus === 'Approved' && (
+                                          <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--success-soft)', border: '1px solid var(--success)', color: 'var(--success)', fontSize: '0.8rem' }}>
+                                            Engineer Approved{selectedJob.engineerReviewedAt ? ` on ${new Date(selectedJob.engineerReviewedAt).toLocaleString()}` : ''}.
+                                          </div>
+                                        )}
+
+                                        <div className="form-row">
+                                          <div className="input-row-group">
+                                            <label>Estimate Cost (LKR)</label>
+                                            <div className="currency-input-wrapper">
+                                              <span className="currency-prefix">Rs.</span>
+                                              <input
+                                                type="text"
+                                                inputMode="decimal"
+                                                className={`input-field currency-input${isLocked ? ' disabled' : ''}`}
+                                                placeholder="0.00"
+                                                value={formatCurrencyInput(finalEstimateCost)}
+                                                disabled={isLocked}
+                                                onChange={(e) => {
+                                                  const raw = e.target.value.replace(/,/g, '');
+                                                  if (raw === '' || /^\d*\.?\d{0,2}$/.test(raw)) {
+                                                    setFinalEstimateCost(raw);
+                                                  }
+                                                }}
+                                              />
+                                            </div>
+                                          </div>
+
+                                          <div className="input-row-group">
+                                            <label>Estimate Date</label>
+                                            <input
+                                              type="date"
+                                              className={`input-field${isLocked ? ' disabled' : ''}`}
+                                              min={selectedJob.drawingReceivedAt ? new Date(selectedJob.drawingReceivedAt).toISOString().split('T')[0] : ''}
+                                              max={new Date().toISOString().split('T')[0]}
+                                              value={finalEstimateDate}
+                                              disabled={isLocked}
+                                              onChange={(e) => setFinalEstimateDate(e.target.value)}
+                                            />
+                                            <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                              Only dates between drawing received date and today can be selected.
+                                            </small>
+                                          </div>
+                                        </div>
+
+                                        {!isLocked && (
+                                          <button
+                                            className="tik-btn"
+                                            style={{ alignSelf: 'flex-start' }}
+                                            onClick={handleSaveFinalEstimate}
+                                          >
+                                            <CheckCircle size={16} /> {engineerStatus === 'Rejected' ? 'Resubmit Final Estimate' : 'Submit Final Estimate'}
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+                                  </>
+                                );
+                              }
+
+                              /* ─── Path B: no drawing needed — final estimate can go straight to the Engineer ─── */
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                   {isSubmitted && engineerStatus === 'Rejected' && (
                                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--danger-soft)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }}>
                                       <strong>Rejected by Engineer.</strong> {selectedJob.engineerReviewNote ? selectedJob.engineerReviewNote : 'Please review and resubmit.'}
@@ -1232,15 +1375,11 @@ const UserDashboard = () => {
                                       <input
                                         type="date"
                                         className={`input-field${isLocked ? ' disabled' : ''}`}
-                                        min={selectedJob.drawingReceivedAt ? new Date(selectedJob.drawingReceivedAt).toISOString().split('T')[0] : ''}
                                         max={new Date().toISOString().split('T')[0]}
                                         value={finalEstimateDate}
                                         disabled={isLocked}
                                         onChange={(e) => setFinalEstimateDate(e.target.value)}
                                       />
-                                      <small style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                        Only dates between drawing received date and today can be selected.
-                                      </small>
                                     </div>
                                   </div>
 
@@ -1256,7 +1395,6 @@ const UserDashboard = () => {
                                 </div>
                               );
                             })()}
-
                           </div>
                         </div>
                       </div>
@@ -1349,7 +1487,7 @@ const UserDashboard = () => {
                       <button
                         className="action-btn-pill secondary"
                         onClick={() => {
-                          setNotifications(notifications.map(n => ({ ...n, read: true })));
+                          setNotifications(persistNotifications(notifications.map(n => ({ ...n, read: true }))));
                           addToast("All notifications marked as read", "success");
                         }}
                       >
@@ -1385,7 +1523,7 @@ const UserDashboard = () => {
                               <button
                                 className="action-btn-pill primary"
                                 onClick={() => {
-                                  setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                                  setNotifications(persistNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n)));
                                   addToast("Notification marked as read", "info");
                                 }}
                               >
@@ -1395,7 +1533,7 @@ const UserDashboard = () => {
                             <button
                               className="action-btn-pill secondary"
                               onClick={() => {
-                                setNotifications(notifications.filter(n => n.id !== notif.id));
+                                setNotifications(persistNotifications(notifications.filter(n => n.id !== notif.id)));
                                 addToast("Notification dismissed", "info");
                               }}
                             >

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { 
-    createProject, 
-    getAllProjects, 
-    getProjectsByDivision, 
-    updateProject, 
+const {
+    createProject,
+    getAllProjects,
+    getProjectsByDivision,
+    getProjectByJobNo,
+    updateProject,
     deleteProject,
     updateProjectStatus,
     undoProjectStatus // Ensure this is exported from your controller
@@ -18,6 +19,9 @@ router.get('/all', getAllProjects);
 
 // 3. Engineer: Get jobs for specific division
 router.get('/division/:division', getProjectsByDivision);
+
+// 3b. Get a single job by jobNo (includes drawingFileUrl, which list endpoints omit)
+router.get('/job/:jobNo', getProjectByJobNo);
 
 // 4. Update general job details
 router.put('/update/:jobNo', updateProject); 
