@@ -722,6 +722,7 @@ const DesignDirectorDashboard = () => {
                           <tr>
                             <th>Division</th>
                             <th>Job Name</th>
+                            <th>Design Engineer</th>
                             <th>Attachment</th>
                             <th>Approved On</th>
                           </tr>
@@ -736,6 +737,7 @@ const DesignDirectorDashboard = () => {
                             >
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
+                              <td>{j.assignedDesignEngineerName || '—'}</td>
                               <td onClick={(e) => e.stopPropagation()}>
                                 <button
                                   type="button"
