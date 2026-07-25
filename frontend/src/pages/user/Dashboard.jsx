@@ -578,6 +578,9 @@ const UserDashboard = () => {
 
   const handleSetDrawingNeeded = async (value) => {
     if (!selectedJobId) return;
+    // Update local state immediately so the choice takes effect on the first click instead
+    // of waiting on the network round-trip (fetchData() below still reconciles with the server).
+    setJobData(prev => prev.map(j => j.jobNo === selectedJobId ? { ...j, drawingNeeded: value } : j));
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
         drawingNeeded: value
@@ -586,6 +589,7 @@ const UserDashboard = () => {
     } catch (err) {
       console.error(err);
       addToast('Failed to save your choice.', 'error');
+      setJobData(prev => prev.map(j => j.jobNo === selectedJobId ? { ...j, drawingNeeded: null } : j));
     }
   };
 
