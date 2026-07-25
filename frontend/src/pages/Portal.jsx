@@ -105,14 +105,29 @@ export default function Portal() {
   const logoAccent = "MAX";
 
   return (
-    <div 
-      className="min-h-screen relative overflow-hidden text-slate-900 antialiased font-sans bg-cover bg-center bg-fixed bg-slate-900"
-      style={{ 
-        backgroundImage: `url("https://i.pinimg.com/736x/6e/6e/7a/6e6e7a8d1a45abb2e0887a5352f20c01.jpg")` 
-      }}
+    <div
+      className="min-h-screen relative overflow-hidden text-slate-900 antialiased font-sans bg-slate-900"
     >
-      {/* Background Safety Tint Layer removed - Image will now render in its 100% original full color spectrum */}
-      <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
+      {/* Looping civil engineering video background, isolated so overlays on top don't affect it */}
+      <video
+        className="absolute inset-0 z-0 w-full h-full object-cover pointer-events-none"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        poster="https://images.unsplash.com/photo-1591955506264-3f5a6834570a?w=1920&q=80&fm=jpg&fit=max"
+      >
+        <source src="https://videos.pexels.com/video-files/30992056/13248801_2560_1440_30fps.mp4" type="video/mp4" />
+      </video>
+
+      {/* Brand accent glow + navy depth vignette — an elegant colour combination that keeps content cards legible */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 12% 88%, rgba(0,110,177,.4) 0%, rgba(0,110,177,0) 45%), radial-gradient(ellipse at 88% 8%, rgba(144,213,255,.3) 0%, rgba(144,213,255,0) 40%), radial-gradient(ellipse at 50% 35%, rgba(15,23,42,.15) 0%, rgba(15,23,42,.35) 60%, rgba(8,14,28,.68) 100%)'
+        }}
+      />
 
       {/* Top Animated Progress Indicator Line using your exact brand accent */}
       <motion.div className="fixed top-0 left-0 right-0 h-[3px] bg-[#006EB1] z-[110] origin-left" style={{ scaleX }} />
