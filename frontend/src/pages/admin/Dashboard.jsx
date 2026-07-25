@@ -1072,8 +1072,9 @@ const AdminDashboard = () => {
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>Recent Jobs</h3>
                     {renderExportButtons(
                       "Recent Jobs",
-                      ["Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status"],
-                      filteredJobs.map(j => [
+                      ["No", "Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status"],
+                      filteredJobs.map((j, idx) => [
+                        idx + 1,
                         j.estimationNo || '—',
                         j.jobName,
                         j.ministry,
@@ -1133,13 +1134,13 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
+                          <th>No</th><th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={14}>
+                            <td colSpan={15}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{jobs.length === 0 ? 'No jobs added yet.' : 'No jobs match the selected filters.'}</span>
@@ -1147,9 +1148,10 @@ const AdminDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredJobs.map((j) => {
+                          filteredJobs.map((j, idx) => {
                             return (
                               <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                                <td className="font-bold">{idx + 1}</td>
                                 <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.ministry}</td>

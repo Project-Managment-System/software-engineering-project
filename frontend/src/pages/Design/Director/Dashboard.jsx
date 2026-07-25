@@ -46,7 +46,7 @@ const DesignDirectorDashboard = () => {
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
-  const [activeTab, setActiveTab] = useState('Pending');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [jobs, setJobs] = useState([]);
