@@ -116,6 +116,9 @@ const EngineerDashboard = () => {
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('overview');
   const [jobSubTab, setJobSubTab] = useState('approvals');
+  // Which status the Approval Requests table is filtered to — set by clicking a top
+  // stat card (Total Jobs / Pending / Approved / Rejected) on the Overview tab.
+  const [jobStatusFilter, setJobStatusFilter] = useState('all');
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -705,11 +708,17 @@ const EngineerDashboard = () => {
   };
 
   const statCards = [
-    { label: 'Total Jobs', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
-    { label: 'Pending', value: pendingApprovals, icon: Clock, color: 'var(--warning)' },
-    { label: 'Approved', value: approvedCount, icon: CheckCircle, color: 'var(--success)' },
-    { label: 'Rejected', value: rejectedCount, icon: XCircle, color: 'var(--danger)' },
+    { label: 'Total Jobs', filter: 'all', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Pending', filter: 'Pending', value: pendingApprovals, icon: Clock, color: 'var(--warning)' },
+    { label: 'Approved', filter: 'Approved', value: approvedCount, icon: CheckCircle, color: 'var(--success)' },
+    { label: 'Rejected', filter: 'Rejected', value: rejectedCount, icon: XCircle, color: 'var(--danger)' },
   ];
+
+  const handleStatCardClick = (filter) => {
+    setJobStatusFilter(filter);
+    setActiveTab('my-jobs');
+    setJobSubTab('approvals');
+  };
 
   /* ─── Progress data: per-ministry grouped from division jobs ─── */
   const ministryProgressData = React.useMemo(() => {
@@ -921,7 +930,9 @@ const EngineerDashboard = () => {
                   key={stat.label}
                   variants={cardVariant}
                   className="field-card"
-                  style={{ padding: '20px', cursor: 'default' }}
+                  style={{ padding: '20px', cursor: 'pointer' }}
+                  onClick={() => handleStatCardClick(stat.filter)}
+                  title={`View ${stat.label.toLowerCase()}`}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                     <div style={{
@@ -1057,12 +1068,26 @@ const EngineerDashboard = () => {
 
                 <AnimatePresence mode="wait">
                   {/* Approvals sub-tab */}
-                  {jobSubTab === 'approvals' && (
+                  {jobSubTab === 'approvals' && (() => {
+                    const filteredApprovalData = jobStatusFilter === 'all'
+                      ? approvalData
+                      : approvalData.filter(job => (job.status || 'Pending') === jobStatusFilter);
+                    return (
                     <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>
+                          Approval Requests{jobStatusFilter !== 'all' ? ` — ${jobStatusFilter}` : ''}
+                        </h4>
+                        {jobStatusFilter !== 'all' && (
+                          <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
+                            Clear filter
+                          </button>
+                        )}
+                      </div>
                       {renderExportButtons(
                         "Approval Requests",
                         ["No", "Estimation Number", "Job Name", "Date of Request", "Allocation", "Status"],
-                        approvalData.map((job, idx) => [idx + 1, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
+                        filteredApprovalData.map((job, idx) => [idx + 1, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
                       )}
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
@@ -1070,17 +1095,17 @@ const EngineerDashboard = () => {
                             <tr><th>No</th><th>Estimation Number</th><th>Job Name</th><th>Date of Request</th><th>Allocation</th><th>Approval</th></tr>
                           </thead>
                           <tbody>
-                            {approvalData.length === 0 ? (
+                            {filteredApprovalData.length === 0 ? (
                               <tr>
                                 <td colSpan={6}>
                                   <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
                                     <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                    <span>No approval requests found</span>
+                                    <span>{jobStatusFilter === 'all' ? 'No approval requests found' : `No ${jobStatusFilter.toLowerCase()} jobs.`}</span>
                                   </div>
                                 </td>
                               </tr>
                             ) : (
-                              approvalData.map((job, idx) => (
+                              filteredApprovalData.map((job, idx) => (
                                 <tr key={job.jobNo}>
                                   <td>{idx + 1}</td>
                                   <td className="font-mono">{job.estimationNo || '—'}</td>
@@ -1115,7 +1140,8 @@ const EngineerDashboard = () => {
                         </table>
                       </div>
                     </motion.div>
-                  )}
+                    );
+                  })()}
 
                   {/* Tracking / Assignee sub-tab */}
                   {jobSubTab === 'tracking' && (
