@@ -683,9 +683,26 @@ const EngineerDashboard = () => {
   /* ─── Assignee table only shows jobs approved in the Approval Requests tab ─── */
   const trackedJobs = jobTrackingData.filter(j => j.status === 'Approved');
 
-  /* ─── DA-approved submissions awaiting Engineer review ─── */
-  const daApprovedJobs = approvalData.filter(j => j.daReviewStatus === 'Approved');
+  /* ─── Final estimates submitted by users, awaiting Engineer review (goes straight to the
+       Engineer now — no Divisional Assistant approval gate in this step) ─── */
+  const daApprovedJobs = approvalData.filter(j => j.finalEstimateCost != null);
   const pendingDaReviewCount = daApprovedJobs.filter(j => (j.engineerReviewStatus || 'Pending') === 'Pending').length;
+
+  /* ─── Drawing Tracking: read-only progress of drawing requests in this division ─── */
+  const drawingTrackingJobs = approvalData.filter(j => j.drawingWorkflowStatus && j.drawingWorkflowStatus !== 'NotRequested');
+  const getDrawingTrackingInfo = (j) => {
+    if (j.drawingWorkflowStatus === 'PendingDA') {
+      if (j.drawingDaStatus === 'Rejected') return { label: 'Rejected by DA', badge: 'status-rejected' };
+      return { label: 'Pending DA Review', badge: 'status-pending' };
+    }
+    if (j.drawingWorkflowStatus === 'PendingDirectorAssignment') return { label: 'With Design Director', badge: 'status-pending' };
+    if (j.drawingWorkflowStatus === 'PendingEngineerDesign') {
+      return { label: j.assignedDesignEngineerName ? `Assigned to ${j.assignedDesignEngineerName}` : 'Assigned to Engineer', badge: 'status-pending' };
+    }
+    if (j.drawingWorkflowStatus === 'PendingDirectorDesign') return { label: 'Awaiting Director Approval', badge: 'status-pending' };
+    if (j.drawingWorkflowStatus === 'Completed') return { label: 'Drawing Sent to User', badge: 'status-approved' };
+    return { label: 'Not Requested', badge: 'status-pending' };
+  };
 
   const statCards = [
     { label: 'Total Jobs', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
@@ -837,7 +854,8 @@ const EngineerDashboard = () => {
               { id: 'overview', icon: BarChart3, label: 'Overview' },
               { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
               { id: 'all-jobs', icon: Globe, label: 'All Jobs' },
-              { id: 'review-da', icon: ClipboardCheck, label: 'Review DA Submissions' },
+              { id: 'drawing-tracking', icon: Clock, label: 'Drawing Tracking' },
+              { id: 'review-da', icon: ClipboardCheck, label: 'Review Final Estimates' },
               { id: 'add-user', icon: UserPlus, label: 'Add User' },
               { id: 'view-progress', icon: TrendingUp, label: 'View Progress' },
               { id: 'ai-chatbot', icon: MessageSquare, label: 'AI Assistant' },
@@ -1266,29 +1284,84 @@ const EngineerDashboard = () => {
               </motion.div>
             )}
 
-            {/* ── Review DA Submissions Tab ── */}
+            {/* ── Drawing Tracking Tab: read-only view of every drawing request's progress ── */}
+            {activeTab === 'drawing-tracking' && (
+              <motion.div key="drawing-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div className="field-card" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <Clock size={20} style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>
+                      {currentDivision ? `${currentDivision} – Drawing Tracking` : 'Drawing Tracking'}
+                    </h3>
+                  </div>
+                  <p style={{ margin: '-14px 0 16px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Progress of every drawing request in your division, from the initial request through to the user receiving it
+                  </p>
+
+                  <div className="table-scroll-wrapper">
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Estimation Number</th>
+                          <th>Job Name</th>
+                          <th>Requested On</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {drawingTrackingJobs.length === 0 ? (
+                          <tr>
+                            <td colSpan={4}>
+                              <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                <span>No drawing requests yet.</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          drawingTrackingJobs.map((job) => {
+                            const info = getDrawingTrackingInfo(job);
+                            return (
+                              <tr key={job.jobNo}>
+                                <td className="font-mono">{job.estimationNo || '—'}</td>
+                                <td className="font-bold">{job.jobName}</td>
+                                <td>{job.drawingRequestedAt ? new Date(job.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
+                                <td><span className={`status-badge ${info.badge}`}>{info.label}</span></td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Review Final Estimates Tab ── */}
             {activeTab === 'review-da' && (
               <motion.div key="review-da" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                 <div className="field-card" style={{ padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <ClipboardCheck size={20} style={{ color: 'var(--accent-primary)' }} />
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Review DA Submissions</h3>
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Review Final Estimates</h3>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                        Final estimates approved by the Divisional Assistant, awaiting your review
+                        Final estimates submitted by users, awaiting your review — click a row for full project details
                       </span>
                       {renderExportButtons(
-                        "Review DA Submissions",
-                        ["Estimation Number", "Job Name", "Submitted By", "Estimate Cost (LKR)", "Alignment Date", "DA Reviewed On", "Engineer Review"],
+                        "Review Final Estimates",
+                        ["Estimation Number", "Job Name", "Submitted By", "Estimate Cost (LKR)", "Alignment Date", "Drawing Approved On", "Design Engineer", "Engineer Review"],
                         daApprovedJobs.map(job => [
                           job.estimationNo || '—',
                           job.jobName,
                           job.assignee || '—',
                           job.finalEstimateCost?.toLocaleString() || '',
                           job.finalEstimateDate ? formatDate(job.finalEstimateDate) : 'N/A',
-                          job.daReviewedAt ? formatDate(job.daReviewedAt) : 'N/A',
+                          job.directorApprovedAt ? formatDate(job.directorApprovedAt) : 'N/A',
+                          job.assignedDesignEngineerName || '—',
                           job.engineerReviewStatus || 'Pending'
                         ])
                       )}
@@ -1304,30 +1377,37 @@ const EngineerDashboard = () => {
                           <th>Submitted By</th>
                           <th>Estimate Cost (LKR)</th>
                           <th>Alignment Date</th>
-                          <th>DA Reviewed On</th>
+                          <th>Drawing Approved On</th>
+                          <th>Design Engineer</th>
                           <th>Engineer Review</th>
                         </tr>
                       </thead>
                       <tbody>
                         {daApprovedJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={7}>
+                            <td colSpan={8}>
                               <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
                                 <ClipboardCheck size={24} style={{ opacity: 0.35 }} />
-                                <span>No DA-approved submissions waiting for review.</span>
+                                <span>No submitted final estimates waiting for review.</span>
                               </div>
                             </td>
                           </tr>
                         ) : (
                           daApprovedJobs.map((job) => (
-                            <tr key={job.jobNo}>
+                            <tr
+                              key={job.jobNo}
+                              onClick={() => navigate(`/design/job/${job.jobNo}`, { state: { job } })}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view full job details"
+                            >
                               <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.assignee || '—'}</td>
                               <td className="font-bold">{job.finalEstimateCost?.toLocaleString()}</td>
                               <td>{job.finalEstimateDate ? formatDate(job.finalEstimateDate) : 'N/A'}</td>
-                              <td>{job.daReviewedAt ? formatDate(job.daReviewedAt) : 'N/A'}</td>
-                              <td>
+                              <td>{job.directorApprovedAt ? formatDate(job.directorApprovedAt) : 'N/A'}</td>
+                              <td>{job.assignedDesignEngineerName || '—'}</td>
+                              <td onClick={(e) => e.stopPropagation()}>
                                 {(job.engineerReviewStatus || 'Pending') === 'Pending' ? (
                                   <div style={{ display: 'flex', gap: '6px' }}>
                                     <button className="approve-btn" onClick={() => handleEngineerReview(job.jobNo, 'Approved')} title="Approve">

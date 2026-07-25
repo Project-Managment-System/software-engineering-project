@@ -3,7 +3,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
-  AlertTriangle, Eye, BarChart3, Settings, User, Save, X, Camera
+  AlertTriangle, Eye, BarChart3, Settings, User, Save, X, Camera, UserCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import '../../shared/BranchDashboard.css';
@@ -56,6 +56,10 @@ const DesignDirectorDashboard = () => {
     try { return JSON.parse(localStorage.getItem('designDirectorSeenCompleted') || '[]'); } catch { return []; }
   });
 
+  const [designEngineers, setDesignEngineers] = useState([]);
+  const [assignSelections, setAssignSelections] = useState({});
+  const [assigningJobNo, setAssigningJobNo] = useState(null);
+
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem('fullName') || 'Design Director',
@@ -75,6 +79,16 @@ const DesignDirectorDashboard = () => {
       console.error('Error loading director design dashboard data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDesignEngineers = async () => {
+    try {
+      const res = await axios.get('http://127.0.0.1:5000/api/users');
+      const engineers = (res.data || []).filter(u => u.role === 'branch_engineer' && u.branch === 'design');
+      setDesignEngineers(engineers);
+    } catch (err) {
+      console.error('Error loading design engineers:', err);
     }
   };
 
@@ -105,7 +119,7 @@ const DesignDirectorDashboard = () => {
     }
   };
 
-  useEffect(() => { fetchData(); fetchUserProfile(); }, []);
+  useEffect(() => { fetchData(); fetchUserProfile(); fetchDesignEngineers(); }, []);
 
   const toggleDarkMode = () => {
     const nextDark = !isDark;
@@ -120,11 +134,13 @@ const DesignDirectorDashboard = () => {
     navigate('/');
   };
 
+  // Forwarded by the DA, awaiting the Director's engineer assignment
+  const assignJobs = jobs.filter(j => j.drawingWorkflowStatus === 'PendingDirectorAssignment');
   // Director "pending" = drawing attached by the Engineer but not yet approved
   const pendingJobs = jobs.filter(j => j.drawingWorkflowStatus === 'PendingDirectorDesign');
   // Director "completed" = approved
   const completedJobs = jobs.filter(j => j.drawingWorkflowStatus === 'Completed');
-  const recentJobs = [...pendingJobs, ...completedJobs].slice(0, 5);
+  const recentJobs = [...assignJobs, ...pendingJobs, ...completedJobs].slice(0, 5);
 
   // Notification badge on "Completed Jobs" only counts jobs not yet viewed —
   // it clears once the Completed Jobs tab has been opened.
@@ -140,6 +156,31 @@ const DesignDirectorDashboard = () => {
     }
     // eslint-disable-next-line
   }, [activeTab, jobs]);
+
+  const handleAssignEngineer = async (jobNo) => {
+    const engineerId = assignSelections[jobNo];
+    if (!engineerId) {
+      alert('Please choose an engineer to assign first.');
+      return;
+    }
+    const engineer = designEngineers.find(e => e._id === engineerId);
+    setAssigningJobNo(jobNo);
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        drawingWorkflowStatus: 'PendingEngineerDesign',
+        assignedDesignEngineerId: engineerId,
+        assignedDesignEngineerName: engineer?.fullName || '',
+        assignedDesignEngineerAt: new Date().toISOString()
+      });
+      setAssignSelections(prev => { const next = { ...prev }; delete next[jobNo]; return next; });
+      await fetchData();
+    } catch (err) {
+      console.error('Assign failed:', err);
+      alert('Failed to assign engineer.');
+    } finally {
+      setAssigningJobNo(null);
+    }
+  };
 
   const handleApprove = async (jobNo) => {
     setApprovingJobNo(jobNo);
@@ -229,7 +270,8 @@ const DesignDirectorDashboard = () => {
           <nav className="sidebar-nav">
             {[
               { id: 'Overview', icon: BarChart3, label: 'Overview' },
-              { id: 'Pending', icon: Clock, label: 'Pending Jobs', count: pendingJobs.length },
+              { id: 'Assign', icon: UserCheck, label: 'Assign Engineer', count: assignJobs.length },
+              { id: 'Pending', icon: Clock, label: 'Pending Approvals', count: pendingJobs.length },
               { id: 'Completed', icon: CheckCircle, label: 'Completed Jobs', count: unseenCompletedCount },
               { id: 'Profile', icon: User, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
@@ -273,6 +315,15 @@ const DesignDirectorDashboard = () => {
 
                 <div className="analytics-dashboard-grid" style={{ marginBottom: '24px' }}>
                   <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--info-soft)', color: 'var(--info)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <UserCheck size={22} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{assignJobs.length}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Awaiting Assignment</div>
+                    </div>
+                  </div>
+                  <div className="field-card" style={{ padding: '22px 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'var(--warning-soft)', color: 'var(--warning)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Clock size={22} />
                     </div>
@@ -295,7 +346,7 @@ const DesignDirectorDashboard = () => {
                       <Briefcase size={22} />
                     </div>
                     <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{pendingJobs.length + completedJobs.length}</div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1 }}>{assignJobs.length + pendingJobs.length + completedJobs.length}</div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600, marginTop: '4px' }}>Total Handled</div>
                     </div>
                   </div>
@@ -319,14 +370,93 @@ const DesignDirectorDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {recentJobs.map(j => (
-                            <tr key={j._id}>
+                          {recentJobs.map(j => {
+                            const statusMeta = j.drawingWorkflowStatus === 'Completed'
+                              ? { badge: 'status-approved', label: 'Approved by Director' }
+                              : j.drawingWorkflowStatus === 'PendingDirectorAssignment'
+                                ? { badge: 'status-pending', label: 'Awaiting Engineer Assignment' }
+                                : { badge: 'status-pending', label: 'Awaiting Director Approval' };
+                            return (
+                              <tr key={j._id}>
+                                <td>{j.division}</td>
+                                <td className="font-bold">{j.jobName}</td>
+                                <td>
+                                  <span className={`status-badge ${statusMeta.badge}`}>{statusMeta.label}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'Assign' && (
+              <motion.section key="assign" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                      <UserCheck size={22} />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Assign Engineer</h2>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Drawing requests forwarded by the Divisional Assistant — choose an engineer to produce each drawing</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="recent-jobs-card">
+                  {assignJobs.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
+                      <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                      <span>{loading ? 'Loading...' : 'No drawing requests awaiting assignment.'}</span>
+                    </div>
+                  ) : (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
+                          <tr>
+                            <th>Division</th>
+                            <th>Job Name</th>
+                            <th>Requested On</th>
+                            <th>Assign Engineer</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {assignJobs.map(j => (
+                            <tr
+                              key={j._id}
+                              onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view full job details"
+                            >
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
-                              <td>
-                                <span className={`status-badge ${j.drawingWorkflowStatus === 'Completed' ? 'status-approved' : 'status-pending'}`}>
-                                  {j.drawingWorkflowStatus === 'Completed' ? 'Approved by Director' : 'Awaiting Director Approval'}
-                                </span>
+                              <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <select
+                                  className="job-select-dropdown"
+                                  value={assignSelections[j.jobNo] || ''}
+                                  onChange={(e) => setAssignSelections(prev => ({ ...prev, [j.jobNo]: e.target.value }))}
+                                >
+                                  <option value="" disabled>Select engineer</option>
+                                  {designEngineers.map(eng => (
+                                    <option key={eng._id} value={eng._id}>{eng.fullName}</option>
+                                  ))}
+                                </select>
+                              </td>
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  className="save-btn"
+                                  disabled={!assignSelections[j.jobNo] || assigningJobNo === j.jobNo}
+                                  onClick={() => handleAssignEngineer(j.jobNo)}
+                                >
+                                  <UserCheck size={13} /> {assigningJobNo === j.jobNo ? 'Assigning...' : 'Assign'}
+                                </button>
                               </td>
                             </tr>
                           ))}
@@ -371,10 +501,15 @@ const DesignDirectorDashboard = () => {
                         </thead>
                         <tbody>
                           {pendingJobs.map(j => (
-                            <tr key={j._id}>
+                            <tr
+                              key={j._id}
+                              onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view full job details"
+                            >
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
-                              <td>
+                              <td onClick={(e) => e.stopPropagation()}>
                                 {j.drawingFileUrl ? (
                                   <button
                                     type="button"
@@ -386,7 +521,7 @@ const DesignDirectorDashboard = () => {
                                   </button>
                                 ) : '—'}
                               </td>
-                              <td>
+                              <td onClick={(e) => e.stopPropagation()}>
                                 <button
                                   className="save-btn"
                                   disabled={approvingJobNo === j.jobNo}

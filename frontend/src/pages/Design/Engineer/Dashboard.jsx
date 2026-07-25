@@ -150,7 +150,7 @@ const DesignEngineerDashboard = () => {
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
-  const [activeTab, setActiveTab] = useState('Pending');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [jobs, setJobs] = useState([]);
@@ -222,8 +222,14 @@ const DesignEngineerDashboard = () => {
     navigate('/');
   };
 
-  const pendingJobs = jobs.filter(j => j.drawingWorkflowStatus === 'PendingEngineerDesign');
-  const completedJobs = jobs.filter(j => ['PendingDirectorDesign', 'Completed'].includes(j.drawingWorkflowStatus));
+  // The Design Director assigns each drawing request to one specific engineer, so this
+  // dashboard scopes jobs to the logged-in engineer. Jobs from before this assignment
+  // step existed have no assignedDesignEngineerId — treat those as unassigned/visible to
+  // everyone rather than hiding them from every engineer.
+  const currentUserId = localStorage.getItem('userId');
+  const isMine = (j) => !j.assignedDesignEngineerId || j.assignedDesignEngineerId === currentUserId;
+  const pendingJobs = jobs.filter(j => j.drawingWorkflowStatus === 'PendingEngineerDesign' && isMine(j));
+  const completedJobs = jobs.filter(j => ['PendingDirectorDesign', 'Completed'].includes(j.drawingWorkflowStatus) && isMine(j));
   const recentJobs = [...pendingJobs, ...completedJobs].slice(0, 5);
 
   // Overview analytics — every job that has reached the design pipeline (attached, awaiting
@@ -511,7 +517,7 @@ const DesignEngineerDashboard = () => {
                               <td className="font-bold">{j.jobName}</td>
                               <td>
                                 <span className={`status-badge ${j.drawingWorkflowStatus === 'PendingEngineerDesign' ? 'status-pending' : j.drawingWorkflowStatus === 'Completed' ? 'status-approved' : 'status-pending'}`}>
-                                  {j.drawingWorkflowStatus === 'PendingEngineerDesign' ? 'Awaiting Attachment' : j.drawingWorkflowStatus === 'Completed' ? 'Approved by Director' : 'Awaiting Director Approval'}
+                                  {j.drawingWorkflowStatus === 'PendingEngineerDesign' ? 'Awaiting Attachment' : j.drawingWorkflowStatus === 'Completed' ? 'Drawing Sent to User' : 'Awaiting Director Approval'}
                                 </span>
                               </td>
                             </tr>
@@ -533,7 +539,7 @@ const DesignEngineerDashboard = () => {
                     </div>
                     <div>
                       <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Pending Jobs</h2>
-                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Jobs forwarded by a Divisional Assistant that need a structural drawing attached</p>
+                      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Jobs the Design Director has assigned to you that need a structural drawing attached</p>
                     </div>
                   </div>
                 </div>
@@ -631,7 +637,7 @@ const DesignEngineerDashboard = () => {
                               <td className="font-bold">{j.jobName}</td>
                               <td>
                                 <span className={`status-badge ${j.drawingWorkflowStatus === 'Completed' ? 'status-approved' : 'status-pending'}`}>
-                                  {j.drawingWorkflowStatus === 'Completed' ? 'Approved by Director' : 'Awaiting Director Approval'}
+                                  {j.drawingWorkflowStatus === 'Completed' ? 'Drawing Sent to User' : 'Awaiting Director Approval'}
                                 </span>
                               </td>
                             </tr>

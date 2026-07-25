@@ -281,19 +281,19 @@ const UserDashboard = () => {
           deadline: item.submitDate ? new Date(item.submitDate).toISOString().split('T')[0] : 'N/A'
         }));
 
-        // Detect DA rejections on this user's own jobs (skip the very first load)
+        // Detect Engineer rejections on this user's own jobs (skip the very first load)
         if (prevReviewStatusRef.current) {
           mapped
             .filter(job => job.assignee === profileName)
             .forEach(job => {
               const prevStatus = prevReviewStatusRef.current[job.jobNo];
-              if (job.daReviewStatus === 'Rejected' && prevStatus !== 'Rejected') {
+              if (job.engineerReviewStatus === 'Rejected' && prevStatus !== 'Rejected') {
                 setNotifications(prev => [{
                   id: Date.now() + Math.random(),
                   jobNo: job.jobNo,
                   jobName: job.jobName,
                   title: "Estimate Rejected ⚠️",
-                  message: `Your Divisional Assistant rejected the final estimate for Job ${job.jobNo}${job.daReviewNote ? `: "${job.daReviewNote}"` : '.'} Please review and resubmit.`,
+                  message: `Your Engineer rejected the final estimate for Job ${job.jobNo}${job.engineerReviewNote ? `: "${job.engineerReviewNote}"` : '.'} Please review and resubmit.`,
                   time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                   read: false
                 }, ...prev]);
@@ -301,7 +301,7 @@ const UserDashboard = () => {
             });
         }
         const nextStatusMap = {};
-        mapped.forEach(job => { nextStatusMap[job.jobNo] = job.daReviewStatus; });
+        mapped.forEach(job => { nextStatusMap[job.jobNo] = job.engineerReviewStatus; });
         prevReviewStatusRef.current = nextStatusMap;
 
         setJobData(mapped);
@@ -528,14 +528,11 @@ const UserDashboard = () => {
         finalEstimateCost: Number(finalEstimateCost),
         finalEstimateDate: finalEstimateDate,
         finalEstimateSubmittedAt: new Date().toISOString(),
-        daReviewStatus: 'Pending',
-        daReviewedAt: null,
-        daReviewNote: '',
         engineerReviewStatus: 'Pending',
         engineerReviewedAt: null,
         engineerReviewNote: ''
       });
-      addToast('Final estimate submitted to your Divisional Assistant for review!', 'success');
+      addToast('Final estimate submitted to your Engineer for review!', 'success');
       fetchData();
     } catch (err) {
       console.error(err);
@@ -1138,33 +1135,28 @@ const UserDashboard = () => {
 
                             {/* ─── Sub-field: Final Estimate Cost & Drawing Alignment — always available, independent of the drawing-required tick ─── */}
                             {(() => {
-                              const daStatus = selectedJob.daReviewStatus || 'Pending';
+                              const engineerStatus = selectedJob.engineerReviewStatus || 'Pending';
                               const isSubmitted = selectedJob.finalEstimateCost != null;
-                              const isLocked = isSubmitted && daStatus !== 'Rejected';
+                              const isLocked = isSubmitted && engineerStatus !== 'Rejected';
                               return (
                                 <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px dashed color-mix(in srgb, var(--accent-primary) 30%, transparent)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                   <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--accent-primary)' }}>
                                     ↳ Final Estimate Cost &amp; Drawing Alignment
                                   </span>
 
-                                  {isSubmitted && daStatus === 'Rejected' && (
+                                  {isSubmitted && engineerStatus === 'Rejected' && (
                                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--danger-soft)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }}>
-                                      <strong>Rejected by Divisional Assistant.</strong> {selectedJob.daReviewNote ? selectedJob.daReviewNote : 'Please review and resubmit.'}
+                                      <strong>Rejected by Engineer.</strong> {selectedJob.engineerReviewNote ? selectedJob.engineerReviewNote : 'Please review and resubmit.'}
                                     </div>
                                   )}
-                                  {isSubmitted && daStatus === 'Pending' && (
+                                  {isSubmitted && engineerStatus === 'Pending' && (
                                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--warning-soft)', border: '1px solid var(--warning)', color: 'var(--warning)', fontSize: '0.8rem' }}>
-                                      Submitted — awaiting review from your Divisional Assistant.
+                                      Waiting for Engineer Approval.
                                     </div>
                                   )}
-                                  {isSubmitted && daStatus === 'Approved' && (
+                                  {isSubmitted && engineerStatus === 'Approved' && (
                                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--success-soft)', border: '1px solid var(--success)', color: 'var(--success)', fontSize: '0.8rem' }}>
-                                      Approved by Divisional Assistant — now with the Engineer for final review.
-                                      {selectedJob.engineerReviewStatus === 'Rejected' && (
-                                        <div style={{ marginTop: '4px', color: 'var(--danger)' }}>
-                                          <strong>Engineer rejected this submission.</strong> {selectedJob.engineerReviewNote || ''}
-                                        </div>
-                                      )}
+                                      Engineer Approved{selectedJob.engineerReviewedAt ? ` on ${new Date(selectedJob.engineerReviewedAt).toLocaleString()}` : ''}.
                                     </div>
                                   )}
 
@@ -1213,7 +1205,7 @@ const UserDashboard = () => {
                                       style={{ alignSelf: 'flex-start' }}
                                       onClick={handleSaveFinalEstimate}
                                     >
-                                      <CheckCircle size={16} /> {daStatus === 'Rejected' ? 'Resubmit Final Estimate' : 'Submit Final Estimate'}
+                                      <CheckCircle size={16} /> {engineerStatus === 'Rejected' ? 'Resubmit Final Estimate' : 'Submit Final Estimate'}
                                     </button>
                                   )}
                                 </div>

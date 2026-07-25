@@ -69,7 +69,7 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/design/job/:jobNo" element={
-          <ProtectedRoute allowedRoles={['branch_engineer', 'branch_director']} requiredBranch="design">
+          <ProtectedRoute allowedRoles={['branch_engineer', 'branch_director', 'engineer']}>
             <DesignJobDetails />
           </ProtectedRoute>
         } />
