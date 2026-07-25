@@ -1198,7 +1198,12 @@ const DivisionalAssistantDashboard = () => {
                           {drawingTracking.map(j => {
                             const info = getDrawingTrackingInfo(j);
                             return (
-                              <tr key={j._id}>
+                              <tr
+                                key={j._id}
+                                onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
+                                style={{ cursor: 'pointer' }}
+                                title="Click to view full job details"
+                              >
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>

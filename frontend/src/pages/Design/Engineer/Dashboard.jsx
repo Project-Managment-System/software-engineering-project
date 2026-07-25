@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   HardHat, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
   AlertTriangle, Paperclip, Send, BarChart3, Settings, User,
-  Save, X, Camera, Wallet, Building2
+  Save, X, Camera, Wallet, Building2, Bell, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -158,6 +158,11 @@ const DesignEngineerDashboard = () => {
   const [selectedFiles, setSelectedFiles] = useState({});
   const [sendingJobNo, setSendingJobNo] = useState(null);
 
+  const [notifications, setNotifications] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('designEngineerNotifications') || '[]'); } catch { return []; }
+  });
+  const prevAssignedRef = useRef(null);
+
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [profileData, setProfileData] = useState({
     name: localStorage.getItem('fullName') || 'Design Engineer',
@@ -172,7 +177,33 @@ const DesignEngineerDashboard = () => {
     setLoading(true);
     try {
       const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
-      setJobs(res.data || []);
+      const list = res.data || [];
+      setJobs(list);
+
+      // Notify this engineer when the Director newly assigns them a drawing job
+      // (skip the first load).
+      const myUserId = localStorage.getItem('userId');
+      if (prevAssignedRef.current) {
+        const newNotifs = [];
+        list.forEach(job => {
+          const wasMine = prevAssignedRef.current[job.jobNo] === myUserId;
+          const isMineNow = job.assignedDesignEngineerId === myUserId;
+          if (isMineNow && !wasMine) {
+            newNotifs.push({
+              id: Date.now() + Math.random(),
+              jobNo: job.jobNo,
+              title: 'New Drawing Assigned 📐',
+              message: `The Design Director assigned you Job ${job.jobNo} (${job.jobName}) — attach the structural drawing.`,
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              read: false
+            });
+          }
+        });
+        if (newNotifs.length) setNotifications(prev => [...newNotifs, ...prev]);
+      }
+      const nextAssignedMap = {};
+      list.forEach(job => { nextAssignedMap[job.jobNo] = job.assignedDesignEngineerId; });
+      prevAssignedRef.current = nextAssignedMap;
     } catch (err) {
       console.error('Error loading engineer design dashboard data:', err);
     } finally {
@@ -208,6 +239,17 @@ const DesignEngineerDashboard = () => {
   };
 
   useEffect(() => { fetchData(); fetchUserProfile(); }, []);
+
+  useEffect(() => {
+    localStorage.setItem('designEngineerNotifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const unreadNotifCount = notifications.filter(n => !n.read).length;
+
+  const handleNotificationClick = (notif) => {
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    if (notif.jobNo) navigate(`/design/job/${notif.jobNo}`);
+  };
 
   const toggleDarkMode = () => {
     const nextDark = !isDark;
@@ -363,6 +405,7 @@ const DesignEngineerDashboard = () => {
           <nav className="sidebar-nav">
             {[
               { id: 'Overview', icon: BarChart3, label: 'Overview' },
+              { id: 'Notifications', icon: Bell, label: 'Notifications', count: unreadNotifCount },
               { id: 'Pending', icon: Clock, label: 'Pending Jobs', count: pendingJobs.length },
               { id: 'Completed', icon: CheckCircle, label: 'Completed Jobs', count: completedJobs.length },
               { id: 'Profile', icon: User, label: 'Profile' },
@@ -524,6 +567,69 @@ const DesignEngineerDashboard = () => {
                           ))}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'Notifications' && (
+              <motion.section key="notifications" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <div style={{ marginBottom: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                        <Bell size={22} />
+                      </div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Notifications</h2>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>New drawing jobs assigned to you</p>
+                      </div>
+                    </div>
+                    {notifications.length > 0 && (
+                      <button className="cancel-btn" onClick={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}>
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="recent-jobs-card">
+                  {notifications.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
+                      <Bell size={32} style={{ opacity: 0.35 }} />
+                      <span>No notifications yet.</span>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {notifications.map(notif => (
+                        <div
+                          key={notif.id}
+                          onClick={() => handleNotificationClick(notif)}
+                          style={{
+                            display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px',
+                            padding: '14px 16px', borderRadius: '12px', cursor: 'pointer',
+                            border: `1px solid ${notif.read ? 'var(--border-base)' : 'var(--accent-primary)'}`,
+                            background: notif.read ? 'var(--bg-subtle)' : 'color-mix(in srgb, var(--accent-primary) 8%, transparent)'
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>{notif.title}</span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{notif.time}</span>
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{notif.message}</p>
+                          </div>
+                          <button
+                            className="cancel-btn"
+                            style={{ padding: '6px 8px', flexShrink: 0 }}
+                            onClick={(e) => { e.stopPropagation(); setNotifications(prev => prev.filter(n => n.id !== notif.id)); }}
+                            title="Dismiss"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
