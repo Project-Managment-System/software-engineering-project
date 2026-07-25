@@ -135,6 +135,12 @@ const UserDashboard = () => {
   const [downloadingDrawingJobNo, setDownloadingDrawingJobNo] = useState(null);
   const prevReviewStatusRef = useRef(null);
   const prevDrawingReceivedRef = useRef(null);
+  // The 6s background poll and action handlers (e.g. handleSetDrawingNeeded) can both have a
+  // fetchData() request in flight at once. Without this guard, an older poll that started
+  // before a user action can resolve *after* it and overwrite the fresher state with stale
+  // data — e.g. clicking "Yes, drawing needed" appearing to silently revert. Only the
+  // most-recently-issued request's response is ever applied.
+  const fetchRequestIdRef = useRef(0);
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
@@ -272,10 +278,14 @@ const UserDashboard = () => {
   };
 
   const fetchData = async () => {
+    const requestId = ++fetchRequestIdRef.current;
     try {
       const division = localStorage.getItem('userDivision');
       if (division) {
         const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+        // A newer fetchData() call has been issued since this one started — its response
+        // will supersede ours, so skip applying this now-stale data.
+        if (requestId !== fetchRequestIdRef.current) return;
         const mapped = res.data.map((item, index) => ({
           ...item,
           sNo: index + 1,
