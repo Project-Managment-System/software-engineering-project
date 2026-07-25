@@ -107,9 +107,11 @@ exports.createProject = async (req, res) => {
 };
 
 // 2. Get All Projects (Admin Dashboard)
+// drawingFileUrl holds the attached drawing as a base64 string and can be multiple MB per
+// job, so list views exclude it — GET /api/projects/job/:jobNo fetches it for a single job.
 exports.getAllProjects = async (req, res) => {
     try {
-        const projects = await Project.find().sort({ createdAt: -1 });
+        const projects = await Project.find().select('-drawingFileUrl').sort({ createdAt: -1 });
         res.json(projects);
     } catch (error) {
         res.status(500).json({ message: "Error fetching projects", error: error.message });
@@ -121,10 +123,23 @@ exports.getProjectsByDivision = async (req, res) => {
     try {
         const { division } = req.params;
         // Using strict match as the division name is passed from the logged-in engineer's session
-        const projects = await Project.find({ division: division }).sort({ createdAt: -1 });
+        const projects = await Project.find({ division: division }).select('-drawingFileUrl').sort({ createdAt: -1 });
         res.json(projects);
     } catch (error) {
         res.status(500).json({ message: "Error fetching division projects", error: error.message });
+    }
+};
+
+// 3b. Get a single project by jobNo, including drawingFileUrl (used for job-details pages
+// and for lazily loading an attachment that list views omit for performance).
+exports.getProjectByJobNo = async (req, res) => {
+    try {
+        const { jobNo } = req.params;
+        const project = await Project.findOne({ jobNo });
+        if (!project) return res.status(404).json({ message: "Job not found" });
+        res.json(project);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching project", error: error.message });
     }
 };
 

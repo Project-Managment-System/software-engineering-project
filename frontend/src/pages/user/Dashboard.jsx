@@ -132,6 +132,7 @@ const UserDashboard = () => {
 
   const [submittedEstimates, setSubmittedEstimates] = useState([]);
   const [jobData, setJobData] = useState([]);
+  const [downloadingDrawingJobNo, setDownloadingDrawingJobNo] = useState(null);
   const prevReviewStatusRef = useRef(null);
   const prevDrawingReceivedRef = useRef(null);
 
@@ -495,6 +496,25 @@ const UserDashboard = () => {
     if (!notif.jobNo) return;
     handleSelectionChange(notif.jobNo);
     setActiveTab('update-progress');
+  };
+
+  // jobData omits drawingFileUrl for performance, so the drawing is fetched on demand here.
+  const handleDownloadDrawing = async (jobNo) => {
+    setDownloadingDrawingJobNo(jobNo);
+    try {
+      const res = await axios.get(`http://127.0.0.1:5000/api/projects/job/${jobNo}`);
+      const fileUrl = res.data?.drawingFileUrl;
+      if (!fileUrl) { addToast('Drawing file not found.', 'error'); return; }
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = `Drawing_${jobNo}.pdf`;
+      link.click();
+    } catch (err) {
+      console.error('Failed to download drawing:', err);
+      addToast('Failed to download the drawing.', 'error');
+    } finally {
+      setDownloadingDrawingJobNo(null);
+    }
   };
 
   const handleSaveJob = async () => {
@@ -1164,11 +1184,16 @@ const UserDashboard = () => {
                             )}
 
                             {/* Drawing download */}
-                            {selectedJob.drawingReceived && selectedJob.drawingFileUrl && (
+                            {selectedJob.drawingReceived && (
                               <div style={{ marginBottom: '14px' }}>
-                                <a href={selectedJob.drawingFileUrl} download={`Drawing_${selectedJob.jobNo}.pdf`} className="download-pdf-btn">
-                                  <Download size={16} /> Download Drawing PDF
-                                </a>
+                                <button
+                                  type="button"
+                                  className="download-pdf-btn"
+                                  onClick={() => handleDownloadDrawing(selectedJob.jobNo)}
+                                  disabled={downloadingDrawingJobNo === selectedJob.jobNo}
+                                >
+                                  <Download size={16} /> {downloadingDrawingJobNo === selectedJob.jobNo ? 'Preparing...' : 'Download Drawing PDF'}
+                                </button>
                               </div>
                             )}
 

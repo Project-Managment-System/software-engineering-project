@@ -99,23 +99,24 @@ const JobDetailsPage = () => {
   const [loading, setLoading] = useState(!preloadedJob);
   const [error, setError] = useState(null);
 
-  // Full job data is handed off via navigation state from the dashboard row click,
-  // so this only hits /api/projects/all (which includes every drawing's base64 file
-  // data and is slow) on a direct page load/refresh where that state isn't available.
+  // Full job data (minus the attachment) is handed off via navigation state from the
+  // dashboard row click, so this renders instantly. List endpoints omit drawingFileUrl
+  // for performance, so we always fetch the single job below — a small, fast request
+  // that hydrates the attachment field in the background without blocking the initial
+  // render, and is also the (fast) fallback source on a direct page load/refresh.
   useEffect(() => {
-    if (preloadedJob) return;
     const fetchJob = async () => {
-      setLoading(true);
+      if (!preloadedJob) setLoading(true);
       try {
-        const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
-        const found = (res.data || []).find(p => p.jobNo === jobNo);
-        setJob(found || null);
-        if (!found) setError('Job not found.');
+        const res = await axios.get(`http://127.0.0.1:5000/api/projects/job/${jobNo}`);
+        if (res.data) setJob(res.data);
+        else if (!preloadedJob) { setJob(null); setError('Job not found.'); }
       } catch (err) {
         console.error('Error loading job details:', err);
-        setError('Failed to load job details.');
+        // Keep showing the preloaded job (if any) rather than blanking it on a transient error
+        if (!preloadedJob) setError('Failed to load job details.');
       } finally {
-        setLoading(false);
+        if (!preloadedJob) setLoading(false);
       }
     };
     fetchJob();
