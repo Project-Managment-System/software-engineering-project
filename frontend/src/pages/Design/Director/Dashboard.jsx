@@ -52,6 +52,7 @@ const DesignDirectorDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [approvingJobNo, setApprovingJobNo] = useState(null);
+  const [loadingAttachmentJobNo, setLoadingAttachmentJobNo] = useState(null);
   const [seenCompletedIds, setSeenCompletedIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('designDirectorSeenCompleted') || '[]'); } catch { return []; }
   });
@@ -236,6 +237,24 @@ const DesignDirectorDashboard = () => {
       alert('Failed to assign engineer.');
     } finally {
       setAssigningJobNo(null);
+    }
+  };
+
+  // Job lists omit drawingFileUrl for performance, so the attachment is fetched on demand here.
+  const viewJobAttachment = async (jobNo) => {
+    setLoadingAttachmentJobNo(jobNo);
+    try {
+      const res = await axios.get(`http://127.0.0.1:5000/api/projects/job/${jobNo}`);
+      if (res.data?.drawingFileUrl) {
+        openAttachment(res.data.drawingFileUrl);
+      } else {
+        alert('No attachment found for this job.');
+      }
+    } catch (err) {
+      console.error('Failed to load attachment:', err);
+      alert('Failed to load the attachment.');
+    } finally {
+      setLoadingAttachmentJobNo(null);
     }
   };
 
@@ -647,16 +666,15 @@ const DesignDirectorDashboard = () => {
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td onClick={(e) => e.stopPropagation()}>
-                                {j.drawingFileUrl ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => openAttachment(j.drawingFileUrl)}
-                                    className="cancel-btn"
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                  >
-                                    <Eye size={13} /> View
-                                  </button>
-                                ) : '—'}
+                                <button
+                                  type="button"
+                                  onClick={() => viewJobAttachment(j.jobNo)}
+                                  className="cancel-btn"
+                                  disabled={loadingAttachmentJobNo === j.jobNo}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                >
+                                  <Eye size={13} /> {loadingAttachmentJobNo === j.jobNo ? 'Loading...' : 'View'}
+                                </button>
                               </td>
                               <td onClick={(e) => e.stopPropagation()}>
                                 <button
@@ -718,17 +736,16 @@ const DesignDirectorDashboard = () => {
                             >
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
-                              <td>
-                                {j.drawingFileUrl ? (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); openAttachment(j.drawingFileUrl); }}
-                                    className="cancel-btn"
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                  >
-                                    <Eye size={13} /> View
-                                  </button>
-                                ) : '—'}
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={() => viewJobAttachment(j.jobNo)}
+                                  className="cancel-btn"
+                                  disabled={loadingAttachmentJobNo === j.jobNo}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                >
+                                  <Eye size={13} /> {loadingAttachmentJobNo === j.jobNo ? 'Loading...' : 'View'}
+                                </button>
                               </td>
                               <td>{j.directorApprovedAt ? new Date(j.directorApprovedAt).toLocaleDateString() : 'N/A'}</td>
                             </tr>
