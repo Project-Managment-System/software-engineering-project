@@ -2036,6 +2036,8 @@ const EngineerDashboard = () => {
                     {[
                       { emoji: '📊', label: 'Division Summary' },
                       { emoji: '📅', label: 'Weekly Progress' },
+                      { emoji: '📈', label: '6-month trend' },
+                      { emoji: '⏰', label: 'Overdue projects' },
                       { emoji: '💡', label: 'Give me ideas' },
                       { emoji: '🕐', label: 'Pending projects' },
                       { emoji: '🔧', label: 'Ongoing projects' },
