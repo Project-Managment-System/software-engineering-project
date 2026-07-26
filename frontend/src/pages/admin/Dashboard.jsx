@@ -116,6 +116,9 @@ const THEME_OPTIONS = [
   { id: 'amber', label: 'Amber', swatch: '#d97706' },
 ];
 
+/* ─── Job "Source" dropdown options ─── */
+const SOURCE_OPTIONS = ['PSDG', 'Recurrent', 'GEMP', 'Clean SL', 'National School', 'DDP', 'IDPPM', 'Other'];
+
 const formatRoleName = (role) => {
   if (!role) return 'N/A';
   switch (role.toLowerCase()) {
@@ -1064,13 +1067,17 @@ const AdminDashboard = () => {
                       </div>
                       <div className="input-row-group">
                         <label>Source</label>
-                        <input
+                        <select
                           name="source"
                           value={formData.source || ''}
                           onChange={handleInputChange}
-                          className="input-field"
-                          placeholder="e.g. Central Fund"
-                        />
+                          className="job-select-dropdown"
+                        >
+                          <option value="">Select source</option>
+                          {SOURCE_OPTIONS.map((src) => (
+                            <option key={src} value={src}>{src}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>

@@ -8,7 +8,8 @@ const {
     updateProject,
     deleteProject,
     updateProjectStatus,
-    undoProjectStatus // Ensure this is exported from your controller
+    undoProjectStatus, // Ensure this is exported from your controller
+    undoEngineerReview
 } = require('../controllers/projectController');
 const Project = require('../models/Project'); // Adjust path to your Project model
 // 1. Admin: Create a new job
@@ -31,6 +32,9 @@ router.patch('/status/:jobNo', updateProjectStatus);
 
 // 6. Undo status (Reset to Pending)
 router.patch('/undo/:jobNo', undoProjectStatus);
+
+// 6b. Undo engineer review (Reset engineerReviewStatus to Pending)
+router.patch('/undo-engineer-review/:jobNo', undoEngineerReview);
 
 // 7. Admin: Delete a job
 router.delete('/delete/:jobNo', deleteProject);

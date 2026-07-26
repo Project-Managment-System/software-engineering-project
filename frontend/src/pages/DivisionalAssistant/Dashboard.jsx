@@ -69,14 +69,14 @@ const formatRoleName = (role) => {
 };
 
 const getRoleBadgeClass = (role) => {
-  if (!role) return 'status-pending';
+  if (!role) return 'role-user';
   switch (role.toLowerCase()) {
     case 'admin': return 'status-rejected';
-    case 'engineer': return 'status-approved';
-    case 'division_assistant': return 'status-success';
-    case 'user': return 'status-pending';
-    case 'clerk': return 'status-success';
-    default: return 'status-pending';
+    case 'engineer': return 'role-engineer';
+    case 'division_assistant': return 'role-division-assistant';
+    case 'user': return 'role-user';
+    case 'clerk': return 'role-clerk';
+    default: return 'role-user';
   }
 };
 
