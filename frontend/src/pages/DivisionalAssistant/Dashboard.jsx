@@ -26,15 +26,6 @@ const pageVariants = {
   exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
 };
 
-const staggerContainer = {
-  visible: { transition: { staggerChildren: 0.08 } }
-};
-
-const cardVariant = {
-  hidden: { opacity: 0, y: 16, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
-};
-
 /* ─── Custom Tooltip for Charts ─── */
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
@@ -546,13 +537,6 @@ const DivisionalAssistantDashboard = () => {
 
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-  const statCards = [
-    { label: 'My Users', value: totalUsers, icon: Users, color: 'var(--accent-primary)' },
-    { label: 'Total Jobs', value: totalJobs, icon: Briefcase, color: '#6366f1' },
-    { label: 'Approved', value: approvedJobs, icon: CheckCircle, color: 'var(--success)' },
-    { label: 'Pending', value: pendingJobs, icon: Clock, color: 'var(--warning)' },
-    { label: 'Rejected', value: rejectedJobs, icon: XCircle, color: 'var(--danger)' },
-  ];
 
   return (
     <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
@@ -691,42 +675,6 @@ const DivisionalAssistantDashboard = () => {
             </div>
           )}
 
-          {/* ─── Stat Cards (hidden on messages tab) ─── */}
-          {activeTab !== 'messages' && (
-            <motion.div
-              className="stat-cards-grid"
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', marginBottom: '28px' }}
-            >
-              {statCards.map((stat) => (
-                <motion.div
-                  key={stat.label}
-                  variants={cardVariant}
-                  className="field-card"
-                  style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                    <div style={{
-                      width: '38px', height: '38px', borderRadius: '10px',
-                      background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                    }}>
-                      <stat.icon size={20} />
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                    {stat.value}
-                  </div>
-                  <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                    {stat.label}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-
           {/* ─── Tab Content ─── */}
           <AnimatePresence mode="wait">
 
@@ -760,12 +708,18 @@ const DivisionalAssistantDashboard = () => {
                     {/* ── Summary Cards ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
                       {[
-                        { label: 'Total Jobs', value: totalJobs, color: '#6366f1', pct: 100 },
-                        { label: 'Approved', value: approvedJobs, color: '#10b981', pct: totalJobs > 0 ? Math.round((approvedJobs / totalJobs) * 100) : 0 },
-                        { label: 'Pending', value: pendingJobs, color: '#f59e0b', pct: totalJobs > 0 ? Math.round((pendingJobs / totalJobs) * 100) : 0 },
-                        { label: 'Rejected', value: rejectedJobs, color: '#ef4444', pct: totalJobs > 0 ? Math.round((rejectedJobs / totalJobs) * 100) : 0 },
+                        { label: 'Total Jobs', status: '', value: totalJobs, color: '#6366f1', pct: 100 },
+                        { label: 'Approved', status: 'Approved', value: approvedJobs, color: '#10b981', pct: totalJobs > 0 ? Math.round((approvedJobs / totalJobs) * 100) : 0 },
+                        { label: 'Pending', status: 'Pending', value: pendingJobs, color: '#f59e0b', pct: totalJobs > 0 ? Math.round((pendingJobs / totalJobs) * 100) : 0 },
+                        { label: 'Rejected', status: 'Rejected', value: rejectedJobs, color: '#ef4444', pct: totalJobs > 0 ? Math.round((rejectedJobs / totalJobs) * 100) : 0 },
                       ].map(s => (
-                        <div key={s.label} className="field-card" style={{ padding: '20px' }}>
+                        <div
+                          key={s.label}
+                          className="field-card"
+                          style={{ padding: '20px', cursor: 'pointer' }}
+                          onClick={() => { setJobFilter({ ministry: '', division: '', status: s.status }); setActiveTab('view-jobs'); }}
+                          title={`View ${s.label.toLowerCase()}`}
+                        >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                               <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -854,9 +808,16 @@ const DivisionalAssistantDashboard = () => {
 
                     {/* ── Users summary ── */}
                     <div className="field-card" style={{ padding: '24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                        <Users size={18} style={{ color: 'var(--accent-primary)' }} />
-                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Division Users ({totalUsers})</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Users size={18} style={{ color: 'var(--accent-primary)' }} />
+                          <h3 className="recent-jobs-title" style={{ margin: 0 }}>Division Users ({totalUsers})</h3>
+                        </div>
+                        {divisionUsers.length > 0 && (
+                          <button className="cancel-btn" onClick={() => setActiveTab('my-users')}>
+                            View All
+                          </button>
+                        )}
                       </div>
                       {divisionUsers.length === 0 ? (
                         <div className="placeholder-content" style={{ height: '100px', border: 'none' }}>
@@ -864,24 +825,37 @@ const DivisionalAssistantDashboard = () => {
                           <span>No users in this division yet.</span>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                          {divisionUsers.map(u => (
-                            <div key={u._id} style={{
-                              display: 'flex', alignItems: 'center', gap: '10px',
-                              padding: '10px 16px', borderRadius: '10px',
-                              background: 'var(--bg-subtle, rgba(0,0,0,0.03))',
-                              border: '1px solid var(--border-base)'
-                            }}>
-                              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'color-mix(in srgb, var(--accent-primary) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
-                                <User size={16} />
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{u.fullName}</div>
-                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{u.employeeId}</div>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="table-scroll-wrapper">
+                          <table className="project-table">
+                            <thead>
+                              <tr>
+                                <th>Employee ID</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {divisionUsers.slice(0, 5).map(u => (
+                                <tr key={u._id}>
+                                  <td style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700, color: 'var(--accent-primary)', fontSize: '0.82rem' }}>{u.employeeId}</td>
+                                  <td className="font-bold">{u.fullName}</td>
+                                  <td>{u.email || '—'}</td>
+                                  <td>
+                                    <span className={`status-badge ${getRoleBadgeClass(u.role)}`}>
+                                      {formatRoleName(u.role)}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
+                      )}
+                      {divisionUsers.length > 5 && (
+                        <p style={{ margin: '12px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'right' }}>
+                          Showing 5 of {divisionUsers.length} users
+                        </p>
                       )}
                     </div>
                   </>
@@ -912,7 +886,7 @@ const DivisionalAssistantDashboard = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       {renderExportButtons(
                         "Division Users",
-                        ["#", "Employee ID", "Full Name", "Email", "Division", "Role"],
+                        ["No", "Employee ID", "Full Name", "Email", "Division", "Role"],
                         divisionUsers.map((u, idx) => [idx + 1, u.employeeId, u.fullName, u.email || '—', u.division, formatRoleName(u.role)])
                       )}
                       <button className="confirm-btn" style={{ fontSize: '0.8rem', padding: '8px 16px' }} onClick={handleRefreshUsers}>
@@ -931,7 +905,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-                            <th>#</th>
+                            <th>No</th>
                             <th>Employee ID</th>
                             <th>Full Name</th>
                             <th>Email</th>
@@ -983,9 +957,10 @@ const DivisionalAssistantDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                     {renderExportButtons(
                       "Division Jobs",
-                      ["Job No", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
-                      filteredJobs.map(j => [
-                        j.jobNo,
+                      ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
+                      filteredJobs.map((j, idx) => [
+                        idx + 1,
+                        j.estimationNo || '—',
                         j.jobName,
                         j.ministry,
                         j.department,
@@ -1038,7 +1013,8 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-                            <th>Job No</th>
+                            <th>No</th>
+                            <th>Estimation Number</th>
                             <th>Activity</th>
                             <th>Ministry</th>
                             <th>Department</th>
@@ -1049,9 +1025,10 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredJobs.map(j => (
+                          {filteredJobs.map((j, idx) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                              <td className="font-mono">{j.jobNo}</td>
+                              <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
+                              <td className="font-mono">{j.estimationNo || '—'}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
                               <td>{j.department}</td>
@@ -1191,10 +1168,11 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Tracking",
-                      ["Job No", "Job Name", "Requested On", "Status"],
-                      drawingTracking.map(j => {
+                      ["No", "Job No", "Job Name", "Requested On", "Status"],
+                      drawingTracking.map((j, idx) => {
                         const info = getDrawingTrackingInfo(j);
                         return [
+                          idx + 1,
                           j.jobNo,
                           j.jobName,
                           j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A',
@@ -1216,6 +1194,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>No</th>
                             <th>Job No</th>
                             <th>Job Name</th>
                             <th>Requested On</th>
@@ -1223,7 +1202,7 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingTracking.map(j => {
+                          {drawingTracking.map((j, idx) => {
                             const info = getDrawingTrackingInfo(j);
                             return (
                               <tr
@@ -1232,6 +1211,7 @@ const DivisionalAssistantDashboard = () => {
                                 style={{ cursor: 'pointer' }}
                                 title="Click to view full job details"
                               >
+                                <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>

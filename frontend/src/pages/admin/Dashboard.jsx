@@ -144,6 +144,9 @@ const AdminDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [users, setUsers] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  // Snapshot of the form as it was when Edit was opened, so the Update button can stay
+  // disabled until the user actually changes something.
+  const [originalFormData, setOriginalFormData] = useState(null);
   const [isSavingJob, setIsSavingJob] = useState(false);
   const [deletingJobNo, setDeletingJobNo] = useState(null);
   const [formData, setFormData] = useState({
@@ -189,7 +192,15 @@ const AdminDashboard = () => {
       }
     } else if (type === 'pdf') {
       try {
-        const doc = new jsPDF();
+        // Wide tables get squeezed unreadable in portrait — switch to landscape
+        // and shrink font/padding as columns grow so everything stays on one page
+        // (horizontalPageBreak must stay off, otherwise columns spill onto extra pages).
+        const orientation = headers.length > 6 ? 'landscape' : 'portrait';
+        const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const usableWidth = pageWidth - 16;
+        const fontSize = headers.length > 14 ? 5.5 : headers.length > 10 ? 6.5 : headers.length > 6 ? 7.5 : 8;
+        const cellPadding = headers.length > 10 ? 1.5 : 2.5;
         doc.setFont("Helvetica");
         doc.setFontSize(14);
         doc.text(title, 14, 15);
@@ -201,8 +212,11 @@ const AdminDashboard = () => {
           body: rows,
           startY: 25,
           theme: 'striped',
-          headStyles: { fillColor: [225, 29, 72] },
-          styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+          headStyles: { fillColor: [225, 29, 72], fontSize },
+          styles: { fontSize, cellPadding, font: 'Helvetica', overflow: 'linebreak' },
+          margin: { left: 8, right: 8 },
+          tableWidth: usableWidth,
+          horizontalPageBreak: false,
         });
         doc.save(`${title.toLowerCase().replace(/\s+/g, '_')}.pdf`);
         addToast(`${title} exported to PDF successfully!`, 'success');
@@ -519,6 +533,7 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
+    if (!window.confirm('Are you sure you want to logout?')) return;
     const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
     localStorage.removeItem('isAdmin');
     localStorage.clear();
@@ -529,6 +544,13 @@ const AdminDashboard = () => {
   const isFormValid = () => {
     const { division, jobName, ministry, department, allocation, dateReq, ref } = formData;
     return !!(division && jobName && ministry && department && allocation && dateReq && ref);
+  };
+
+  // While editing, the Update button stays disabled until something actually differs
+  // from the job as it was when Edit was opened.
+  const hasUnsavedChanges = () => {
+    if (!editingId) return true;
+    return JSON.stringify(formData) !== JSON.stringify(originalFormData);
   };
 
   const handleAddJob = async () => {
@@ -577,16 +599,19 @@ const AdminDashboard = () => {
 
   const handleEditJob = (job) => {
     setEditingId(job.jobNo);
-    setFormData({
+    const snapshot = {
       ...job,
       dateReq: job.dateReq ? job.dateReq.split('T')[0] : ''
-    });
+    };
+    setFormData(snapshot);
+    setOriginalFormData(snapshot);
     addToast('Editing job: ' + job.jobNo, 'info');
     jobFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleCancel = () => {
     setEditingId(null);
+    setOriginalFormData(null);
     const lockedDivision = userDivision && DIVISION_DS_DIVISIONS[userDivision] ? userDivision : '';
     setFormData({
       jobName: '', ministry: '', department: '', division: lockedDivision,
@@ -1058,7 +1083,7 @@ const AdminDashboard = () => {
                   </div>
 
                   <div className="form-action-row">
-                    <button className="save-btn" onClick={handleAddJob} disabled={!isFormValid() || isSavingJob}>
+                    <button className="save-btn" onClick={handleAddJob} disabled={!isFormValid() || isSavingJob || !hasUnsavedChanges()}>
                       <Save size={14} /> {isSavingJob ? 'Saving...' : (editingId ? 'Update' : 'OK')}
                     </button>
                     <button className="cancel-btn" onClick={handleCancel}>
@@ -1079,7 +1104,7 @@ const AdminDashboard = () => {
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>Recent Jobs</h3>
                     {renderExportButtons(
                       "Recent Jobs",
-                      ["No", "Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status"],
+                      ["No", "Est. No", "Activity", "Ministry", "Department", "Institute", "Work Type", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Submit Date", "Status"],
                       filteredJobs.map((j, idx) => [
                         idx + 1,
                         j.estimationNo || '—',
@@ -1087,12 +1112,12 @@ const AdminDashboard = () => {
                         j.ministry,
                         j.department,
                         j.institute,
+                        j.work === 'R' ? 'Repair' : 'New',
                         j.deptIdNo || '—',
                         j.source || '—',
                         j.dsDivision || '—',
                         j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
                         j.allocation,
-                        j.remark || '',
                         j.submitDate ? j.submitDate.split('T')[0] : 'N/A',
                         j.status || 'Pending'
                       ])
@@ -1141,7 +1166,7 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>No</th><th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th>
+                          <th>No</th><th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Work Type</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Submit Date</th><th>Actions</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1164,12 +1189,16 @@ const AdminDashboard = () => {
                                 <td>{j.ministry}</td>
                                 <td>{j.department}</td>
                                 <td>{j.institute}</td>
+                                <td>
+                                  <span className={`status-badge ${j.work === 'R' ? 'status-pending' : 'status-approved'}`}>
+                                    {j.work === 'R' ? 'Repair' : 'New'}
+                                  </span>
+                                </td>
                                 <td>{j.deptIdNo || '—'}</td>
                                 <td>{j.source || '—'}</td>
                                 <td>{j.dsDivision || '—'}</td>
                                 <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
                                 <td className="font-bold">{j.allocation}</td>
-                                <td>{j.remark}</td>
                                 <td>{j.submitDate ? j.submitDate.split('T')[0] : 'N/A'}</td>
                                 <td>
                                   {j.status === 'Approved' && userRole === 'clerk' ? (
@@ -1515,7 +1544,7 @@ const AdminDashboard = () => {
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>All Jobs</h3>
                     {renderExportButtons(
                       "All Jobs",
-                      ["Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Remark", "Submit Date", "Status", "Submitted Date to TO", "Submitted to DA", "Submitted to Engineer"],
+                      ["Est. No", "Activity", "Ministry", "Department", "Institute", "Dept ID No", "Source", "DS Division", "Request Date", "Allocation", "Submit Date", "Status", "Submitted to DA", "Submitted to Engineer"],
                       filteredJobs.map(j => [
                         j.estimationNo || '—',
                         j.jobName,
@@ -1527,12 +1556,10 @@ const AdminDashboard = () => {
                         j.dsDivision || '—',
                         j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
                         j.allocation,
-                        j.remark || '',
                         j.submitDate ? j.submitDate.split('T')[0] : 'N/A',
                         j.status || 'Pending',
                         j.estimateSubmittedAt ? j.estimateSubmittedAt.split('T')[0] : '—',
-                        j.finalEstimateSubmittedAt ? j.finalEstimateSubmittedAt.split('T')[0] : '—',
-                        j.daReviewStatus === 'Approved' && j.daReviewedAt ? j.daReviewedAt.split('T')[0] : '—'
+                        j.finalEstimateSubmittedAt ? j.finalEstimateSubmittedAt.split('T')[0] : '—'
                       ])
                     )}
                   </div>
@@ -1541,13 +1568,13 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Remark</th><th>Submit Date</th><th>Actions</th><th>Status</th><th>Submitted Date to TO</th><th>Submitted to DA</th><th>Submitted to Engineer</th>
+                          <th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Submit Date</th><th>Actions</th><th>Status</th><th>Submitted to DA</th><th>Submitted to Engineer</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={17}>
+                            <td colSpan={15}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{jobs.length === 0 ? 'No jobs added yet.' : 'No jobs match the selected filters.'}</span>
@@ -1567,7 +1594,6 @@ const AdminDashboard = () => {
                               <td>{j.dsDivision || '—'}</td>
                               <td>{j.dateReq ? j.dateReq.split('T')[0] : 'N/A'}</td>
                               <td className="font-bold">{j.allocation}</td>
-                              <td>{j.remark}</td>
                               <td>{j.submitDate ? j.submitDate.split('T')[0] : 'N/A'}</td>
                               <td>
                                 {j.status === 'Approved' && userRole === 'clerk' ? (
@@ -1592,7 +1618,6 @@ const AdminDashboard = () => {
                               </td>
                               <td>{j.estimateSubmittedAt ? j.estimateSubmittedAt.split('T')[0] : '—'}</td>
                               <td>{j.finalEstimateSubmittedAt ? j.finalEstimateSubmittedAt.split('T')[0] : '—'}</td>
-                              <td>{j.daReviewStatus === 'Approved' && j.daReviewedAt ? j.daReviewedAt.split('T')[0] : '—'}</td>
                             </tr>
                           ))
                         )}

@@ -5,7 +5,7 @@ import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
   Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
   FileText, MessageSquare, Bell, RotateCcw, Check, Download, Hash, Layers,
-  LayoutDashboard, Activity, BarChart3, FileSpreadsheet, Printer
+  LayoutDashboard, Activity, BarChart3, FileSpreadsheet, Printer, ArrowLeft
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -54,15 +54,6 @@ const pageVariants = {
   exit: { opacity: 0, y: -12, transition: { duration: 0.2 } }
 };
 
-const staggerContainer = {
-  visible: { transition: { staggerChildren: 0.08 } }
-};
-
-const cardVariant = {
-  hidden: { opacity: 0, y: 16, scale: 0.97 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } }
-};
-
 /* ─── Role Formatting Helpers ─── */
 /* ─── Selectable accent color themes (Settings) ─── */
 const THEME_OPTIONS = [
@@ -94,6 +85,9 @@ const UserDashboard = () => {
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
   const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Which status the "My Jobs" tab is filtered to — set by clicking a summary card
+  // (Total Jobs / Approved / Pending / Rejected) on the Overview tab.
+  const [jobStatusFilter, setJobStatusFilter] = useState('all');
 
   const [selectedJobId, setSelectedJobId] = useState('');
   const [visitDate, setVisitDate] = useState('');
@@ -135,6 +129,12 @@ const UserDashboard = () => {
   const [downloadingDrawingJobNo, setDownloadingDrawingJobNo] = useState(null);
   const prevReviewStatusRef = useRef(null);
   const prevDrawingReceivedRef = useRef(null);
+  // The 6s background poll and action handlers (e.g. handleSetDrawingNeeded) can both have a
+  // fetchData() request in flight at once. Without this guard, an older poll that started
+  // before a user action can resolve *after* it and overwrite the fresher state with stale
+  // data — e.g. clicking "Yes, drawing needed" appearing to silently revert. Only the
+  // most-recently-issued request's response is ever applied.
+  const fetchRequestIdRef = useRef(0);
 
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
@@ -272,10 +272,14 @@ const UserDashboard = () => {
   };
 
   const fetchData = async () => {
+    const requestId = ++fetchRequestIdRef.current;
     try {
       const division = localStorage.getItem('userDivision');
       if (division) {
         const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+        // A newer fetchData() call has been issued since this one started — its response
+        // will supersede ours, so skip applying this now-stale data.
+        if (requestId !== fetchRequestIdRef.current) return;
         const mapped = res.data.map((item, index) => ({
           ...item,
           sNo: index + 1,
@@ -601,6 +605,10 @@ const UserDashboard = () => {
     }
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+        // In the "drawing not needed" path this is the only submit action, so persist the
+        // confirmed field-visited date here too — otherwise it only ever lives in local
+        // state and reopening the job later shows it blurred again as if never confirmed.
+        fieldVisitedDate: visitDate,
         finalEstimateCost: Number(finalEstimateCost),
         finalEstimateDate: finalEstimateDate,
         finalEstimateSubmittedAt: new Date().toISOString(),
@@ -657,12 +665,6 @@ const UserDashboard = () => {
   const approvedJobsCount = myJobs.filter(j => j.status === 'Approved').length;
   const rejectedJobsCount = myJobs.filter(j => j.status === 'Rejected').length;
   const drawingsReceivedCount = myJobs.filter(j => j.drawingReceived).length;
-
-  const statCards = [
-    { label: 'My Jobs', value: totalMyJobs, icon: Briefcase, color: 'var(--accent-primary)' },
-    { label: 'Estimates Sent', value: totalSubmittedEstimates, icon: Send, color: 'var(--accent-2)' },
-    { label: 'Pending Approvals', value: pendingApprovalsCount, icon: Clock, color: 'var(--warning)' },
-  ];
 
   /* ─── Allocation-wise breakdown (for Overview chart) ─── */
   const allocationBreakdown = myJobs.reduce((acc, j) => {
@@ -779,43 +781,15 @@ const UserDashboard = () => {
         {/* ─── Main Content ─── */}
         <main className={`dashboard-content ${isSidebarOpen ? 'content-shifted-open' : 'content-shifted-closed'}`}>
           <header className="content-header">
-            <div className="header-left" />
+            <div className="header-left">
+              {activeTab !== 'overview' && (
+                <button className="cancel-btn" onClick={() => setActiveTab('overview')}>
+                  <ArrowLeft size={14} /> Back
+                </button>
+              )}
+            </div>
           </header>
 
-          {/* ─── Stat Cards (hidden on messages tab) ─── */}
-          {activeTab !== 'messages' && (
-            <motion.div
-              variants={staggerContainer}
-              initial="hidden"
-              animate="visible"
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '28px' }}
-            >
-              {statCards.map((stat) => (
-                <motion.div
-                  key={stat.label}
-                  variants={cardVariant}
-                  className="field-card"
-                  style={{ padding: '20px', cursor: 'default' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <div style={{
-                      width: '36px', height: '36px', borderRadius: '10px',
-                      background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                    }}>
-                      <stat.icon size={19} />
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                    {stat.value}
-                  </div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                    {stat.label}
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
 
           <AnimatePresence mode="wait">
             {/* ── Overview Tab ── */}
@@ -848,12 +822,18 @@ const UserDashboard = () => {
                     {/* ── Summary Cards ── */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
                       {[
-                        { label: 'Total Jobs', value: totalMyJobs, color: '#6366f1', pct: 100 },
-                        { label: 'Approved', value: approvedJobsCount, color: '#10b981', pct: totalMyJobs > 0 ? Math.round((approvedJobsCount / totalMyJobs) * 100) : 0 },
-                        { label: 'Pending', value: pendingApprovalsCount, color: '#f59e0b', pct: totalMyJobs > 0 ? Math.round((pendingApprovalsCount / totalMyJobs) * 100) : 0 },
-                        { label: 'Rejected', value: rejectedJobsCount, color: '#ef4444', pct: totalMyJobs > 0 ? Math.round((rejectedJobsCount / totalMyJobs) * 100) : 0 },
+                        { label: 'Total Jobs', filter: 'all', value: totalMyJobs, color: '#6366f1', pct: 100 },
+                        { label: 'Approved', filter: 'Approved', value: approvedJobsCount, color: '#10b981', pct: totalMyJobs > 0 ? Math.round((approvedJobsCount / totalMyJobs) * 100) : 0 },
+                        { label: 'Pending', filter: 'Pending', value: pendingApprovalsCount, color: '#f59e0b', pct: totalMyJobs > 0 ? Math.round((pendingApprovalsCount / totalMyJobs) * 100) : 0 },
+                        { label: 'Rejected', filter: 'Rejected', value: rejectedJobsCount, color: '#ef4444', pct: totalMyJobs > 0 ? Math.round((rejectedJobsCount / totalMyJobs) * 100) : 0 },
                       ].map(s => (
-                        <div key={s.label} className="field-card" style={{ padding: '20px' }}>
+                        <div
+                          key={s.label}
+                          className="field-card"
+                          style={{ padding: '20px', cursor: 'pointer' }}
+                          onClick={() => { setJobStatusFilter(s.filter); setActiveTab('my-jobs'); }}
+                          title={`View ${s.label.toLowerCase()}`}
+                        >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div>
                               <div style={{ fontSize: '2rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: s.color, lineHeight: 1 }}>{s.value}</div>
@@ -951,12 +931,18 @@ const UserDashboard = () => {
                           { label: 'Estimates Sent', value: totalSubmittedEstimates, icon: Send },
                           { label: 'Drawings Received', value: drawingsReceivedCount, icon: CheckCircle },
                         ].map(item => (
-                          <div key={item.label} style={{
-                            display: 'flex', alignItems: 'center', gap: '10px',
-                            padding: '10px 16px', borderRadius: '10px',
-                            background: 'var(--bg-subtle, rgba(0,0,0,0.03))',
-                            border: '1px solid var(--border-base)'
-                          }}>
+                          <div
+                            key={item.label}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '10px',
+                              padding: '10px 16px', borderRadius: '10px',
+                              background: 'var(--bg-subtle, rgba(0,0,0,0.03))',
+                              border: '1px solid var(--border-base)',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => setActiveTab('update-progress')}
+                            title={`View ${item.label.toLowerCase()}`}
+                          >
                             <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'color-mix(in srgb, var(--accent-primary) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
                               <item.icon size={16} />
                             </div>
@@ -974,18 +960,29 @@ const UserDashboard = () => {
             )}
 
             {/* ── My Jobs Tab ── */}
-            {activeTab === 'my-jobs' && (
+            {activeTab === 'my-jobs' && (() => {
+              const filteredMyJobs = jobStatusFilter === 'all'
+                ? myJobs
+                : myJobs.filter(job => (job.status || 'Pending') === jobStatusFilter);
+              return (
               <motion.section key="my-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
                 <div className="field-card" style={{ padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Division Allocated Jobs</h3>
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>
+                        My Division Allocated Jobs{jobStatusFilter !== 'all' ? ` — ${jobStatusFilter}` : ''}
+                      </h3>
+                      {jobStatusFilter !== 'all' && (
+                        <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
+                          Clear filter
+                        </button>
+                      )}
                     </div>
                     {renderExportButtons(
                       "My Division Allocated Jobs",
-                      ["Serial No", "Estimation Number", "Job Name", "Allocation", "Assign Date", "Timeline Limit"],
-                      myJobs.map((job, index) => [index + 1, job.estimationNo || '—', job.jobName, job.allocation, job.assignDate, job.deadline])
+                      ["Serial No", "Estimation Number", "Job Name", "Allocation", "Assign Date", "Timeline Limit", "Status"],
+                      filteredMyJobs.map((job, index) => [index + 1, job.estimationNo || '—', job.jobName, job.allocation, job.assignDate, job.deadline, job.status || 'Pending'])
                     )}
                   </div>
                   <div className="table-scroll-wrapper">
@@ -998,20 +995,21 @@ const UserDashboard = () => {
                           <th>Allocation</th>
                           <th>Assign Date</th>
                           <th>Timeline Limit</th>
+                          <th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {myJobs.length === 0 ? (
+                        {filteredMyJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={6}>
+                            <td colSpan={7}>
                               <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
                                 <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                <span>No jobs assigned to you yet.</span>
+                                <span>{jobStatusFilter === 'all' ? 'No jobs assigned to you yet.' : `No ${jobStatusFilter.toLowerCase()} jobs.`}</span>
                               </div>
                             </td>
                           </tr>
                         ) : (
-                          myJobs.map((job, index) => (
+                          filteredMyJobs.map((job, index) => (
                             <tr key={job.jobNo}>
                               <td>{index + 1}</td>
                               <td className="font-mono">{job.estimationNo || '—'}</td>
@@ -1021,6 +1019,11 @@ const UserDashboard = () => {
                               <td>
                                 <span className="deadline-tag">{job.deadline}</span>
                               </td>
+                              <td>
+                                <span className={`status-badge status-${(job.status || 'Pending').toLowerCase()}`}>
+                                  {job.status || 'Pending'}
+                                </span>
+                              </td>
                             </tr>
                           ))
                         )}
@@ -1029,7 +1032,8 @@ const UserDashboard = () => {
                   </div>
                 </div>
               </motion.section>
-            )}
+              );
+            })()}
 
 
 
@@ -1188,6 +1192,17 @@ const UserDashboard = () => {
                               if (drawingNeeded) {
                                 return (
                                   <>
+                                    {!selectedJob.estimateSubmitted && (
+                                      <button
+                                        type="button"
+                                        className="cancel-btn"
+                                        style={{ marginBottom: '14px' }}
+                                        onClick={() => handleSetDrawingNeeded(null)}
+                                        title="Change your answer to the drawing question"
+                                      >
+                                        <ArrowLeft size={14} /> Back
+                                      </button>
+                                    )}
                                     <div className="btn-group-estimation" style={{ marginBottom: '14px', alignItems: 'center' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <button
@@ -1336,6 +1351,17 @@ const UserDashboard = () => {
                               /* ─── Path B: no drawing needed — final estimate can go straight to the Engineer ─── */
                               return (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                  {!isSubmitted && (
+                                    <button
+                                      type="button"
+                                      className="cancel-btn"
+                                      style={{ alignSelf: 'flex-start' }}
+                                      onClick={() => handleSetDrawingNeeded(null)}
+                                      title="Change your answer to the drawing question"
+                                    >
+                                      <ArrowLeft size={14} /> Back
+                                    </button>
+                                  )}
                                   {isSubmitted && engineerStatus === 'Rejected' && (
                                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--danger-soft)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }}>
                                       <strong>Rejected by Engineer.</strong> {selectedJob.engineerReviewNote ? selectedJob.engineerReviewNote : 'Please review and resubmit.'}

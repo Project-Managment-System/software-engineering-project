@@ -72,11 +72,11 @@ export default function HeadOfficeLogin() {
       if (branch) localStorage.setItem('userBranch', branch);
 
       if (role === 'headoffice_admin') {
-        navigate('/headoffice/dashboard');
+        navigate('/headoffice/dashboard', { replace: true });
       } else if (role === 'branch_engineer' && BRANCH_ROUTE_SLUGS.includes(branch)) {
-        navigate(`/${branch}/engineer/dashboard`);
+        navigate(`/${branch}/engineer/dashboard`, { replace: true });
       } else if (role === 'branch_director' && BRANCH_ROUTE_SLUGS.includes(branch)) {
-        navigate(`/${branch}/director/dashboard`);
+        navigate(`/${branch}/director/dashboard`, { replace: true });
       } else {
         setError('This portal is not available for your account.');
       }

@@ -37,7 +37,7 @@ export default function AdminLogin() {
         if (division) localStorage.setItem('userDivision', division);
         localStorage.setItem('isAdmin', 'true'); // Required for route guards
 
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       }
     } catch (error) {
       alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');

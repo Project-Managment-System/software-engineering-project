@@ -3,9 +3,12 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
-  AlertTriangle, Eye, BarChart3, Settings, User, Save, X, Camera, UserCheck, Bell, Trash2
+  AlertTriangle, Eye, BarChart3, Settings, User, Save, X, Camera, UserCheck, Bell, Trash2,
+  FileText, FileSpreadsheet, Printer, RefreshCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import '../../shared/BranchDashboard.css';
 
 const pageVariants = {
@@ -60,6 +63,8 @@ const DesignDirectorDashboard = () => {
   const [designEngineers, setDesignEngineers] = useState([]);
   const [assignSelections, setAssignSelections] = useState({});
   const [assigningJobNo, setAssigningJobNo] = useState(null);
+  const [reassignSelections, setReassignSelections] = useState({});
+  const [reassigningJobNo, setReassigningJobNo] = useState(null);
 
   const [notifications, setNotifications] = useState(() => {
     try { return JSON.parse(localStorage.getItem('designDirectorNotifications') || '[]'); } catch { return []; }
@@ -248,6 +253,160 @@ const DesignDirectorDashboard = () => {
       setAssigningJobNo(null);
     }
   };
+
+  // Reassign the engineer on a job that already has one — unlike handleAssignEngineer,
+  // this leaves drawingWorkflowStatus untouched since the job is already in progress.
+  const handleReassignEngineer = async (jobNo) => {
+    const engineerId = reassignSelections[jobNo];
+    if (!engineerId) {
+      alert('Please choose a new engineer first.');
+      return;
+    }
+    const engineer = designEngineers.find(e => e._id === engineerId);
+    setReassigningJobNo(jobNo);
+    try {
+      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+        assignedDesignEngineerId: engineerId,
+        assignedDesignEngineerName: engineer?.fullName || '',
+        assignedDesignEngineerAt: new Date().toISOString()
+      });
+      setReassignSelections(prev => { const next = { ...prev }; delete next[jobNo]; return next; });
+      await fetchData();
+    } catch (err) {
+      console.error('Reassign failed:', err);
+      alert('Failed to reassign engineer.');
+    } finally {
+      setReassigningJobNo(null);
+    }
+  };
+
+  /* ─── Table exports — PDF, Excel, Print ─── */
+  const handleExport = (title, headers, rows, type) => {
+    if (type === 'excel') {
+      try {
+        let csvContent = "";
+        csvContent += headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",") + "\n";
+        rows.forEach(row => {
+          csvContent += row.map(cell => {
+            const val = cell !== undefined && cell !== null ? String(cell) : "";
+            return `"${val.replace(/"/g, '""')}"`;
+          }).join(",") + "\n";
+        });
+        const blob = new Blob(["﻿" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${title.toLowerCase().replace(/\s+/g, '_')}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error("Excel export error:", err);
+        alert("Failed to export Excel.");
+      }
+    } else if (type === 'pdf') {
+      try {
+        const doc = new jsPDF();
+        doc.setFont("Helvetica");
+        doc.setFontSize(14);
+        doc.text(title, 14, 15);
+        doc.setFontSize(8);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 21);
+
+        autoTable(doc, {
+          head: [headers],
+          body: rows,
+          startY: 25,
+          theme: 'striped',
+          headStyles: { fillColor: [124, 58, 237] },
+          styles: { fontSize: 8, cellPadding: 3, font: 'Helvetica' },
+        });
+        doc.save(`${title.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+      } catch (err) {
+        console.error("PDF export error:", err);
+        alert("Failed to export PDF.");
+      }
+    } else if (type === 'print') {
+      try {
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+          alert("Popup blocked! Please allow popups to print.");
+          return;
+        }
+        const tableHTML = `
+          <table style="width:100%; border-collapse:collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; margin-top: 15px;">
+            <thead>
+              <tr style="background-color:#7c3aed; color:white;">
+                ${headers.map(h => `<th style="padding:8px 10px; border:1px solid #ddd; text-align:left; font-weight: 700;">${h}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map((row, rIdx) => `
+                <tr style="background-color: ${rIdx % 2 === 0 ? '#f9fafb' : '#ffffff'};">
+                  ${row.map(cell => `<td style="padding:8px 10px; border:1px solid #ddd; color: #374151;">${cell ?? ''}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print - ${title}</title>
+              <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 30px; color: #1f2937; }
+                h2 { margin: 0 0 4px 0; color: #111827; font-size: 20px; }
+                .meta { font-size: 12px; color: #6b7280; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
+                @media print {
+                  body { margin: 15px; }
+                  thead { display: table-header-group; }
+                }
+              </style>
+            </head>
+            <body>
+              <h2>${title}</h2>
+              <div class="meta">Generated on: ${new Date().toLocaleString()}</div>
+              ${tableHTML}
+              <script>
+                window.onload = function() {
+                  window.print();
+                  window.close();
+                };
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } catch (err) {
+        console.error("Print error:", err);
+        alert("Failed to initiate print.");
+      }
+    }
+  };
+
+  const renderExportButtons = (title, headers, rows) => (
+    <div className="table-export-actions">
+      <button onClick={() => handleExport(title, headers, rows, 'pdf')} className="export-btn pdf-export" title="Download PDF">
+        <FileText size={13} /> PDF
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'excel')} className="export-btn excel-export" title="Download Excel">
+        <FileSpreadsheet size={13} /> Excel
+      </button>
+      <button onClick={() => handleExport(title, headers, rows, 'print')} className="export-btn print-export" title="Print Table">
+        <Printer size={13} /> Print
+      </button>
+    </div>
+  );
+
+  const getAssignedJobStatus = (j) => {
+    if (j.drawingWorkflowStatus === 'Completed') return { badge: 'status-approved', label: 'Approved by Director' };
+    if (j.drawingWorkflowStatus === 'PendingDirectorDesign') return { badge: 'status-pending', label: 'Awaiting Director Approval' };
+    return { badge: 'status-pending', label: 'Pending Drawing' };
+  };
+
+  // Every job that currently has (or has ever had) an engineer assigned to it
+  const assignedEngineerJobs = jobs
+    .filter(j => j.assignedDesignEngineerId)
+    .sort((a, b) => new Date(b.assignedDesignEngineerAt || 0) - new Date(a.assignedDesignEngineerAt || 0));
 
   // Job lists omit drawingFileUrl for performance, so the attachment is fetched on demand here.
   const viewJobAttachment = async (jobNo) => {
@@ -625,6 +784,104 @@ const DesignDirectorDashboard = () => {
                               </td>
                             </tr>
                           ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── Already-assigned engineers, with reassignment ── */}
+                <div style={{ margin: '32px 0 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+                      <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'color-mix(in srgb, var(--accent-primary) 14%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-primary)' }}>
+                        <Briefcase size={22} />
+                      </div>
+                      <div>
+                        <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Assigned Engineers</h2>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Every job with an engineer assigned — reassign if needed</p>
+                      </div>
+                    </div>
+                    {assignedEngineerJobs.length > 0 && renderExportButtons(
+                      "Assigned Engineers",
+                      ["No", "Division", "Job Name", "Assigned Engineer", "Assigned On", "Status"],
+                      assignedEngineerJobs.map((j, idx) => [
+                        idx + 1,
+                        j.division,
+                        j.jobName,
+                        j.assignedDesignEngineerName || '—',
+                        j.assignedDesignEngineerAt ? new Date(j.assignedDesignEngineerAt).toLocaleDateString() : 'N/A',
+                        getAssignedJobStatus(j).label
+                      ])
+                    )}
+                  </div>
+                </div>
+
+                <div className="recent-jobs-card">
+                  {assignedEngineerJobs.length === 0 ? (
+                    <div className="placeholder-content" style={{ height: '200px', border: 'none' }}>
+                      <AlertTriangle size={28} style={{ opacity: 0.4 }} />
+                      <span>{loading ? 'Loading...' : 'No engineers assigned yet.'}</span>
+                    </div>
+                  ) : (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
+                          <tr>
+                            <th>No</th>
+                            <th>Division</th>
+                            <th>Job Name</th>
+                            <th>Assigned Engineer</th>
+                            <th>Assigned On</th>
+                            <th>Status</th>
+                            <th>Reassign Engineer</th>
+                            <th>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {assignedEngineerJobs.map((j, idx) => {
+                            const isCompleted = j.drawingWorkflowStatus === 'Completed';
+                            const statusMeta = getAssignedJobStatus(j);
+                            return (
+                              <tr
+                                key={j._id}
+                                onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
+                                style={{ cursor: 'pointer' }}
+                                title="Click to view full job details"
+                              >
+                                <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
+                                <td>{j.division}</td>
+                                <td className="font-bold">{j.jobName}</td>
+                                <td>{j.assignedDesignEngineerName || '—'}</td>
+                                <td>{j.assignedDesignEngineerAt ? new Date(j.assignedDesignEngineerAt).toLocaleDateString() : 'N/A'}</td>
+                                <td><span className={`status-badge ${statusMeta.badge}`}>{statusMeta.label}</span></td>
+                                <td onClick={(e) => e.stopPropagation()}>
+                                  <select
+                                    className="job-select-dropdown"
+                                    value={reassignSelections[j.jobNo] || ''}
+                                    onChange={(e) => setReassignSelections(prev => ({ ...prev, [j.jobNo]: e.target.value }))}
+                                    disabled={isCompleted}
+                                    title={isCompleted ? 'Job already completed — cannot reassign' : undefined}
+                                  >
+                                    <option value="" disabled>Select engineer</option>
+                                    {designEngineers.map(eng => (
+                                      <option key={eng._id} value={eng._id}>{eng.fullName}</option>
+                                    ))}
+                                  </select>
+                                </td>
+                                <td onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    className="save-btn"
+                                    disabled={isCompleted || !reassignSelections[j.jobNo] || reassigningJobNo === j.jobNo}
+                                    onClick={() => handleReassignEngineer(j.jobNo)}
+                                    title={isCompleted ? 'Job already completed — cannot reassign' : undefined}
+                                  >
+                                    <RefreshCw size={13} /> {reassigningJobNo === j.jobNo ? 'Submitting...' : 'Submit'}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>

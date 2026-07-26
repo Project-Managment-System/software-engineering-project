@@ -508,9 +508,8 @@
   color: var(--accent-primary) !important;
 }
 
-/* Active sub-tab override (#ddd applied inline) */
-#cems-user-dashboard .sub-tabs button[style*="background: rgb(221, 221, 221)"],
-#cems-user-dashboard .sub-tabs button[style*="background: #ddd"] {
+/* Active sub-tab */
+#cems-user-dashboard .sub-tabs button.active-sub-tab {
   background: var(--accent-soft) !important;
   color: var(--accent-primary) !important;
   border-bottom: 3px solid var(--accent-primary) !important;
