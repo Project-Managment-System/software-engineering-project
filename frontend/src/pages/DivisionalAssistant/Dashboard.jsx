@@ -316,6 +316,10 @@ const DivisionalAssistantDashboard = () => {
   const drawingRequests = divisionJobs.filter(j => j.drawingWorkflowStatus === 'PendingDA');
   const drawingTracking = divisionJobs.filter(j => j.drawingWorkflowStatus && j.drawingWorkflowStatus !== 'NotRequested');
 
+  const isDrawingSentToEngineer = (j) => (
+    ['PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'].includes(j.drawingWorkflowStatus)
+  );
+
   const getDrawingTrackingInfo = (j) => {
     if (j.drawingWorkflowStatus === 'PendingDA') {
       if (j.drawingDaStatus === 'Rejected') return { label: 'Rejected by You', badge: 'status-rejected' };
@@ -957,7 +961,7 @@ const DivisionalAssistantDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                     {renderExportButtons(
                       "Division Jobs",
-                      ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
+                      ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status", "Sent to Engineer"],
                       filteredJobs.map((j, idx) => [
                         idx + 1,
                         j.estimationNo || '—',
@@ -967,7 +971,8 @@ const DivisionalAssistantDashboard = () => {
                         j.division,
                         j.allocation,
                         j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
-                        j.status || 'Pending'
+                        j.status || 'Pending',
+                        isDrawingSentToEngineer(j) ? 'Yes' : 'No'
                       ])
                     )}
                   </div>
@@ -1022,6 +1027,7 @@ const DivisionalAssistantDashboard = () => {
                             <th>Allocation</th>
                             <th>Request Date</th>
                             <th>Status</th>
+                            <th>Sent to Engineer</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1038,6 +1044,11 @@ const DivisionalAssistantDashboard = () => {
                               <td>
                                 <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
                                   {j.status || 'Pending'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-badge ${isDrawingSentToEngineer(j) ? 'status-approved' : 'status-pending'}`}>
+                                  {isDrawingSentToEngineer(j) ? 'Yes' : 'No'}
                                 </span>
                               </td>
                             </tr>
