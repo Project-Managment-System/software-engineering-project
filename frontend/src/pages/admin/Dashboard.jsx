@@ -879,6 +879,7 @@ const AdminDashboard = () => {
                         onChange={handleInputChange}
                         className="job-select-dropdown" required
                         disabled={jobFormDivisionOptions.length === 1}
+                        style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
                       >
                         <option value="" disabled>Select Division</option>
                         {jobFormDivisionOptions.map((div) => (
