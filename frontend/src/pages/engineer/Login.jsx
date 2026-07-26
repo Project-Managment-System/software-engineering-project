@@ -37,7 +37,7 @@ export default function EngineerLogin() {
         localStorage.setItem('profilePic', profilePic || '');
         if (division) localStorage.setItem('userDivision', division);
 
-        navigate('/engineer/dashboard');
+        navigate('/engineer/dashboard', { replace: true });
         return;
       }
 

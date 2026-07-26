@@ -32,7 +32,7 @@ export default function UserLogin() {
         localStorage.setItem('isAuthenticated', 'true'); // Key check for UserDashboard
         if (division) localStorage.setItem('userDivision', division);
 
-        navigate('/user/dashboard');
+        navigate('/user/dashboard', { replace: true });
       }
     } catch (error) {
       alert(error.response?.data?.message || error.response?.data?.error || 'Login Failed');
