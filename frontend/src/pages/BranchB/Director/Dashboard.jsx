@@ -325,14 +325,14 @@ const BranchBDirectorDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Job No</th><th>Activity</th><th>Ministry</th><th>Division</th>
+                          <th>Serial No</th><th>Job No</th><th>Activity</th><th>Ministry</th><th>Division</th>
                           <th>Allocation</th><th>Status</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={6}>
+                            <td colSpan={7}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{loading ? 'Loading records...' : jobs.length === 0 ? 'No records available.' : 'No records match the selected filters.'}</span>
@@ -340,8 +340,9 @@ const BranchBDirectorDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredJobs.map((j) => (
+                          filteredJobs.map((j, index) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                              <td>{index + 1}</td>
                               <td className="font-mono">{j.jobNo}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>

@@ -69,14 +69,14 @@ const formatRoleName = (role) => {
 };
 
 const getRoleBadgeClass = (role) => {
-  if (!role) return 'status-pending';
+  if (!role) return 'role-user';
   switch (role.toLowerCase()) {
     case 'admin': return 'status-rejected';
-    case 'engineer': return 'status-approved';
-    case 'division_assistant': return 'status-success';
-    case 'user': return 'status-pending';
-    case 'clerk': return 'status-success';
-    default: return 'status-pending';
+    case 'engineer': return 'role-engineer';
+    case 'division_assistant': return 'role-division-assistant';
+    case 'user': return 'role-user';
+    case 'clerk': return 'role-clerk';
+    default: return 'role-user';
   }
 };
 
@@ -315,6 +315,10 @@ const DivisionalAssistantDashboard = () => {
   /* ─── Drawing request handlers: User -> DA -> Design Director (assigns engineer) -> Design Engineer -> Design Director -> User ─── */
   const drawingRequests = divisionJobs.filter(j => j.drawingWorkflowStatus === 'PendingDA');
   const drawingTracking = divisionJobs.filter(j => j.drawingWorkflowStatus && j.drawingWorkflowStatus !== 'NotRequested');
+
+  const isDrawingSentToEngineer = (j) => (
+    ['PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'].includes(j.drawingWorkflowStatus)
+  );
 
   const getDrawingTrackingInfo = (j) => {
     if (j.drawingWorkflowStatus === 'PendingDA') {
@@ -957,7 +961,7 @@ const DivisionalAssistantDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                     {renderExportButtons(
                       "Division Jobs",
-                      ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
+                      ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status", "Sent to Engineer"],
                       filteredJobs.map((j, idx) => [
                         idx + 1,
                         j.estimationNo || '—',
@@ -967,7 +971,8 @@ const DivisionalAssistantDashboard = () => {
                         j.division,
                         j.allocation,
                         j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
-                        j.status || 'Pending'
+                        j.status || 'Pending',
+                        isDrawingSentToEngineer(j) ? 'Yes' : 'No'
                       ])
                     )}
                   </div>
@@ -1022,6 +1027,7 @@ const DivisionalAssistantDashboard = () => {
                             <th>Allocation</th>
                             <th>Request Date</th>
                             <th>Status</th>
+                            <th>Sent to Engineer</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1038,6 +1044,11 @@ const DivisionalAssistantDashboard = () => {
                               <td>
                                 <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
                                   {j.status || 'Pending'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-badge ${isDrawingSentToEngineer(j) ? 'status-approved' : 'status-pending'}`}>
+                                  {isDrawingSentToEngineer(j) ? 'Yes' : 'No'}
                                 </span>
                               </td>
                             </tr>
@@ -1068,8 +1079,9 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Requests",
-                      ["Job No", "Activity", "Division", "Requested On", "Status"],
-                      drawingRequests.map(j => [
+                      ["Serial No", "Job No", "Activity", "Division", "Requested On", "Status"],
+                      drawingRequests.map((j, idx) => [
+                        idx + 1,
                         j.jobNo,
                         j.jobName,
                         j.division,
@@ -1091,6 +1103,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Job No</th>
                             <th>Activity</th>
                             <th>Division</th>
@@ -1100,10 +1113,11 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingRequests.map(j => {
+                          {drawingRequests.map((j, idx) => {
                             const drawingStatus = j.drawingDaStatus || 'Pending';
                             return (
                               <tr key={j._id}>
+                                <td>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.division}</td>

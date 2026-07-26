@@ -116,6 +116,9 @@ const THEME_OPTIONS = [
   { id: 'amber', label: 'Amber', swatch: '#d97706' },
 ];
 
+/* ─── Job "Source" dropdown options ─── */
+const SOURCE_OPTIONS = ['PSDG', 'Recurrent', 'GEMP', 'Clean SL', 'National School', 'DDP', 'IDPPM', 'Other'];
+
 const formatRoleName = (role) => {
   if (!role) return 'N/A';
   switch (role.toLowerCase()) {
@@ -904,6 +907,7 @@ const AdminDashboard = () => {
                         onChange={handleInputChange}
                         className="job-select-dropdown" required
                         disabled={jobFormDivisionOptions.length === 1}
+                        style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
                       >
                         <option value="" disabled>Select Division</option>
                         {jobFormDivisionOptions.map((div) => (
@@ -1064,13 +1068,17 @@ const AdminDashboard = () => {
                       </div>
                       <div className="input-row-group">
                         <label>Source</label>
-                        <input
+                        <select
                           name="source"
                           value={formData.source || ''}
                           onChange={handleInputChange}
-                          className="input-field"
-                          placeholder="e.g. Central Fund"
-                        />
+                          className="job-select-dropdown"
+                        >
+                          <option value="">Select source</option>
+                          {SOURCE_OPTIONS.map((src) => (
+                            <option key={src} value={src}>{src}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -1575,8 +1583,9 @@ const AdminDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredJobs.map((j) => (
+                          filteredJobs.map((j, index) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                              <td>{index + 1}</td>
                               <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
