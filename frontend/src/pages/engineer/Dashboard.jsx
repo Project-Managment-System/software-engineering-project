@@ -1074,16 +1074,16 @@ const EngineerDashboard = () => {
                       : approvalData.filter(job => (job.status || 'Pending') === jobStatusFilter);
                     return (
                     <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700 }}>
-                          Approval Requests{jobStatusFilter !== 'all' ? ` — ${jobStatusFilter}` : ''}
-                        </h4>
-                        {jobStatusFilter !== 'all' && (
+                      {jobStatusFilter !== 'all' && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+                          <span className={`status-badge status-${jobStatusFilter.toLowerCase()}`}>
+                            Filtered — {jobStatusFilter}
+                          </span>
                           <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
                             Clear filter
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                       {renderExportButtons(
                         "Approval Requests",
                         ["No", "Estimation Number", "Job Name", "Date of Request", "Allocation", "Status"],

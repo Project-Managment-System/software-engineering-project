@@ -886,7 +886,7 @@ const DivisionalAssistantDashboard = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       {renderExportButtons(
                         "Division Users",
-                        ["#", "Employee ID", "Full Name", "Email", "Division", "Role"],
+                        ["No", "Employee ID", "Full Name", "Email", "Division", "Role"],
                         divisionUsers.map((u, idx) => [idx + 1, u.employeeId, u.fullName, u.email || '—', u.division, formatRoleName(u.role)])
                       )}
                       <button className="confirm-btn" style={{ fontSize: '0.8rem', padding: '8px 16px' }} onClick={handleRefreshUsers}>
@@ -905,7 +905,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-                            <th>#</th>
+                            <th>No</th>
                             <th>Employee ID</th>
                             <th>Full Name</th>
                             <th>Email</th>
@@ -957,9 +957,10 @@ const DivisionalAssistantDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                     {renderExportButtons(
                       "Division Jobs",
-                      ["Job No", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
-                      filteredJobs.map(j => [
-                        j.jobNo,
+                      ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
+                      filteredJobs.map((j, idx) => [
+                        idx + 1,
+                        j.estimationNo || '—',
                         j.jobName,
                         j.ministry,
                         j.department,
@@ -1012,7 +1013,8 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-                            <th>Job No</th>
+                            <th>No</th>
+                            <th>Estimation Number</th>
                             <th>Activity</th>
                             <th>Ministry</th>
                             <th>Department</th>
@@ -1023,9 +1025,10 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredJobs.map(j => (
+                          {filteredJobs.map((j, idx) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                              <td className="font-mono">{j.jobNo}</td>
+                              <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
+                              <td className="font-mono">{j.estimationNo || '—'}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
                               <td>{j.department}</td>
