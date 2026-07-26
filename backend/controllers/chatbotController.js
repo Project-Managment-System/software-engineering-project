@@ -15,9 +15,133 @@ const detectIntent = (message) => {
   if (/\b(team|staff|user|member|person|who)\b/.test(msg)) return 'team';
   if (/\b(allocation|budget|fund|amount|money|cost)\b/.test(msg)) return 'allocation';
   if (/\b(ministry|department|sector)\b/.test(msg)) return 'ministry';
+  if (/\b(overdue|delay|stuck|behind|stalled|late)\b/.test(msg)) return 'overdue';
+  if (/\b(trend|compare|growth|history|over time|month\b)\b/.test(msg)) return 'trend';
   if (/\b(hello|hi|hey|greet|good)\b/.test(msg)) return 'greeting';
   if (/\b(help|what can|command|option)\b/.test(msg)) return 'help';
   return 'general';
+};
+
+// ─── Direct Job Lookup ────────────────────────────────────────────────────────
+// Lets the assistant answer with real single-project data whenever the message
+// contains something that looks like a job number or a meaningful job-name word,
+// instead of forcing every query through the fixed intent list above.
+const findJobMatches = (projects, message) => {
+  const tokens = message.trim().toLowerCase().split(/\s+/).map(t => t.replace(/[^a-z0-9-]/g, '')).filter(Boolean);
+  if (tokens.length === 0) return [];
+
+  const idTokens = tokens.filter(t => /\d/.test(t) && t.length >= 3);
+  const nameTokens = tokens.filter(t => t.length >= 5);
+  if (idTokens.length === 0 && nameTokens.length === 0) return [];
+
+  const matches = projects.filter(p => {
+    const jobNo = (p.jobNo || '').toLowerCase();
+    const jobName = (p.jobName || '').toLowerCase();
+    const idHit = idTokens.some(t => jobNo && (jobNo === t || jobNo.includes(t) || t.includes(jobNo)));
+    const nameHit = nameTokens.some(t => jobName && jobName.includes(t));
+    return idHit || nameHit;
+  });
+
+  return matches.length > 0 && matches.length <= 15 ? matches : [];
+};
+
+const generateJobDetail = (matches, division) => {
+  if (matches.length === 1) {
+    const p = matches[0];
+    const requested = p.dateReq || p.createdAt;
+    const days = requested ? Math.floor((Date.now() - new Date(requested)) / 86400000) : null;
+    return `🔎 **Job Found — ${division} Division**\n\n` +
+      `**[${p.jobNo}] ${p.jobName}**\n` +
+      `• Status: **${p.status}**\n` +
+      `• Ministry: ${p.ministry || 'N/A'}\n` +
+      `• Department: ${p.department || 'N/A'}\n` +
+      `• Allocation: ${p.allocation ? 'Rs. ' + parseFloat(p.allocation).toLocaleString() : 'N/A'}\n` +
+      `• Requested: ${requested ? new Date(requested).toLocaleDateString() : 'N/A'}${days !== null ? ` (${days} day${days !== 1 ? 's' : ''} ago)` : ''}\n` +
+      `• Last Updated: ${p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : 'N/A'}`;
+  }
+  return `🔎 **${matches.length} Matching Jobs — ${division} Division**\n\n` +
+    matches.slice(0, 8).map((p, i) => `**${i + 1}. [${p.jobNo}] ${p.jobName}** — *${p.status}*`).join('\n') +
+    (matches.length > 8 ? `\n\n*...and ${matches.length - 8} more*` : '') +
+    `\n\nAsk me for one specific job number for full details.`;
+};
+
+// ─── Overdue / Trend Analysis ─────────────────────────────────────────────────
+const generateOverdueReport = (projects, division) => {
+  const THRESHOLD_DAYS = 14;
+  const now = Date.now();
+  const stale = projects
+    .filter(p => p.status === 'Pending' || p.status === 'Ongoing')
+    .map(p => ({ p, days: Math.floor((now - new Date(p.updatedAt || p.createdAt)) / 86400000) }))
+    .filter(x => x.days >= THRESHOLD_DAYS)
+    .sort((a, b) => b.days - a.days);
+
+  if (stale.length === 0) {
+    return `✅ **No Overdue Projects — ${division} Division**\n\nEvery pending or ongoing project has been touched within the last ${THRESHOLD_DAYS} days. Nice work staying on top of things!`;
+  }
+
+  return `⏰ **Overdue Projects — ${division} Division**\n\n` +
+    `**${stale.length}** project${stale.length > 1 ? 's have' : ' has'} had no status update for ${THRESHOLD_DAYS}+ days:\n\n` +
+    stale.slice(0, 8).map((x, i) =>
+      `**${i + 1}. [${x.p.jobNo}] ${x.p.jobName}** — *${x.p.status}*\n   No update for **${x.days} days**`
+    ).join('\n\n') +
+    (stale.length > 8 ? `\n\n*...and ${stale.length - 8} more*` : '');
+};
+
+const generateTrendReport = (projects, division) => {
+  if (projects.length === 0) return `📈 No project history is available yet for **${division}** division.`;
+
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: d.toLocaleString('default', { month: 'short', year: '2-digit' }), y: d.getFullYear(), m: d.getMonth(), count: 0 });
+  }
+  projects.forEach(p => {
+    const d = new Date(p.createdAt);
+    const hit = months.find(x => x.y === d.getFullYear() && x.m === d.getMonth());
+    if (hit) hit.count++;
+  });
+
+  const max = Math.max(...months.map(x => x.count), 1);
+  const chart = months.map(x => `${x.key}: ${'#'.repeat(Math.round((x.count / max) * 12)) || '.'} (${x.count})`).join('\n');
+  const total6mo = months.reduce((a, x) => a + x.count, 0);
+  const trendDir = months[5].count >= months[0].count ? '📈 rising' : '📉 declining';
+
+  return `📈 **6-Month Job Intake Trend — ${division} Division**\n\n\`\`\`\n${chart}\n\`\`\`\n\n` +
+    `**${total6mo}** job${total6mo !== 1 ? 's' : ''} submitted over the last 6 months. Trend is currently **${trendDir}** compared to 6 months ago.`;
+};
+
+// ─── Smart Fallback ────────────────────────────────────────────────────────────
+// Fires when the message matches no fixed intent and no job lookup. Instead of a
+// flat "I don't understand", it searches the division's real data for anything
+// relevant, and only redirects the user when there is genuinely nothing to match.
+const STOPWORDS = new Set(['the', 'a', 'an', 'is', 'are', 'was', 'were', 'what', 'who', 'how', 'why', 'when', 'where', 'of', 'in', 'on', 'for', 'to', 'my', 'me', 'i', 'you', 'your', 'can', 'please', 'tell', 'show', 'give', 'about', 'it', 'this', 'that', 'and', 'with']);
+
+const generateSmartFallback = (projects, division, message) => {
+  const tokens = message.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(t => t.length >= 3 && !STOPWORDS.has(t));
+
+  if (tokens.length === 0 || projects.length === 0) {
+    return `🤔 I couldn't quite understand that, or it's outside what I'm built to help with — I'm focused on your **${division} division's** project data, not general topics.\n\n` +
+      `Try asking me:\n• **"Summary"** — Division overview\n• **"Weekly progress"** — Recent activity\n• **"Give me ideas"** — Recommendations\n• **"Show pending"** — Pending projects\n• A **job number or job name** — Direct lookup\n\nOr type **"help"** to see everything I can do.`;
+  }
+
+  const scored = projects
+    .map(p => {
+      const haystack = `${p.jobNo || ''} ${p.jobName || ''} ${p.ministry || ''} ${p.department || ''} ${p.status || ''}`.toLowerCase();
+      const score = tokens.reduce((acc, t) => acc + (haystack.includes(t) ? 1 : 0), 0);
+      return { p, score };
+    })
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  if (scored.length === 0) {
+    return `🤔 I couldn't find anything in **${division} division's** data matching *"${message}"*, and it looks outside what I'm built to help with.\n\n` +
+      `I'm a project-data assistant — try asking about summaries, pending/ongoing/completed jobs, allocations, ministries, or a specific job number.\n\nType **"help"** for the full list.`;
+  }
+
+  return `🔍 **Closest Matches for** *"${message}"* **— ${division} Division**\n\n` +
+    scored.slice(0, 5).map((x, i) => `**${i + 1}. [${x.p.jobNo}] ${x.p.jobName}** — *${x.p.status}*\n   Ministry: ${x.p.ministry || 'N/A'}`).join('\n\n') +
+    `\n\nAsk me for a specific job number for full details, or type **"help"** for more commands.`;
 };
 
 // ─── Report Generators ───────────────────────────────────────────────────────
@@ -195,25 +319,37 @@ exports.handleChat = async (req, res) => {
       return res.status(400).json({ error: 'Message and division are required.' });
     }
 
-    const intent = detectIntent(message);
     const projects = await Project.find({ division }).sort({ updatedAt: -1 });
+
+    // A job number or job name in the message takes priority over generic intents —
+    // it lets the assistant answer with one real project's data instead of a canned report.
+    const jobMatches = findJobMatches(projects, message);
+    if (jobMatches.length > 0) {
+      return res.json({ response: generateJobDetail(jobMatches, division), intent: 'lookup' });
+    }
+
+    const intent = detectIntent(message);
     let response = '';
 
     switch (intent) {
       case 'greeting':
-        response = `👋 **Hello! I'm CEMS AI Assistant.**\n\nI'm here to help you stay on top of your **${division} division** projects.\n\nHere's what I can do:\n• 📊 **Overall Summary** — Full division report\n• 📅 **Weekly Progress** — Last 7 days activity\n• 💡 **Recommendations** — Smart project insights\n• 🔍 **Status Filters** — Pending, Ongoing, Completed\n• 👥 **Team Report** — Division staff directory\n• 💰 **Allocation Report** — Budget breakdown\n• 🏛️ **Ministry Report** — Ministry distribution\n\nJust ask me anything about your division! 🚀`;
+        response = `👋 **Hello! I'm CEMS AI Assistant.**\n\nI'm here to help you stay on top of your **${division} division** projects.\n\nHere's what I can do:\n• 📊 **Overall Summary** — Full division report\n• 📅 **Weekly Progress** — Last 7 days activity\n• 📈 **6-Month Trend** — Job intake over time\n• ⏰ **Overdue Check** — Stalled projects\n• 💡 **Recommendations** — Smart project insights\n• 🔍 **Status Filters** — Pending, Ongoing, Completed\n• 👥 **Team Report** — Division staff directory\n• 💰 **Allocation Report** — Budget breakdown\n• 🏛️ **Ministry Report** — Ministry distribution\n• 🔎 **Job Lookup** — Just type a job number or job name\n\nJust ask me anything about your division! 🚀`;
         break;
       case 'help':
         response = `🤖 **CEMS AI Assistant — Help Guide**\n\nHere are things you can ask me:\n\n` +
           `• *"Give me a summary"* → Full division overview\n` +
           `• *"Weekly progress"* → This week's activity\n` +
+          `• *"6-month trend"* → Job intake trend chart\n` +
+          `• *"Overdue projects"* → Projects with no recent activity\n` +
           `• *"Ideas or recommendations"* → Strategic suggestions\n` +
           `• *"Show pending projects"* → List pending items\n` +
           `• *"Ongoing projects"* → Current active work\n` +
           `• *"Completed projects"* → Finished jobs\n` +
           `• *"Team report"* → Division staff\n` +
           `• *"Allocation report"* → Budget data\n` +
-          `• *"Ministry report"* → Ministry breakdown`;
+          `• *"Ministry report"* → Ministry breakdown\n` +
+          `• *A job number or job name* → Direct lookup for that project\n\n` +
+          `Anything else you ask, I'll search your division's real project data for the closest match instead of just giving up.`;
         break;
       case 'summary':
         response = generateSummary(projects, division);
@@ -248,8 +384,14 @@ exports.handleChat = async (req, res) => {
       case 'ministry':
         response = generateMinistryReport(projects, division);
         break;
+      case 'overdue':
+        response = generateOverdueReport(projects, division);
+        break;
+      case 'trend':
+        response = generateTrendReport(projects, division);
+        break;
       default:
-        response = `🤔 I'm not sure how to answer *"${message}"* yet.\n\nTry asking me:\n• **"Summary"** — Division overview\n• **"Weekly progress"** — Recent activity\n• **"Give me ideas"** — Recommendations\n• **"Show pending"** — Pending projects\n\nOr type **"help"** to see all available commands.`;
+        response = generateSmartFallback(projects, division, message);
     }
 
     res.json({ response, intent });
