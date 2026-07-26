@@ -605,6 +605,10 @@ const UserDashboard = () => {
     }
     try {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+        // In the "drawing not needed" path this is the only submit action, so persist the
+        // confirmed field-visited date here too — otherwise it only ever lives in local
+        // state and reopening the job later shows it blurred again as if never confirmed.
+        fieldVisitedDate: visitDate,
         finalEstimateCost: Number(finalEstimateCost),
         finalEstimateDate: finalEstimateDate,
         finalEstimateSubmittedAt: new Date().toISOString(),
@@ -1188,6 +1192,17 @@ const UserDashboard = () => {
                               if (drawingNeeded) {
                                 return (
                                   <>
+                                    {!selectedJob.estimateSubmitted && (
+                                      <button
+                                        type="button"
+                                        className="cancel-btn"
+                                        style={{ marginBottom: '14px' }}
+                                        onClick={() => handleSetDrawingNeeded(null)}
+                                        title="Change your answer to the drawing question"
+                                      >
+                                        <ArrowLeft size={14} /> Back
+                                      </button>
+                                    )}
                                     <div className="btn-group-estimation" style={{ marginBottom: '14px', alignItems: 'center' }}>
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                         <button
@@ -1336,6 +1351,17 @@ const UserDashboard = () => {
                               /* ─── Path B: no drawing needed — final estimate can go straight to the Engineer ─── */
                               return (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                  {!isSubmitted && (
+                                    <button
+                                      type="button"
+                                      className="cancel-btn"
+                                      style={{ alignSelf: 'flex-start' }}
+                                      onClick={() => handleSetDrawingNeeded(null)}
+                                      title="Change your answer to the drawing question"
+                                    >
+                                      <ArrowLeft size={14} /> Back
+                                    </button>
+                                  )}
                                   {isSubmitted && engineerStatus === 'Rejected' && (
                                     <div style={{ padding: '10px 12px', borderRadius: '8px', background: 'var(--danger-soft)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }}>
                                       <strong>Rejected by Engineer.</strong> {selectedJob.engineerReviewNote ? selectedJob.engineerReviewNote : 'Please review and resubmit.'}
