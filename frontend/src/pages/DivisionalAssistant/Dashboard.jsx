@@ -1168,10 +1168,11 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Tracking",
-                      ["Job No", "Job Name", "Requested On", "Status"],
-                      drawingTracking.map(j => {
+                      ["No", "Job No", "Job Name", "Requested On", "Status"],
+                      drawingTracking.map((j, idx) => {
                         const info = getDrawingTrackingInfo(j);
                         return [
+                          idx + 1,
                           j.jobNo,
                           j.jobName,
                           j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A',
@@ -1193,6 +1194,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>No</th>
                             <th>Job No</th>
                             <th>Job Name</th>
                             <th>Requested On</th>
@@ -1200,7 +1202,7 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingTracking.map(j => {
+                          {drawingTracking.map((j, idx) => {
                             const info = getDrawingTrackingInfo(j);
                             return (
                               <tr
@@ -1209,6 +1211,7 @@ const DivisionalAssistantDashboard = () => {
                                 style={{ cursor: 'pointer' }}
                                 title="Click to view full job details"
                               >
+                                <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
