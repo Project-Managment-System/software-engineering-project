@@ -957,17 +957,10 @@ const DivisionalAssistantDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                     {renderExportButtons(
                       "Division Jobs",
-<<<<<<< HEAD
-                      ["Serial No", "Job No", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
-                      filteredJobs.map((j, idx) => [
-                        idx + 1,
-                        j.jobNo,
-=======
                       ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
                       filteredJobs.map((j, idx) => [
                         idx + 1,
                         j.estimationNo || '—',
->>>>>>> 4b9f2756b206a0a3471488aadb317bde5b799b6e
                         j.jobName,
                         j.ministry,
                         j.department,
@@ -1020,13 +1013,8 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-<<<<<<< HEAD
-                            <th>Serial No</th>
-                            <th>Job No</th>
-=======
                             <th>No</th>
                             <th>Estimation Number</th>
->>>>>>> 4b9f2756b206a0a3471488aadb317bde5b799b6e
                             <th>Activity</th>
                             <th>Ministry</th>
                             <th>Department</th>
@@ -1039,13 +1027,8 @@ const DivisionalAssistantDashboard = () => {
                         <tbody>
                           {filteredJobs.map((j, idx) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-<<<<<<< HEAD
-                              <td>{idx + 1}</td>
-                              <td className="font-mono">{j.jobNo}</td>
-=======
                               <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
                               <td className="font-mono">{j.estimationNo || '—'}</td>
->>>>>>> 4b9f2756b206a0a3471488aadb317bde5b799b6e
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
                               <td>{j.department}</td>
@@ -1188,11 +1171,7 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Tracking",
-<<<<<<< HEAD
-                      ["Serial No", "Job No", "Job Name", "Requested On", "Status"],
-=======
                       ["No", "Job No", "Job Name", "Requested On", "Status"],
->>>>>>> 4b9f2756b206a0a3471488aadb317bde5b799b6e
                       drawingTracking.map((j, idx) => {
                         const info = getDrawingTrackingInfo(j);
                         return [
@@ -1218,11 +1197,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-<<<<<<< HEAD
-                            <th>Serial No</th>
-=======
                             <th>No</th>
->>>>>>> 4b9f2756b206a0a3471488aadb317bde5b799b6e
                             <th>Job No</th>
                             <th>Job Name</th>
                             <th>Requested On</th>
@@ -1239,11 +1214,7 @@ const DivisionalAssistantDashboard = () => {
                                 style={{ cursor: 'pointer' }}
                                 title="Click to view full job details"
                               >
-<<<<<<< HEAD
-                                <td>{idx + 1}</td>
-=======
                                 <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
->>>>>>> 4b9f2756b206a0a3471488aadb317bde5b799b6e
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>
