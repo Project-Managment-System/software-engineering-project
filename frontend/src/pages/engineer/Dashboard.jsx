@@ -1295,10 +1295,13 @@ const EngineerDashboard = () => {
                                   <td>
                                     <select value={job.assignee || ""} onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}>
                                       <option value="" disabled>Select Assignee</option>
-                                      {allSystemUsers.map((user) => {
-                                        const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
-                                        return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
-                                      })}
+                                      {allSystemUsers
+                                        .filter((user) => user.role === 'user'
+                                          && (user.division || '').trim().toLowerCase() === (currentDivision || '').trim().toLowerCase())
+                                        .map((user) => {
+                                          const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
+                                          return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
+                                        })}
                                     </select>
                                   </td>
                                   <td>
