@@ -72,11 +72,11 @@ export default function HeadOfficeLogin() {
       if (branch) localStorage.setItem('userBranch', branch);
 
       if (role === 'headoffice_admin') {
-        navigate('/headoffice/dashboard');
+        navigate('/headoffice/dashboard', { replace: true });
       } else if (role === 'branch_engineer' && BRANCH_ROUTE_SLUGS.includes(branch)) {
-        navigate(`/${branch}/engineer/dashboard`);
+        navigate(`/${branch}/engineer/dashboard`, { replace: true });
       } else if (role === 'branch_director' && BRANCH_ROUTE_SLUGS.includes(branch)) {
-        navigate(`/${branch}/director/dashboard`);
+        navigate(`/${branch}/director/dashboard`, { replace: true });
       } else {
         setError('This portal is not available for your account.');
       }
@@ -101,13 +101,26 @@ export default function HeadOfficeLogin() {
 
   return (
     <div
-      className="min-h-screen relative flex items-center justify-center p-6 antialiased font-sans bg-cover bg-center bg-fixed bg-slate-900"
-      style={{
-        backgroundImage: `url("https://i.pinimg.com/736x/ad/31/d3/ad31d39d17b3bc1957c7d5ed5ff35f8d.jpg")`
-      }}
+      className="min-h-screen relative flex items-center justify-center p-6 antialiased font-sans bg-slate-900"
     >
-      {/* Background Image Safety Layer (Kept transparent to preserve original image colors) */}
-      <div className="absolute inset-0 bg-black/5 z-0 pointer-events-none" />
+      {/* Looping civil engineering video background */}
+      <video
+        className="absolute inset-0 z-0 w-full h-full object-cover pointer-events-none"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        poster="https://images.unsplash.com/photo-1485083269755-a7b559a4fe5e?w=1920&q=80&fm=jpg&fit=max"
+      >
+        <source src="https://videos.pexels.com/video-files/34989053/14823639_2560_1440_60fps.mp4" type="video/mp4" />
+      </video>
+
+      {/* Brand accent glow + navy vignette — the golden haze is soft on its own, so this adds a brand-blue accent plus enough depth to keep the card crisp */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 90% 8%, rgba(144,213,255,.25) 0%, rgba(144,213,255,0) 40%), radial-gradient(ellipse at center, rgba(15,23,42,0) 30%, rgba(9,14,28,.5) 100%)' }}
+      />
 
       {/* Main Form Box Structure */}
       <motion.div

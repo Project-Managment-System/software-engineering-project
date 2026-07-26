@@ -51,21 +51,21 @@ const formatRoleName = (role) => {
     case 'admin': return 'Admin';
     case 'engineer': return 'Engineer';
     case 'division_assistant': return 'Division Assistant';
-    case 'technical_officer': return 'Technical Officer';
+    case 'user': return 'User';
     case 'clerk': return 'Clerk';
     default: return role;
   }
 };
 
 const getRoleBadgeClass = (role) => {
-  if (!role) return 'status-pending';
+  if (!role) return 'role-user';
   switch (role.toLowerCase()) {
     case 'admin': return 'status-rejected';
-    case 'engineer': return 'status-approved';
-    case 'division_assistant': return 'status-success';
-    case 'technical_officer': return 'status-pending';
-    case 'clerk': return 'status-success';
-    default: return 'status-pending';
+    case 'engineer': return 'role-engineer';
+    case 'division_assistant': return 'role-division-assistant';
+    case 'user': return 'role-user';
+    case 'clerk': return 'role-clerk';
+    default: return 'role-user';
   }
 };
 
@@ -114,8 +114,21 @@ const EngineerDashboard = () => {
   const fileInputRef = useRef(null);
   const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
-  const [activeTab, setActiveTab] = useState('overview');
+  // Restored from sessionStorage so that navigating to a job's details page and clicking
+  // Back returns to whichever tab the user was actually on, instead of resetting to Overview.
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('engineerDashboardActiveTab') || 'overview');
   const [jobSubTab, setJobSubTab] = useState('approvals');
+  // Which status the Approval Requests table is filtered to — set by clicking a top
+  // stat card (Total Jobs / Pending / Approved / Rejected) on the Overview tab.
+  const [jobStatusFilter, setJobStatusFilter] = useState('all');
+  // Which ministry-card pill (Total/Approved/Pending/Rejected) is currently expanded
+  // on the View Progress tab, showing the matching jobs underneath — { ministry, status } or null.
+  // Restored from sessionStorage so Back-navigating from a job's details page re-expands
+  // the same pill instead of losing that context.
+  const [expandedMinistryPill, setExpandedMinistryPill] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('engineerDashboardExpandedPill') || 'null'); }
+    catch { return null; }
+  });
   const [profilePic, setProfilePic] = useState(localStorage.getItem('profilePic') || null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -201,6 +214,16 @@ const EngineerDashboard = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, chatLoading]);
+
+  // Keep the active tab in sessionStorage so a job-details page's Back button
+  // (navigate(-1)) restores this same tab instead of the dashboard remounting on Overview.
+  useEffect(() => {
+    sessionStorage.setItem('engineerDashboardActiveTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    sessionStorage.setItem('engineerDashboardExpandedPill', JSON.stringify(expandedMinistryPill));
+  }, [expandedMinistryPill]);
 
   // Format AI markdown-like response to HTML
   const formatBotMessage = (text) => {
@@ -434,6 +457,8 @@ const EngineerDashboard = () => {
       const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
       localStorage.clear();
       if (savedTheme) localStorage.setItem('theme', savedTheme);
+      sessionStorage.removeItem('engineerDashboardActiveTab');
+      sessionStorage.removeItem('engineerDashboardExpandedPill');
       navigate('/');
     }
   };
@@ -528,6 +553,17 @@ const EngineerDashboard = () => {
       addToast(`Submission ${engineerReviewStatus.toLowerCase()}!`, engineerReviewStatus === 'Approved' ? 'success' : 'warning');
     } catch (err) {
       addToast('Review update failed!', 'error');
+    }
+  };
+
+  const handleUndoEngineerReview = async (jobNo) => {
+    try {
+      await axios.patch(`http://127.0.0.1:5000/api/projects/undo-engineer-review/${jobNo}`);
+      fetchData();
+      addToast('Engineer review reset to Pending', 'info');
+    } catch (error) {
+      console.error('Error undoing engineer review:', error);
+      addToast('Failed to undo engineer review.', 'error');
     }
   };
 
@@ -705,11 +741,17 @@ const EngineerDashboard = () => {
   };
 
   const statCards = [
-    { label: 'Total Jobs', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
-    { label: 'Pending', value: pendingApprovals, icon: Clock, color: 'var(--warning)' },
-    { label: 'Approved', value: approvedCount, icon: CheckCircle, color: 'var(--success)' },
-    { label: 'Rejected', value: rejectedCount, icon: XCircle, color: 'var(--danger)' },
+    { label: 'Total Jobs', filter: 'all', value: totalDivisionJobs, icon: Briefcase, color: 'var(--accent-primary)' },
+    { label: 'Pending', filter: 'Pending', value: pendingApprovals, icon: Clock, color: 'var(--warning)' },
+    { label: 'Approved', filter: 'Approved', value: approvedCount, icon: CheckCircle, color: 'var(--success)' },
+    { label: 'Rejected', filter: 'Rejected', value: rejectedCount, icon: XCircle, color: 'var(--danger)' },
   ];
+
+  const handleStatCardClick = (filter) => {
+    setJobStatusFilter(filter);
+    setActiveTab('my-jobs');
+    setJobSubTab('approvals');
+  };
 
   /* ─── Progress data: per-ministry grouped from division jobs ─── */
   const ministryProgressData = React.useMemo(() => {
@@ -921,7 +963,9 @@ const EngineerDashboard = () => {
                   key={stat.label}
                   variants={cardVariant}
                   className="field-card"
-                  style={{ padding: '20px', cursor: 'default' }}
+                  style={{ padding: '20px', cursor: 'pointer' }}
+                  onClick={() => handleStatCardClick(stat.filter)}
+                  title={`View ${stat.label.toLowerCase()}`}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
                     <div style={{
@@ -947,12 +991,88 @@ const EngineerDashboard = () => {
           <AnimatePresence mode="wait">
 
             {/* ── Overview Tab ── */}
-            {activeTab === 'overview' && (
+            {activeTab === 'overview' && (() => {
+              const maxWorkload = Math.max(1, ...usersWithJobs.map(u => u.jobCount));
+              const statusSlices = [
+                { name: 'Approved', value: approvedCount, color: '#10b981' },
+                { name: 'Pending', value: pendingApprovals, color: '#f59e0b' },
+                { name: 'Rejected', value: rejectedCount, color: '#ef4444' },
+              ].filter(d => d.value > 0);
+
+              return (
               <motion.div key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+
+                {/* ── Charts Row ── */}
+                <motion.div
+                  variants={staggerContainer}
+                  initial="hidden"
+                  animate="visible"
+                  style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '24px' }}
+                >
+                  {/* Donut: Division status breakdown */}
+                  <motion.div variants={cardVariant} whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                      <Activity size={18} style={{ color: 'var(--accent-primary)' }} />
+                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Division Status Breakdown</h3>
+                    </div>
+                    {totalDivisionJobs === 0 ? (
+                      <div className="placeholder-content" style={{ height: '240px', border: 'none' }}>
+                        <BarChart3 size={28} style={{ opacity: 0.35 }} />
+                        <span>No jobs found for your division yet.</span>
+                      </div>
+                    ) : (
+                      <div style={{ position: 'relative', width: '100%', height: 260 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={statusSlices}
+                              cx="50%" cy="45%"
+                              innerRadius={58} outerRadius={86}
+                              paddingAngle={4} dataKey="value"
+                              isAnimationActive animationDuration={700}
+                            >
+                              {statusSlices.map((entry, i) => (
+                                <Cell key={`ov-status-cell-${i}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <RechartsTooltip content={<CustomTooltip />} />
+                            <Legend verticalAlign="bottom" height={36}
+                              formatter={(value) => (
+                                <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem' }}>{value}</span>
+                              )}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{ position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                          <div style={{ fontSize: '1.9rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
+                            {totalDivisionJobs}
+                          </div>
+                          <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '3px' }}>
+                            Total Jobs
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {statusSlices.length > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginTop: '4px' }}>
+                        {statusSlices.map((s) => (
+                          <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{s.name}</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.color }}>
+                              - {s.value} ({totalDivisionJobs > 0 ? Math.round((s.value / totalDivisionJobs) * 100) : 0}%)
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </motion.div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
 
                   {/* Left Column: Team & Resource Directory */}
-                  <div className="field-card" style={{ padding: '24px' }}>
+                  <motion.div variants={cardVariant} initial="hidden" animate="visible" whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <Users size={20} style={{ color: 'var(--accent-primary)' }} />
@@ -972,7 +1092,7 @@ const EngineerDashboard = () => {
                             <th>User Name</th>
                             <th>Position</th>
                             <th>Division</th>
-                            <th style={{ textAlign: 'center' }}>Active Jobs</th>
+                            <th style={{ minWidth: '140px' }}>Active Jobs</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -995,25 +1115,44 @@ const EngineerDashboard = () => {
                                   </span>
                                 </td>
                                 <td>{user.division || 'Head Office'}</td>
-                                <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--accent-primary)' }}>{user.jobCount}</td>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <div style={{ flex: 1, height: '5px', borderRadius: '99px', background: 'var(--border-base)', minWidth: '52px' }}>
+                                      <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${(user.jobCount / maxWorkload) * 100}%` }}
+                                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                                        style={{ height: '100%', borderRadius: '99px', background: 'var(--accent-primary)' }}
+                                      />
+                                    </div>
+                                    <span style={{ fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.85rem', minWidth: '16px', textAlign: 'right' }}>{user.jobCount}</span>
+                                  </div>
+                                </td>
                               </tr>
                             ))
                           )}
                         </tbody>
                       </table>
                     </div>
-                  </div>
+                  </motion.div>
 
                   {/* Right Column: AI Suggestions */}
-                  <div className="field-card" style={{ padding: '24px' }}>
+                  <motion.div variants={cardVariant} initial="hidden" animate="visible" whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                       <Lightbulb size={20} style={{ color: '#d97706' }} />
                       <h3 className="recent-jobs-title" style={{ margin: 0 }}>Allocation suggestions</h3>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <motion.div
+                      variants={staggerContainer}
+                      initial="hidden"
+                      animate="visible"
+                      style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+                    >
                       {recommendations.map((rec, index) => (
-                        <div
+                        <motion.div
                           key={index}
+                          variants={cardVariant}
+                          whileHover={{ x: 3 }}
                           className={`alert-banner alert-${rec.type === 'success' ? 'success' : rec.type === 'danger' ? 'error' : rec.type === 'warning' ? 'warning' : 'info'}`}
                           style={{ margin: 0, padding: '16px', borderRadius: '12px', boxShadow: 'none' }}
                         >
@@ -1028,14 +1167,15 @@ const EngineerDashboard = () => {
                               {rec.text}
                             </span>
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
 
                 </div>
               </motion.div>
-            )}
+              );
+            })()}
 
             {/* ── My Jobs Tab ── */}
             {activeTab === 'my-jobs' && (
@@ -1046,14 +1186,12 @@ const EngineerDashboard = () => {
                   <button
                     className={jobSubTab === 'approvals' ? 'active-sub-tab' : ''}
                     onClick={() => setJobSubTab('approvals')}
-                    style={jobSubTab === 'approvals' ? { background: 'var(--accent-soft)', color: 'var(--accent-primary)', borderBottom: '3px solid var(--accent-primary)', fontWeight: 700 } : {}}
                   >
                     <CheckCircle size={14} style={{ marginRight: '6px' }} /> Approval Requests
                   </button>
                   <button
                     className={jobSubTab === 'tracking' ? 'active-sub-tab' : ''}
                     onClick={() => setJobSubTab('tracking')}
-                    style={jobSubTab === 'tracking' ? { background: 'var(--accent-soft)', color: 'var(--accent-primary)', borderBottom: '3px solid var(--accent-primary)', fontWeight: 700 } : {}}
                   >
                     <Users size={14} style={{ marginRight: '6px' }} /> Assignee
                   </button>
@@ -1061,12 +1199,26 @@ const EngineerDashboard = () => {
 
                 <AnimatePresence mode="wait">
                   {/* Approvals sub-tab */}
-                  {jobSubTab === 'approvals' && (
+                  {jobSubTab === 'approvals' && (() => {
+                    const filteredApprovalData = jobStatusFilter === 'all'
+                      ? approvalData
+                      : approvalData.filter(job => (job.status || 'Pending') === jobStatusFilter);
+                    return (
                     <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                      {jobStatusFilter !== 'all' && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+                          <span className={`status-badge status-${jobStatusFilter.toLowerCase()}`}>
+                            Filtered — {jobStatusFilter}
+                          </span>
+                          <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
+                            Clear filter
+                          </button>
+                        </div>
+                      )}
                       {renderExportButtons(
                         "Approval Requests",
                         ["No", "Estimation Number", "Job Name", "Date of Request", "Allocation", "Status"],
-                        approvalData.map((job, idx) => [idx + 1, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
+                        filteredApprovalData.map((job, idx) => [idx + 1, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
                       )}
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
@@ -1074,17 +1226,17 @@ const EngineerDashboard = () => {
                             <tr><th>No</th><th>Estimation Number</th><th>Job Name</th><th>Date of Request</th><th>Allocation</th><th>Approval</th></tr>
                           </thead>
                           <tbody>
-                            {approvalData.length === 0 ? (
+                            {filteredApprovalData.length === 0 ? (
                               <tr>
                                 <td colSpan={6}>
                                   <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
                                     <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                    <span>No approval requests found</span>
+                                    <span>{jobStatusFilter === 'all' ? 'No approval requests found' : `No ${jobStatusFilter.toLowerCase()} jobs.`}</span>
                                   </div>
                                 </td>
                               </tr>
                             ) : (
-                              approvalData.map((job, idx) => (
+                              filteredApprovalData.map((job, idx) => (
                                 <tr key={job.jobNo}>
                                   <td>{idx + 1}</td>
                                   <td className="font-mono">{job.estimationNo || '—'}</td>
@@ -1119,7 +1271,8 @@ const EngineerDashboard = () => {
                         </table>
                       </div>
                     </motion.div>
-                  )}
+                    );
+                  })()}
 
                   {/* Tracking / Assignee sub-tab */}
                   {jobSubTab === 'tracking' && (
@@ -1155,10 +1308,13 @@ const EngineerDashboard = () => {
                                   <td>
                                     <select value={job.assignee || ""} onChange={(e) => handleAssigneeChange(job.jobNo, e.target.value)}>
                                       <option value="" disabled>Select Assignee</option>
-                                      {allSystemUsers.map((user) => {
-                                        const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
-                                        return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
-                                      })}
+                                      {allSystemUsers
+                                        .filter((user) => user.role === 'user'
+                                          && (user.division || '').trim().toLowerCase() === (currentDivision || '').trim().toLowerCase())
+                                        .map((user) => {
+                                          const displayName = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
+                                          return <option key={user._id} value={displayName}>{displayName || "Unnamed User"}</option>;
+                                        })}
                                     </select>
                                   </td>
                                   <td>
@@ -1447,9 +1603,18 @@ const EngineerDashboard = () => {
                                   </div>
                                 ) : (
                                   <div>
-                                    <span className={`status-badge status-${job.engineerReviewStatus.toLowerCase()}`}>
-                                      {job.engineerReviewStatus}
-                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span className={`status-badge status-${job.engineerReviewStatus.toLowerCase()}`}>
+                                        {job.engineerReviewStatus}
+                                      </span>
+                                      <button
+                                        className="undo-review-btn"
+                                        onClick={() => handleUndoEngineerReview(job.jobNo)}
+                                        title="Undo review"
+                                      >
+                                        <Undo size={12} /> Undo
+                                      </button>
+                                    </div>
                                     {job.engineerReviewStatus === 'Rejected' && job.engineerReviewNote && (
                                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '220px' }}>"{job.engineerReviewNote}"</div>
                                     )}
@@ -1491,7 +1656,7 @@ const EngineerDashboard = () => {
                     <select name="role" value={userFormData.role} onChange={handleUserFormChange} className="job-select-dropdown" required>
                       <option value="" disabled>Select Position</option>
                       <option value="division_assistant">Division Assistant</option>
-                      <option value="technical_officer">Technical Officer</option>
+                      <option value="user">User</option>
                       <option value="clerk">Clerk</option>
                     </select>
                     <div className="action-buttons">
@@ -1590,7 +1755,7 @@ const EngineerDashboard = () => {
                                     className="job-select-dropdown"
                                   >
                                     <option value="division_assistant">Division Assistant</option>
-                                    <option value="technical_officer">Technical Officer</option>
+                                    <option value="user">User</option>
                                     <option value="clerk">Clerk</option>
                                   </select>
                                 ) : (
@@ -1861,20 +2026,87 @@ const EngineerDashboard = () => {
                           </div>
                         </div>
 
-                        {/* Status pills row */}
-                        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                        {/* Status pills row — click a pill to see which jobs make up that count */}
+                        <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
                           {[
                             { label: 'Total', value: ministry.total, color: '#6366f1' },
                             { label: 'Approved', value: ministry.approved, color: '#10b981' },
                             { label: 'Pending', value: ministry.pending, color: '#f59e0b' },
                             { label: 'Rejected', value: ministry.rejected, color: '#ef4444' },
-                          ].map(pill => (
-                            <div key={pill.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '99px', background: `${pill.color}18`, border: `1px solid ${pill.color}30` }}>
-                              <span style={{ fontWeight: 900, color: pill.color, fontSize: '0.95rem' }}>{pill.value}</span>
-                              <span style={{ fontWeight: 600, color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{pill.label}</span>
-                            </div>
-                          ))}
+                          ].map(pill => {
+                            const isActive = expandedMinistryPill?.ministry === ministry.ministry && expandedMinistryPill?.status === pill.label;
+                            return (
+                              <button
+                                key={pill.label}
+                                type="button"
+                                onClick={() => setExpandedMinistryPill(isActive ? null : { ministry: ministry.ministry, status: pill.label })}
+                                title={`Show ${pill.label.toLowerCase()} jobs`}
+                                style={{
+                                  display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '99px',
+                                  background: isActive ? pill.color : `${pill.color}18`,
+                                  border: `1px solid ${pill.color}${isActive ? '' : '30'}`,
+                                  cursor: 'pointer', transition: 'background 0.2s ease'
+                                }}
+                              >
+                                <span style={{ fontWeight: 900, color: isActive ? '#fff' : pill.color, fontSize: '0.95rem' }}>{pill.value}</span>
+                                <span style={{ fontWeight: 600, color: isActive ? '#fff' : 'var(--text-secondary)', fontSize: '0.75rem' }}>{pill.label}</span>
+                              </button>
+                            );
+                          })}
                         </div>
+
+                        {/* Expanded job list for the selected pill */}
+                        <AnimatePresence>
+                          {expandedMinistryPill?.ministry === ministry.ministry && (() => {
+                            const pillJobs = approvalData.filter(j =>
+                              (j.ministry || 'Other') === ministry.ministry &&
+                              (expandedMinistryPill.status === 'Total' || (j.status || 'Pending') === expandedMinistryPill.status)
+                            );
+                            return (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.25 }}
+                                style={{ overflow: 'hidden', marginBottom: '20px' }}
+                              >
+                                <div style={{ borderRadius: '12px', border: '1px solid var(--border-base)', background: 'var(--bg-subtle, rgba(0,0,0,0.03))', padding: '12px' }}>
+                                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-label)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '10px' }}>
+                                    {expandedMinistryPill.status} jobs in {ministry.ministry} ({pillJobs.length})
+                                  </div>
+                                  {pillJobs.length === 0 ? (
+                                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', padding: '8px 0' }}>No jobs match this status.</div>
+                                  ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                      {pillJobs.map(job => (
+                                        <div
+                                          key={job.jobNo}
+                                          onClick={() => navigate(`/design/job/${job.jobNo}`, { state: { job } })}
+                                          style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                                            padding: '8px 12px', borderRadius: '8px', background: 'var(--bg-card)',
+                                            border: '1px solid var(--border-light)', cursor: 'pointer'
+                                          }}
+                                          title="Click to view full job details"
+                                        >
+                                          <div style={{ minWidth: 0 }}>
+                                            <div className="font-bold" style={{ fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{job.jobName}</div>
+                                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                              {job.estimationNo || '—'} · {job.department || 'General'}
+                                            </div>
+                                          </div>
+                                          <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`} style={{ flexShrink: 0 }}>
+                                            {job.status || 'Pending'}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            );
+                          })()}
+                        </AnimatePresence>
 
                         {/* Department breakdown */}
                         {ministry.departments.length > 0 && (

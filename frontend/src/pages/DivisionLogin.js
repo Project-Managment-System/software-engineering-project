@@ -70,15 +70,15 @@ export default function DivisionLogin() {
       // Route based on the real role from the database
       if (role === 'admin' || role === 'clerk') {
         localStorage.setItem('isAdmin', 'true'); // required by ProtectedRoute guard
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else if (role === 'engineer') {
-        navigate('/engineer/dashboard');
+        navigate('/engineer/dashboard', { replace: true });
       } else if (role === 'user') {
         localStorage.setItem('isAuthenticated', 'true'); // required by UserDashboard guard
-        navigate('/user/dashboard');
+        navigate('/user/dashboard', { replace: true });
       } else if (role === 'division_assistant') {
         localStorage.setItem('isAuthenticated', 'true');
-        navigate('/divisional-assistant/dashboard');
+        navigate('/divisional-assistant/dashboard', { replace: true });
       } else {
         alert('This portal is not yet available for your account role.');
       }
@@ -103,13 +103,26 @@ export default function DivisionLogin() {
 
   return (
     <div
-      className="min-h-screen relative flex items-center justify-center p-6 antialiased font-sans bg-cover bg-center bg-fixed bg-slate-900"
-      style={{
-        backgroundImage: `url("https://i.pinimg.com/736x/aa/f5/52/aaf552b182a4253d5ec0de4aa4838af6.jpg")`
-      }}
+      className="min-h-screen relative flex items-center justify-center p-6 antialiased font-sans bg-slate-900"
     >
-      {/* Background Image Safety Layer (Kept clear/transparent to maintain original image colors) */}
-      <div className="absolute inset-0 bg-black/5 z-0 pointer-events-none" />
+      {/* Looping civil engineering video background */}
+      <video
+        className="absolute inset-0 z-0 w-full h-full object-cover pointer-events-none"
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        poster="https://images.unsplash.com/photo-1670912461796-81819c1e525b?w=1920&q=80&fm=jpg&fit=max"
+      >
+        <source src="https://videos.pexels.com/video-files/28823325/12486025_2560_1440_30fps.mp4" type="video/mp4" />
+      </video>
+
+      {/* Brand accent glow + navy vignette — keeps the sunset's natural colour while adding an elegant brand-blue accent at the edges */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 10% 90%, rgba(0,110,177,.28) 0%, rgba(0,110,177,0) 42%), radial-gradient(ellipse at center, rgba(15,23,42,0) 35%, rgba(9,14,28,.42) 100%)' }}
+      />
 
       {/* Main Form Box Structure */}
       <motion.div

@@ -206,7 +206,27 @@ exports.updateProject = async (req, res) => {
     }
 };
 
-// 7. Delete a Project
+// 7. Undo Engineer Review (Reset engineerReviewStatus to Pending)
+exports.undoEngineerReview = async (req, res) => {
+    try {
+        const { jobNo } = req.params;
+        const updatedProject = await Project.findOneAndUpdate(
+            { jobNo },
+            {
+                engineerReviewStatus: 'Pending',
+                engineerReviewedAt: null,
+                engineerReviewNote: ''
+            },
+            { new: true }
+        );
+        if (!updatedProject) return res.status(404).json({ message: "Job not found" });
+        res.json({ message: "Engineer review reset to Pending! 🔄", project: updatedProject });
+    } catch (error) {
+        res.status(500).json({ message: "Undo Engineer Review Error", error: error.message });
+    }
+};
+
+// 8. Delete a Project
 exports.deleteProject = async (req, res) => {
     try {
         const { jobNo } = req.params;

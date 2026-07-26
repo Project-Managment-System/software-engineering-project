@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
 
 // Components
 import Footer from './components/Footer/Footer.jsx'; 
@@ -48,9 +49,15 @@ function App() {
       {/* Routes define the content that changes based on the URL */}
       <Routes>
         {/* Main Entry Points */}
-        <Route path="/" element={<><Portal /><Footer /></>} />
-        <Route path="/division/login" element={<DivisionLogin />} />
-        <Route path="/headoffice/login" element={<HeadOfficeLogin />} />
+        <Route path="/" element={
+          <RedirectIfAuthenticated><Portal /><Footer /></RedirectIfAuthenticated>
+        } />
+        <Route path="/division/login" element={
+          <RedirectIfAuthenticated><DivisionLogin /></RedirectIfAuthenticated>
+        } />
+        <Route path="/headoffice/login" element={
+          <RedirectIfAuthenticated><HeadOfficeLogin /></RedirectIfAuthenticated>
+        } />
         <Route path="/headoffice/dashboard" element={
           <ProtectedRoute allowedRoles={['headoffice_admin']}>
             <HeadOfficeDashboard />
@@ -115,7 +122,9 @@ function App() {
         } />
 
         {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/login" element={
+          <RedirectIfAuthenticated><AdminLogin /></RedirectIfAuthenticated>
+        } />
         <Route path="/admin/dashboard" element={
           <ProtectedRoute allowedRoles={['admin', 'clerk']}>
             <AdminDashboard />
@@ -123,7 +132,9 @@ function App() {
         } />
         
         {/* Engineer Routes */}
-        <Route path="/engineer/login" element={<EngineerLogin />} />
+        <Route path="/engineer/login" element={
+          <RedirectIfAuthenticated><EngineerLogin /></RedirectIfAuthenticated>
+        } />
         <Route path="/engineer/dashboard" element={
           <ProtectedRoute allowedRoles={['engineer']}>
             <EngineerDashboard />
@@ -131,7 +142,9 @@ function App() {
         } /> 
         
         {/* User Routes */}
-        <Route path="/user/login" element={<UserLogin />} />
+        <Route path="/user/login" element={
+          <RedirectIfAuthenticated><UserLogin /></RedirectIfAuthenticated>
+        } />
         <Route path="/user/dashboard" element={
           <ProtectedRoute allowedRoles={['user']}>
             <UserDashboard />
