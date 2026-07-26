@@ -520,6 +520,7 @@ const HeadOfficeDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
+                          <th>Serial No</th>
                           <th>Job No</th><th>Activity</th><th>Ministry</th><th>Department</th>
                           <th>Division</th><th>DS Division</th><th>Institute</th>
                           <th>Allocation</th><th>Request Date</th><th>Submit Date</th><th>Status</th>
@@ -528,7 +529,7 @@ const HeadOfficeDashboard = () => {
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={11}>
+                            <td colSpan={12}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{loading ? 'Loading records...' : jobs.length === 0 ? 'No records available.' : 'No records match the selected filters.'}</span>
@@ -536,8 +537,9 @@ const HeadOfficeDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredJobs.map((j) => (
+                          filteredJobs.map((j, index) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                              <td>{index + 1}</td>
                               <td className="font-mono">{j.jobNo}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
@@ -732,6 +734,7 @@ const HeadOfficeDashboard = () => {
                         <table className="project-table">
                           <thead>
                             <tr>
+                              <th>Serial No</th>
                               <th>Full Name</th>
                               <th>Position</th>
                               <th>Username (Employee ID)</th>
@@ -741,8 +744,9 @@ const HeadOfficeDashboard = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {branchUsers.map(u => (
+                            {branchUsers.map((u, index) => (
                               <tr key={u._id}>
+                                <td>{index + 1}</td>
                                 <td className="font-bold">{u.fullName}</td>
                                 <td>
                                   <span className={`status-badge ${u.role === 'branch_director' ? 'status-director' : 'status-engineer'}`}>
@@ -870,6 +874,7 @@ const HeadOfficeDashboard = () => {
                           <table className="project-table">
                             <thead>
                               <tr>
+                                <th>Serial No</th>
                                 <th>Full Name</th>
                                 <th>Position</th>
                                 <th>Branch</th>
@@ -880,8 +885,9 @@ const HeadOfficeDashboard = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {allBranchUsers.map(u => (
+                              {allBranchUsers.map((u, index) => (
                                 <tr key={u._id}>
+                                  <td>{index + 1}</td>
                                   <td className="font-bold">{u.fullName}</td>
                                   <td>
                                     <span className={`status-badge ${u.role === 'branch_director' ? 'status-director' : 'status-engineer'}`}>

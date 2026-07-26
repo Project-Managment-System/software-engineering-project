@@ -1068,8 +1068,9 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Requests",
-                      ["Job No", "Activity", "Division", "Requested On", "Status"],
-                      drawingRequests.map(j => [
+                      ["Serial No", "Job No", "Activity", "Division", "Requested On", "Status"],
+                      drawingRequests.map((j, idx) => [
+                        idx + 1,
                         j.jobNo,
                         j.jobName,
                         j.division,
@@ -1091,6 +1092,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Job No</th>
                             <th>Activity</th>
                             <th>Division</th>
@@ -1100,10 +1102,11 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingRequests.map(j => {
+                          {drawingRequests.map((j, idx) => {
                             const drawingStatus = j.drawingDaStatus || 'Pending';
                             return (
                               <tr key={j._id}>
+                                <td>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.division}</td>

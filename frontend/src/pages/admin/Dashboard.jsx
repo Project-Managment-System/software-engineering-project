@@ -907,6 +907,7 @@ const AdminDashboard = () => {
                         onChange={handleInputChange}
                         className="job-select-dropdown" required
                         disabled={jobFormDivisionOptions.length === 1}
+                        style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
                       >
                         <option value="" disabled>Select Division</option>
                         {jobFormDivisionOptions.map((div) => (
@@ -1582,8 +1583,9 @@ const AdminDashboard = () => {
                             </td>
                           </tr>
                         ) : (
-                          filteredJobs.map((j) => (
+                          filteredJobs.map((j, index) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
+                              <td>{index + 1}</td>
                               <td style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 800, color: 'var(--gold)', fontSize: '0.78rem' }}>{j.estimationNo || '—'}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
