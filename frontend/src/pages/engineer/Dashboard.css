@@ -719,6 +719,33 @@
   transform: scale(1.08);
 }
 
+#cems-user-dashboard .undo-review-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+#cems-user-dashboard .undo-review-btn:hover {
+  background: #d97706;
+  color: white;
+  border-color: #d97706;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+}
+
 #cems-user-dashboard .edit-btn {
   display: inline-flex;
   align-items: center;
@@ -1055,6 +1082,39 @@
   border-color: rgba(5,150,105,0.2);
 }
 #cems-user-dashboard .status-badge.status-success::before { background: var(--success); }
+
+/* ── Role-specific badge colors (Employee table Position column) ── */
+/* Engineer — Emerald Green */
+#cems-user-dashboard .status-badge.role-engineer {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+#cems-user-dashboard .status-badge.role-engineer::before { background: #10b981; }
+
+/* Division Assistant — Blue */
+#cems-user-dashboard .status-badge.role-division-assistant {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+#cems-user-dashboard .status-badge.role-division-assistant::before { background: #3b82f6; }
+
+/* Clerk — Purple */
+#cems-user-dashboard .status-badge.role-clerk {
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+  border-color: rgba(139, 92, 246, 0.3);
+}
+#cems-user-dashboard .status-badge.role-clerk::before { background: #8b5cf6; }
+
+/* User — Amber */
+#cems-user-dashboard .status-badge.role-user {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+#cems-user-dashboard .status-badge.role-user::before { background: #f59e0b; }
 
 /* ============================================================
    19. TABLE EXPORTS - PDF, Excel, Print

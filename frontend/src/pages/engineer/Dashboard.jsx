@@ -58,14 +58,14 @@ const formatRoleName = (role) => {
 };
 
 const getRoleBadgeClass = (role) => {
-  if (!role) return 'status-pending';
+  if (!role) return 'role-user';
   switch (role.toLowerCase()) {
     case 'admin': return 'status-rejected';
-    case 'engineer': return 'status-approved';
-    case 'division_assistant': return 'status-success';
-    case 'user': return 'status-pending';
-    case 'clerk': return 'status-success';
-    default: return 'status-pending';
+    case 'engineer': return 'role-engineer';
+    case 'division_assistant': return 'role-division-assistant';
+    case 'user': return 'role-user';
+    case 'clerk': return 'role-clerk';
+    default: return 'role-user';
   }
 };
 
@@ -528,6 +528,17 @@ const EngineerDashboard = () => {
       addToast(`Submission ${engineerReviewStatus.toLowerCase()}!`, engineerReviewStatus === 'Approved' ? 'success' : 'warning');
     } catch (err) {
       addToast('Review update failed!', 'error');
+    }
+  };
+
+  const handleUndoEngineerReview = async (jobNo) => {
+    try {
+      await axios.patch(`http://127.0.0.1:5000/api/projects/undo-engineer-review/${jobNo}`);
+      fetchData();
+      addToast('Engineer review reset to Pending', 'info');
+    } catch (error) {
+      console.error('Error undoing engineer review:', error);
+      addToast('Failed to undo engineer review.', 'error');
     }
   };
 
@@ -1439,9 +1450,18 @@ const EngineerDashboard = () => {
                                   </div>
                                 ) : (
                                   <div>
-                                    <span className={`status-badge status-${job.engineerReviewStatus.toLowerCase()}`}>
-                                      {job.engineerReviewStatus}
-                                    </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span className={`status-badge status-${job.engineerReviewStatus.toLowerCase()}`}>
+                                        {job.engineerReviewStatus}
+                                      </span>
+                                      <button
+                                        className="undo-review-btn"
+                                        onClick={() => handleUndoEngineerReview(job.jobNo)}
+                                        title="Undo review"
+                                      >
+                                        <Undo size={12} /> Undo
+                                      </button>
+                                    </div>
                                     {job.engineerReviewStatus === 'Rejected' && job.engineerReviewNote && (
                                       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', maxWidth: '220px' }}>"{job.engineerReviewNote}"</div>
                                     )}
