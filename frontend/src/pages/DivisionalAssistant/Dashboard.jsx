@@ -69,14 +69,14 @@ const formatRoleName = (role) => {
 };
 
 const getRoleBadgeClass = (role) => {
-  if (!role) return 'status-pending';
+  if (!role) return 'role-user';
   switch (role.toLowerCase()) {
     case 'admin': return 'status-rejected';
-    case 'engineer': return 'status-approved';
-    case 'division_assistant': return 'status-success';
-    case 'user': return 'status-pending';
-    case 'clerk': return 'status-success';
-    default: return 'status-pending';
+    case 'engineer': return 'role-engineer';
+    case 'division_assistant': return 'role-division-assistant';
+    case 'user': return 'role-user';
+    case 'clerk': return 'role-clerk';
+    default: return 'role-user';
   }
 };
 
@@ -315,6 +315,10 @@ const DivisionalAssistantDashboard = () => {
   /* ─── Drawing request handlers: User -> DA -> Design Director (assigns engineer) -> Design Engineer -> Design Director -> User ─── */
   const drawingRequests = divisionJobs.filter(j => j.drawingWorkflowStatus === 'PendingDA');
   const drawingTracking = divisionJobs.filter(j => j.drawingWorkflowStatus && j.drawingWorkflowStatus !== 'NotRequested');
+
+  const isDrawingSentToEngineer = (j) => (
+    ['PendingEngineerDesign', 'PendingDirectorDesign', 'Completed'].includes(j.drawingWorkflowStatus)
+  );
 
   const getDrawingTrackingInfo = (j) => {
     if (j.drawingWorkflowStatus === 'PendingDA') {
@@ -886,7 +890,7 @@ const DivisionalAssistantDashboard = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                       {renderExportButtons(
                         "Division Users",
-                        ["#", "Employee ID", "Full Name", "Email", "Division", "Role"],
+                        ["No", "Employee ID", "Full Name", "Email", "Division", "Role"],
                         divisionUsers.map((u, idx) => [idx + 1, u.employeeId, u.fullName, u.email || '—', u.division, formatRoleName(u.role)])
                       )}
                       <button className="confirm-btn" style={{ fontSize: '0.8rem', padding: '8px 16px' }} onClick={handleRefreshUsers}>
@@ -905,7 +909,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-                            <th>#</th>
+                            <th>No</th>
                             <th>Employee ID</th>
                             <th>Full Name</th>
                             <th>Email</th>
@@ -957,16 +961,18 @@ const DivisionalAssistantDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
                     {renderExportButtons(
                       "Division Jobs",
-                      ["Job No", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status"],
-                      filteredJobs.map(j => [
-                        j.jobNo,
+                      ["No", "Estimation Number", "Activity", "Ministry", "Department", "Division", "Allocation", "Request Date", "Status", "Sent to Engineer"],
+                      filteredJobs.map((j, idx) => [
+                        idx + 1,
+                        j.estimationNo || '—',
                         j.jobName,
                         j.ministry,
                         j.department,
                         j.division,
                         j.allocation,
                         j.dateReq ? j.dateReq.split('T')[0] : 'N/A',
-                        j.status || 'Pending'
+                        j.status || 'Pending',
+                        isDrawingSentToEngineer(j) ? 'Yes' : 'No'
                       ])
                     )}
                   </div>
@@ -1012,7 +1018,8 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
-                            <th>Job No</th>
+                            <th>No</th>
+                            <th>Estimation Number</th>
                             <th>Activity</th>
                             <th>Ministry</th>
                             <th>Department</th>
@@ -1020,12 +1027,14 @@ const DivisionalAssistantDashboard = () => {
                             <th>Allocation</th>
                             <th>Request Date</th>
                             <th>Status</th>
+                            <th>Sent to Engineer</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredJobs.map(j => (
+                          {filteredJobs.map((j, idx) => (
                             <tr key={j._id} className={j.status === 'Rejected' ? 'row-rejected' : ''}>
-                              <td className="font-mono">{j.jobNo}</td>
+                              <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
+                              <td className="font-mono">{j.estimationNo || '—'}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>{j.ministry}</td>
                               <td>{j.department}</td>
@@ -1035,6 +1044,11 @@ const DivisionalAssistantDashboard = () => {
                               <td>
                                 <span className={`status-badge status-${j.status ? j.status.toLowerCase() : 'pending'}`}>
                                   {j.status || 'Pending'}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`status-badge ${isDrawingSentToEngineer(j) ? 'status-approved' : 'status-pending'}`}>
+                                  {isDrawingSentToEngineer(j) ? 'Yes' : 'No'}
                                 </span>
                               </td>
                             </tr>
@@ -1065,8 +1079,9 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Requests",
-                      ["Job No", "Activity", "Division", "Requested On", "Status"],
-                      drawingRequests.map(j => [
+                      ["Serial No", "Job No", "Activity", "Division", "Requested On", "Status"],
+                      drawingRequests.map((j, idx) => [
+                        idx + 1,
                         j.jobNo,
                         j.jobName,
                         j.division,
@@ -1088,6 +1103,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Job No</th>
                             <th>Activity</th>
                             <th>Division</th>
@@ -1097,10 +1113,11 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingRequests.map(j => {
+                          {drawingRequests.map((j, idx) => {
                             const drawingStatus = j.drawingDaStatus || 'Pending';
                             return (
                               <tr key={j._id}>
+                                <td>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.division}</td>
@@ -1165,10 +1182,11 @@ const DivisionalAssistantDashboard = () => {
                     </div>
                     {renderExportButtons(
                       "Drawing Tracking",
-                      ["Job No", "Job Name", "Requested On", "Status"],
-                      drawingTracking.map(j => {
+                      ["No", "Job No", "Job Name", "Requested On", "Status"],
+                      drawingTracking.map((j, idx) => {
                         const info = getDrawingTrackingInfo(j);
                         return [
+                          idx + 1,
                           j.jobNo,
                           j.jobName,
                           j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A',
@@ -1190,6 +1208,7 @@ const DivisionalAssistantDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>No</th>
                             <th>Job No</th>
                             <th>Job Name</th>
                             <th>Requested On</th>
@@ -1197,7 +1216,7 @@ const DivisionalAssistantDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {drawingTracking.map(j => {
+                          {drawingTracking.map((j, idx) => {
                             const info = getDrawingTrackingInfo(j);
                             return (
                               <tr
@@ -1206,6 +1225,7 @@ const DivisionalAssistantDashboard = () => {
                                 style={{ cursor: 'pointer' }}
                                 title="Click to view full job details"
                               >
+                                <td style={{ fontWeight: 700, color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
                                 <td className="font-mono">{j.jobNo}</td>
                                 <td className="font-bold">{j.jobName}</td>
                                 <td>{j.drawingRequestedAt ? new Date(j.drawingRequestedAt).toLocaleDateString() : 'N/A'}</td>

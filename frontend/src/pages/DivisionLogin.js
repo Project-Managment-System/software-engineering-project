@@ -70,15 +70,15 @@ export default function DivisionLogin() {
       // Route based on the real role from the database
       if (role === 'admin' || role === 'clerk') {
         localStorage.setItem('isAdmin', 'true'); // required by ProtectedRoute guard
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard', { replace: true });
       } else if (role === 'engineer') {
-        navigate('/engineer/dashboard');
+        navigate('/engineer/dashboard', { replace: true });
       } else if (role === 'user') {
         localStorage.setItem('isAuthenticated', 'true'); // required by UserDashboard guard
-        navigate('/user/dashboard');
+        navigate('/user/dashboard', { replace: true });
       } else if (role === 'division_assistant') {
         localStorage.setItem('isAuthenticated', 'true');
-        navigate('/divisional-assistant/dashboard');
+        navigate('/divisional-assistant/dashboard', { replace: true });
       } else {
         alert('This portal is not yet available for your account role.');
       }

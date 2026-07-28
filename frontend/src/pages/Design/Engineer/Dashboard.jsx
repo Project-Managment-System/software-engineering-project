@@ -574,14 +574,16 @@ const DesignEngineerDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Status</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {recentJobs.map(j => (
+                          {recentJobs.map((j, index) => (
                             <tr key={j._id}>
+                              <td>{index + 1}</td>
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>
@@ -687,14 +689,16 @@ const DesignEngineerDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Attachment</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {pendingJobs.map(j => (
+                          {pendingJobs.map((j, index) => (
                             <tr key={j._id}>
+                              <td>{index + 1}</td>
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>
@@ -752,6 +756,7 @@ const DesignEngineerDashboard = () => {
                       <table className="project-table">
                         <thead>
                           <tr>
+                            <th>Serial No</th>
                             <th>Division</th>
                             <th>Job Name</th>
                             <th>Status</th>
@@ -759,13 +764,14 @@ const DesignEngineerDashboard = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {completedJobs.map(j => (
+                          {completedJobs.map((j, index) => (
                             <tr
                               key={j._id}
                               onClick={() => navigate(`/design/job/${j.jobNo}`, { state: { job: j } })}
                               style={{ cursor: 'pointer' }}
                               title="Click to view full job details"
                             >
+                              <td>{index + 1}</td>
                               <td>{j.division}</td>
                               <td className="font-bold">{j.jobName}</td>
                               <td>
