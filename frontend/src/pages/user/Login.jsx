@@ -22,12 +22,18 @@ export default function UserLogin() {
       if (response.data.status === 'LOGIN_SUCCESS') {
         const { role, userId, fullName, email, division, profilePic } = response.data;
 
+        if (role !== 'user') {
+          alert("Access Denied: Account is not authorized for User login.");
+          setIsSubmitting(false);
+          return;
+        }
+
         // Store session info
         localStorage.setItem('userId', userId);
         localStorage.setItem('employeeId', employeeId);
         localStorage.setItem('fullName', fullName || 'User');
         localStorage.setItem('email', email || '');
-        localStorage.setItem('role', role || 'user');
+        localStorage.setItem('role', role);
         localStorage.setItem('profilePic', profilePic || '');
         localStorage.setItem('isAuthenticated', 'true'); // Key check for UserDashboard
         if (division) localStorage.setItem('userDivision', division);

@@ -58,6 +58,17 @@ export default function DivisionLogin() {
 
       const { role, userId, employeeId, fullName, email, division, profilePic } = res.data;
 
+      // Only this portal's own roles are allowed here. Session data must not be written to
+      // localStorage until AFTER that check passes — otherwise a rejected login still leaves
+      // the account "signed in" behind the scenes, and clicking Back to Portal would silently
+      // bounce straight into that account's real dashboard instead of requiring a proper login
+      // through the correct portal.
+      const DIVISION_PORTAL_ROLES = ['admin', 'clerk', 'engineer', 'user', 'division_assistant'];
+      if (!DIVISION_PORTAL_ROLES.includes(role)) {
+        alert('This portal is not yet available for your account role.');
+        return;
+      }
+
       // Store session info for the dashboards to use
       localStorage.setItem('userId', userId);
       localStorage.setItem('employeeId', employeeId);
@@ -76,11 +87,9 @@ export default function DivisionLogin() {
       } else if (role === 'user') {
         localStorage.setItem('isAuthenticated', 'true'); // required by UserDashboard guard
         navigate('/user/dashboard', { replace: true });
-      } else if (role === 'division_assistant') {
+      } else {
         localStorage.setItem('isAuthenticated', 'true');
         navigate('/divisional-assistant/dashboard', { replace: true });
-      } else {
-        alert('This portal is not yet available for your account role.');
       }
     } catch (err) {
       const code = err.response?.data?.error;

@@ -420,6 +420,45 @@ const UserDashboard = () => {
     }
   };
 
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (isChangingPassword) return;
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      addToast("New password and confirmation don't match.", 'warning');
+      return;
+    }
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      addToast('Please fill in all password fields.', 'warning');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      addToast('Password updated successfully!', 'success');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      const code = err.response?.data?.error;
+      if (code === 'INCORRECT_CURRENT_PASSWORD') {
+        addToast('Current password is incorrect.', 'error');
+      } else if (code === 'PASSWORD_TOO_SHORT') {
+        addToast('New password is too short.', 'error');
+      } else {
+        addToast('Failed to update password. Please try again.', 'error');
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleProfileTabOpen = () => {
     setEditProfileName(profileName);
     setEditRegNo(regNo);
@@ -1055,7 +1094,7 @@ const UserDashboard = () => {
                       >
                         <option value="">-- Choose Job ID --</option>
                         {myJobs.map(job => (
-                          <option key={job.jobNo} value={job.jobNo}>{job.jobNo} - {job.jobName}</option>
+                          <option key={job.jobNo} value={job.jobNo}>{job.jobName} - {job.estimationNo || 'N/A'}</option>
                         ))}
                       </select>
                     </div>
@@ -1244,6 +1283,13 @@ const UserDashboard = () => {
                                             })()}</>
                                           )}
                                         </span>
+                                      </div>
+                                    )}
+
+                                    {/* Divisional Assistant rejected the drawing request itself */}
+                                    {selectedJob.estimateSubmitted && selectedJob.drawingDaStatus === 'Rejected' && (
+                                      <div style={{ margin: '0 0 14px', padding: '10px 12px', borderRadius: '8px', background: 'var(--danger-soft)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }}>
+                                        <strong>Rejected by Divisional Assistant.</strong> {selectedJob.drawingDaNote ? selectedJob.drawingDaNote : 'Please review and resubmit.'}
                                       </div>
                                     )}
 
@@ -1737,6 +1783,27 @@ const UserDashboard = () => {
                         ))}
                       </div>
                     </div>
+
+                    <div className="input-row-group" style={{ marginTop: '10px', borderTop: '1px solid var(--border-base)', paddingTop: '20px' }}>
+                      <label style={{ fontSize: '0.95rem', fontWeight: 700 }}>Change Password</label>
+                    </div>
+                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+                      <div className="input-row-group">
+                        <label>Current Password</label>
+                        <input type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <div className="input-row-group">
+                        <label>New Password</label>
+                        <input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <div className="input-row-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <button type="submit" className="confirm-btn" disabled={isChangingPassword} style={{ marginTop: '4px', width: 'fit-content' }}>
+                        {isChangingPassword ? 'Updating...' : 'Update Password'}
+                      </button>
+                    </form>
                   </div>
                 </div>
               </motion.section>

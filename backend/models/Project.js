@@ -109,11 +109,19 @@ const ProjectSchema = new mongoose.Schema({
 
     // Optional: Keep track of who assigned it if needed, 
     // though the system handles this via division
-    assignedBy: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User' 
+    assignedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
     }
 }, { timestamps: true });
+
+// Every dashboard's division-scoped fetch (getProjectsByDivision, the chatbot's per-division
+// query, etc.) filters on division and sorts by createdAt — this compound index serves both
+// the filter and the sort in one index scan instead of a collection scan + in-memory sort.
+ProjectSchema.index({ division: 1, createdAt: -1 });
+// getAllProjects() has no filter, so the compound index above can't help its global sort —
+// this covers that case separately.
+ProjectSchema.index({ createdAt: -1 });
 
 // Pre-save hook to ensure the job status can be reverted/updated
 //ProjectSchema.pre('save', function(next) {

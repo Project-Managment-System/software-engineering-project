@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import RedirectIfAuthenticated from './components/RedirectIfAuthenticated';
 
 // Components
-import Footer from './components/Footer/Footer.jsx'; 
+import Footer from './components/Footer/Footer.jsx';
 import './App.css';
 
 // Landing Portal
@@ -12,41 +12,61 @@ import Portal from './pages/Portal';
 import DivisionLogin from './pages/DivisionLogin';
 
 // Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import AdminLogin from './pages/admin/Login';
+// Every dashboard below is lazy-loaded: with ~15 dashboards previously all imported eagerly,
+// every user's first page load downloaded the JS for all of them regardless of which single
+// one they'd actually visit. React.lazy defers each dashboard's code to when its route is
+// actually navigated to, so the initial bundle only contains the page being viewed.
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminLogin = lazy(() => import('./pages/admin/Login'));
 
 // Head Office Pages
-import HeadOfficeLogin from './pages/HeadOffice/Login';
-import HeadOfficeDashboard from './pages/HeadOffice/Dashboard';
+const HeadOfficeLogin = lazy(() => import('./pages/HeadOffice/Login'));
+const HeadOfficeDashboard = lazy(() => import('./pages/HeadOffice/Dashboard'));
 
 // Head Office → Branch Dashboards (login is unified through /headoffice/login)
-import DesignEngineerDashboard from './pages/Design/Engineer/Dashboard';
-import DesignDirectorDashboard from './pages/Design/Director/Dashboard';
-import DesignJobDetails from './pages/Design/JobDetails';
-import BranchAEngineerDashboard from './pages/BranchA/Engineer/Dashboard';
-import BranchADirectorDashboard from './pages/BranchA/Director/Dashboard';
-import BranchBEngineerDashboard from './pages/BranchB/Engineer/Dashboard';
-import BranchBDirectorDashboard from './pages/BranchB/Director/Dashboard';
-import BranchCEngineerDashboard from './pages/BranchC/Engineer/Dashboard';
-import BranchCDirectorDashboard from './pages/BranchC/Director/Dashboard';
-import BranchDEngineerDashboard from './pages/BranchD/Engineer/Dashboard';
-import BranchDDirectorDashboard from './pages/BranchD/Director/Dashboard';
+const DesignEngineerDashboard = lazy(() => import('./pages/Design/Engineer/Dashboard'));
+const DesignDirectorDashboard = lazy(() => import('./pages/Design/Director/Dashboard'));
+const DesignJobDetails = lazy(() => import('./pages/Design/JobDetails'));
+const BranchAEngineerDashboard = lazy(() => import('./pages/BranchA/Engineer/Dashboard'));
+const BranchADirectorDashboard = lazy(() => import('./pages/BranchA/Director/Dashboard'));
+const BranchBEngineerDashboard = lazy(() => import('./pages/BranchB/Engineer/Dashboard'));
+const BranchBDirectorDashboard = lazy(() => import('./pages/BranchB/Director/Dashboard'));
+const BranchCEngineerDashboard = lazy(() => import('./pages/BranchC/Engineer/Dashboard'));
+const BranchCDirectorDashboard = lazy(() => import('./pages/BranchC/Director/Dashboard'));
+const BranchDEngineerDashboard = lazy(() => import('./pages/BranchD/Engineer/Dashboard'));
+const BranchDDirectorDashboard = lazy(() => import('./pages/BranchD/Director/Dashboard'));
 
 // Engineer Pages
-import EngineerDashboard from './pages/engineer/Dashboard'; 
-import EngineerLogin from './pages/engineer/Login';
+const EngineerDashboard = lazy(() => import('./pages/engineer/Dashboard'));
+const EngineerLogin = lazy(() => import('./pages/engineer/Login'));
 
 // User Pages
-import UserDashboard from './pages/user/Dashboard';
-import UserLogin from './pages/user/Login';
+const UserDashboard = lazy(() => import('./pages/user/Dashboard'));
+const UserLogin = lazy(() => import('./pages/user/Login'));
 
 // Divisional Assistant Pages
-import DivisionalAssistantDashboard from './pages/DivisionalAssistant/Dashboard';
+const DivisionalAssistantDashboard = lazy(() => import('./pages/DivisionalAssistant/Dashboard'));
+
+// Shown briefly while a route's chunk downloads on first visit — matches the app's brand palette
+const RouteLoadingFallback = () => (
+  <div style={{
+    minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: '#f8fafc'
+  }}>
+    <div style={{
+      width: '40px', height: '40px', borderRadius: '50%',
+      border: '3px solid #90D5FF55', borderTopColor: '#006EB1',
+      animation: 'route-spin 0.8s linear infinite'
+    }} />
+    <style>{'@keyframes route-spin { to { transform: rotate(360deg); } }'}</style>
+  </div>
+);
 
 function App() {
   return (
     <BrowserRouter>
       {/* Routes define the content that changes based on the URL */}
+      <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
         {/* Main Entry Points */}
         <Route path="/" element={
@@ -158,6 +178,7 @@ function App() {
           </ProtectedRoute>
         } />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

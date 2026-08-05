@@ -90,10 +90,52 @@ const BranchCDirectorDashboard = () => {
   };
 
   const handleLogout = () => {
+    if (!window.confirm('Are you sure you want to log out?')) return;
     const savedTheme = localStorage.getItem('theme');
     localStorage.clear();
     if (savedTheme) localStorage.setItem('theme', savedTheme);
     navigate('/');
+  };
+
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState(null);
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (isChangingPassword) return;
+    setPasswordMsg(null);
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMsg({ type: 'error', text: "New password and confirmation don't match." });
+      return;
+    }
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      setPasswordMsg({ type: 'error', text: 'Please fill in all password fields.' });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      setPasswordMsg({ type: 'success', text: 'Password updated successfully!' });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      const code = err.response?.data?.error;
+      if (code === 'INCORRECT_CURRENT_PASSWORD') {
+        setPasswordMsg({ type: 'error', text: 'Current password is incorrect.' });
+      } else if (code === 'PASSWORD_TOO_SHORT') {
+        setPasswordMsg({ type: 'error', text: 'New password is too short.' });
+      } else {
+        setPasswordMsg({ type: 'error', text: 'Failed to update password. Please try again.' });
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -410,6 +452,32 @@ const BranchCDirectorDashboard = () => {
                         ))}
                       </div>
                     </div>
+
+                    <div className="input-row-group" style={{ marginTop: '10px', borderTop: '1px solid var(--border-base)', paddingTop: '20px' }}>
+                      <label style={{ fontSize: '0.95rem', fontWeight: 700 }}>Change Password</label>
+                    </div>
+                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+                      <div className="input-row-group">
+                        <label>Current Password</label>
+                        <input type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <div className="input-row-group">
+                        <label>New Password</label>
+                        <input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <div className="input-row-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} className="input-field" />
+                      </div>
+                      {passwordMsg && (
+                        <div style={{ fontSize: '0.8rem', fontWeight: 600, color: passwordMsg.type === 'success' ? 'var(--success)' : 'var(--danger)' }}>
+                          {passwordMsg.text}
+                        </div>
+                      )}
+                      <button type="submit" className="confirm-btn" disabled={isChangingPassword} style={{ marginTop: '4px', width: 'fit-content' }}>
+                        {isChangingPassword ? 'Updating...' : 'Update Password'}
+                      </button>
+                    </form>
                   </div>
                 </div>
               </motion.section>

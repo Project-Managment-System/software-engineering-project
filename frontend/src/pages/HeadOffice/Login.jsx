@@ -62,6 +62,19 @@ export default function HeadOfficeLogin() {
 
       const { role, userId, employeeId, fullName, email, branch, profilePic } = res.data;
 
+      // Only this portal's own roles are allowed here. Session data must not be written to
+      // localStorage until AFTER that check passes — otherwise a rejected login still leaves
+      // the account "signed in" behind the scenes, and clicking Back to Portal would silently
+      // bounce straight into that account's real dashboard instead of requiring a proper login
+      // through the correct portal.
+      const isHeadOfficeRole = role === 'headoffice_admin';
+      const isBranchRole = (role === 'branch_engineer' || role === 'branch_director') && BRANCH_ROUTE_SLUGS.includes(branch);
+
+      if (!isHeadOfficeRole && !isBranchRole) {
+        setError('This portal is not available for your account.');
+        return;
+      }
+
       localStorage.setItem('userId', userId);
       localStorage.setItem('employeeId', employeeId);
       localStorage.setItem('fullName', fullName);
@@ -73,12 +86,10 @@ export default function HeadOfficeLogin() {
 
       if (role === 'headoffice_admin') {
         navigate('/headoffice/dashboard', { replace: true });
-      } else if (role === 'branch_engineer' && BRANCH_ROUTE_SLUGS.includes(branch)) {
+      } else if (role === 'branch_engineer') {
         navigate(`/${branch}/engineer/dashboard`, { replace: true });
-      } else if (role === 'branch_director' && BRANCH_ROUTE_SLUGS.includes(branch)) {
-        navigate(`/${branch}/director/dashboard`, { replace: true });
       } else {
-        setError('This portal is not available for your account.');
+        navigate(`/${branch}/director/dashboard`, { replace: true });
       }
     } catch (err) {
       const code = err.response?.data?.error;

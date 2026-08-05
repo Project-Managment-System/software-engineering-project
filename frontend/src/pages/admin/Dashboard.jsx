@@ -6,7 +6,7 @@ import {
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
   FileText, MessageSquare, Lock, Bell, Check, Users, Layers,
-  FileSpreadsheet, Printer
+  FileSpreadsheet, Printer, ChevronDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -69,6 +69,10 @@ const DIVISION_DS_DIVISIONS = {
   'Polonnaruwa': ['Thamankaduwa', 'Dimbulagala'],
   'Thambuttegama': ['Thambuttegama'],
 };
+
+// System Administrator oversight account — monitors every division, so its New Job
+// form is never locked to a single division the way a per-division clerk's is.
+const UNRESTRICTED_DIVISION_EMPLOYEE_IDS = ['cl0004'];
 
 /* ─── Animation variants ─── */
 const pageVariants = {
@@ -461,16 +465,18 @@ const AdminDashboard = () => {
   const [userDivision, setUserDivision] = useState(localStorage.getItem('userDivision') || '');
   const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'admin');
 
-  // Lock the "New Job" form's Division field to the logged-in user's own division, if any
+  // Lock the "New Job" form's Division field to the logged-in user's own division, if any —
+  // except for unrestricted oversight accounts, which need to file jobs under any division.
+  const hasUnrestrictedDivisionAccess = UNRESTRICTED_DIVISION_EMPLOYEE_IDS.includes(localStorage.getItem('employeeId'));
   useEffect(() => {
-    if (userDivision && DIVISION_DS_DIVISIONS[userDivision] && !editingId) {
+    if (userDivision && DIVISION_DS_DIVISIONS[userDivision] && !editingId && !hasUnrestrictedDivisionAccess) {
       setFormData((prev) => prev.division === userDivision ? prev : {
         ...prev,
         division: userDivision,
         dsDivision: DIVISION_DS_DIVISIONS[userDivision][0] || ''
       });
     }
-  }, [userDivision, editingId]);
+  }, [userDivision, editingId, hasUnrestrictedDivisionAccess]);
   const [editProfileName, setEditProfileName] = useState('');
   const [editRegNo, setEditRegNo] = useState('');
   const [editEmail, setEditEmail] = useState('');
@@ -539,6 +545,45 @@ const AdminDashboard = () => {
     localStorage.clear();
     if (savedTheme) localStorage.setItem('theme', savedTheme);
     navigate('/');
+  };
+
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (isChangingPassword) return;
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      addToast("New password and confirmation don't match.", 'warning');
+      return;
+    }
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      addToast('Please fill in all password fields.', 'warning');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      addToast('Password updated successfully!', 'success');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      const code = err.response?.data?.error;
+      if (code === 'INCORRECT_CURRENT_PASSWORD') {
+        addToast('Current password is incorrect.', 'error');
+      } else if (code === 'PASSWORD_TOO_SHORT') {
+        addToast('New password is too short.', 'error');
+      } else {
+        addToast('Failed to update password. Please try again.', 'error');
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const isFormValid = () => {
@@ -698,7 +743,7 @@ const AdminDashboard = () => {
 
   const availableDepartments = MINISTRY_DEPARTMENTS[formData.ministry] || [];
   const availableDsDivisions = DIVISION_DS_DIVISIONS[formData.division] || [];
-  const jobFormDivisionOptions = userDivision && DIVISION_DS_DIVISIONS[userDivision]
+  const jobFormDivisionOptions = userDivision && DIVISION_DS_DIVISIONS[userDivision] && !hasUnrestrictedDivisionAccess
     ? [userDivision]
     : Object.keys(DIVISION_DS_DIVISIONS);
 
@@ -901,19 +946,29 @@ const AdminDashboard = () => {
                   <div className="vertical-form">
                     <div className="input-row-group">
                       <label>Division <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
+                      <div style={{ position: 'relative' }}>
                       <select
                         name="division"
                         value={formData.division}
                         onChange={handleInputChange}
                         className="job-select-dropdown" required
                         disabled={jobFormDivisionOptions.length === 1}
-                        style={{ appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
+                        style={hasUnrestrictedDivisionAccess
+                          ? { appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none', paddingRight: '38px' }
+                          : { appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
                       >
                         <option value="" disabled>Select Division</option>
                         {jobFormDivisionOptions.map((div) => (
                           <option key={div} value={div}>{div}</option>
                         ))}
                       </select>
+                      {hasUnrestrictedDivisionAccess && (
+                        <ChevronDown
+                          size={16}
+                          style={{ position: 'absolute', top: '50%', right: '14px', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }}
+                        />
+                      )}
+                      </div>
                     </div>
 
                     <div className="form-row">
@@ -1690,6 +1745,27 @@ const AdminDashboard = () => {
                         ))}
                       </div>
                     </div>
+
+                    <div className="input-row-group" style={{ marginTop: '10px', borderTop: '1px solid var(--border-base)', paddingTop: '20px' }}>
+                      <label style={{ fontSize: '0.95rem', fontWeight: 700 }}>Change Password</label>
+                    </div>
+                    <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxWidth: '400px' }}>
+                      <div className="input-row-group">
+                        <label>Current Password</label>
+                        <input type="password" value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <div className="input-row-group">
+                        <label>New Password</label>
+                        <input type="password" value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <div className="input-row-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} className="input-field" />
+                      </div>
+                      <button type="submit" className="confirm-btn" disabled={isChangingPassword} style={{ marginTop: '4px', width: 'fit-content' }}>
+                        {isChangingPassword ? 'Updating...' : 'Update Password'}
+                      </button>
+                    </form>
                   </div>
                 </div>
               </motion.section>

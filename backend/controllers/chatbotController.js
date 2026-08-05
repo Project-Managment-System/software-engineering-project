@@ -2,23 +2,44 @@ const Project = require('../models/Project');
 const User = require('../models/User');
 
 // ─── Intent Detection ────────────────────────────────────────────────────────
+// Ordered from most specific/narrow to most general — the first match wins, so
+// conversational and precise-topic patterns are checked well before the broad,
+// easily-shadowed ones (e.g. "who" in team, "good" in greeting).
 const detectIntent = (message) => {
   const msg = message.toLowerCase();
-  if (/\b(week|7 day|recent|last week|this week|progress)\b/.test(msg)) return 'weekly';
-  if (/\b(summar|overview|report|total|all jobs|full report)\b/.test(msg)) return 'summary';
-  if (/\b(idea|suggest|recommend|improve|tip|advice|insight)\b/.test(msg)) return 'ideas';
-  if (/\b(pending|waiting|not start)\b/.test(msg)) return 'pending';
+  // NOTE: word-stem alternatives (e.g. "summar", "complet") deliberately drop the trailing
+  // \b and use \w* instead, so they still match inflected forms like "summary"/"completed" —
+  // a bare \bsummar\b can never match anything, since "summar" is never a complete word.
+  if (/\b(thank\w*|thx|appreciate\w*)\b/.test(msg)) return 'thanks';
+  if (/\b(bye|goodbye|farewell|see you|gtg|logging off)\b/.test(msg)) return 'bye';
+  if (/\b(how are you|how's it going|hows it going|how're you)\b/.test(msg)) return 'howareyou';
+  if (/\b(who are you|what are you|your name|about yourself)\b/.test(msg)) return 'identity';
+  if (/\b(joke\w*|funny|make me laugh)\b/.test(msg)) return 'joke';
+  if (/\b(what'?s the date|what is the date|the date today|today'?s date|current date|what day is it|what'?s the time|what is the time|current time|what time is it)\b/.test(msg)) return 'datetime';
+  if (/\b(repair\w*|work type|new work|type of work)\b/.test(msg)) return 'worktype';
+  if (/\b(expensive|cheapest|highest allocation|lowest allocation|biggest budget|smallest budget|most expensive|least expensive)\b/.test(msg)) return 'costextremes';
+  if (/\b(turnaround|average time|completion time|how long does it take|how long to complete)\b/.test(msg)) return 'turnaround';
+  if (/\b(ds division|grama niladhari|gn division|divisional secretariat)\b/.test(msg)) return 'dsdivision';
+  if (/\b(source\w*|referred|origin of request)\b/.test(msg)) return 'source';
+  if (/\bdepartment\w*\b/.test(msg)) return 'department';
+  // Checked ahead of the generic "summary" intent below — "team report"/"allocation
+  // report"/"ministry report" all contain the word "report", which summary also matches,
+  // so the more specific topic must win before the generic one gets a chance to.
+  if (/\b(team|staff|user\w*|member\w*|person\w*|who)\b/.test(msg)) return 'team';
+  if (/\b(allocation\w*|budget\w*|fund\w*|amount|money|cost)\b/.test(msg)) return 'allocation';
+  if (/\b(ministry|ministries|sector\w*)\b/.test(msg)) return 'ministry';
+  if (/\b(overdue|delay\w*|stuck|behind|stalled|late)\b/.test(msg)) return 'overdue';
+  if (/\b(trend\w*|compar\w*|growth|history|over time|month\w*)\b/.test(msg)) return 'trend';
+  if (/\b(week\w*|7 day|recent|last week|this week|progress)\b/.test(msg)) return 'weekly';
+  if (/\b(summar\w*|overview|report\w*|total|all jobs|full report)\b/.test(msg)) return 'summary';
+  if (/\b(idea\w*|suggest\w*|recommend\w*|improve\w*|tip\w*|advice|insight\w*)\b/.test(msg)) return 'ideas';
+  if (/\b(pending|waiting|not start\w*)\b/.test(msg)) return 'pending';
   if (/\b(ongoing|in progress|active|current)\b/.test(msg)) return 'ongoing';
-  if (/\b(complet|done|finish|closed)\b/.test(msg)) return 'completed';
-  if (/\b(reject|fail|cancel)\b/.test(msg)) return 'rejected';
-  if (/\b(approv)\b/.test(msg)) return 'approved';
-  if (/\b(team|staff|user|member|person|who)\b/.test(msg)) return 'team';
-  if (/\b(allocation|budget|fund|amount|money|cost)\b/.test(msg)) return 'allocation';
-  if (/\b(ministry|department|sector)\b/.test(msg)) return 'ministry';
-  if (/\b(overdue|delay|stuck|behind|stalled|late)\b/.test(msg)) return 'overdue';
-  if (/\b(trend|compare|growth|history|over time|month\b)\b/.test(msg)) return 'trend';
-  if (/\b(hello|hi|hey|greet|good)\b/.test(msg)) return 'greeting';
-  if (/\b(help|what can|command|option)\b/.test(msg)) return 'help';
+  if (/\b(complet\w*|done|finish\w*|closed)\b/.test(msg)) return 'completed';
+  if (/\b(reject\w*|fail\w*|cancel\w*)\b/.test(msg)) return 'rejected';
+  if (/\bapprov\w*\b/.test(msg)) return 'approved';
+  if (/\b(hello|hi|hey|greet\w*|good)\b/.test(msg)) return 'greeting';
+  if (/\b(help|what can|command\w*|option\w*)\b/.test(msg)) return 'help';
   return 'general';
 };
 
@@ -109,6 +130,86 @@ const generateTrendReport = (projects, division) => {
 
   return `📈 **6-Month Job Intake Trend — ${division} Division**\n\n\`\`\`\n${chart}\n\`\`\`\n\n` +
     `**${total6mo}** job${total6mo !== 1 ? 's' : ''} submitted over the last 6 months. Trend is currently **${trendDir}** compared to 6 months ago.`;
+};
+
+// ─── Work Type / Cost / Turnaround / DS Division / Source / Department Reports ─
+const generateWorkTypeReport = (projects, division) => {
+  if (projects.length === 0) return `No project data found for **${division}** division.`;
+  const avgOf = (arr) => {
+    const vals = arr.map(p => parseFloat(p.allocation) || 0).filter(v => v > 0);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+  };
+  const newWork = projects.filter(p => p.work === 'N');
+  const repairWork = projects.filter(p => p.work === 'R');
+
+  return `🏗️ **Work Type Breakdown — ${division} Division**\n\n` +
+    `• **New Construction (N):** ${newWork.length} project${newWork.length !== 1 ? 's' : ''}` +
+    `${newWork.length ? ` · Avg Allocation: Rs. ${avgOf(newWork).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : ''}\n` +
+    `• **Repair (R):** ${repairWork.length} project${repairWork.length !== 1 ? 's' : ''}` +
+    `${repairWork.length ? ` · Avg Allocation: Rs. ${avgOf(repairWork).toLocaleString(undefined, { maximumFractionDigits: 0 })}` : ''}\n\n` +
+    `Total: **${projects.length}** project${projects.length !== 1 ? 's' : ''} tracked.`;
+};
+
+const generateCostExtremesReport = (projects, division) => {
+  const withAlloc = projects.filter(p => parseFloat(p.allocation) > 0);
+  if (withAlloc.length === 0) return `No allocation data found for **${division}** division to compare.`;
+
+  const sorted = [...withAlloc].sort((a, b) => parseFloat(b.allocation) - parseFloat(a.allocation));
+  const highest = sorted[0];
+  const lowest = sorted[sorted.length - 1];
+
+  return `💵 **Cost Extremes — ${division} Division**\n\n` +
+    `**Highest Allocation:**\n[${highest.jobNo}] ${highest.jobName} — **Rs. ${parseFloat(highest.allocation).toLocaleString()}**\n\n` +
+    `**Lowest Allocation:**\n[${lowest.jobNo}] ${lowest.jobName} — **Rs. ${parseFloat(lowest.allocation).toLocaleString()}**`;
+};
+
+const generateTurnaroundReport = (projects, division) => {
+  const completed = projects.filter(p => p.status === 'Completed' && p.dateReq && p.updatedAt);
+  const days = completed
+    .map(p => Math.floor((new Date(p.updatedAt) - new Date(p.dateReq)) / 86400000))
+    .filter(d => d >= 0);
+
+  if (days.length === 0) {
+    return `📐 Not enough completed-project date data yet for **${division}** division to calculate a turnaround time.`;
+  }
+
+  const avg = (days.reduce((a, b) => a + b, 0) / days.length).toFixed(1);
+  return `📐 **Turnaround Time — ${division} Division**\n\n` +
+    `Based on **${days.length}** completed project${days.length !== 1 ? 's' : ''} with request-to-completion dates:\n` +
+    `• Average: **${avg} days**\n` +
+    `• Fastest: **${Math.min(...days)} days**\n` +
+    `• Slowest: **${Math.max(...days)} days**`;
+};
+
+const generateGroupedReport = (projects, division, field, title, emoji, noDataLabel) => {
+  const groups = {};
+  projects.forEach(p => {
+    const key = p[field] || 'Unspecified';
+    if (p[field]) groups[key] = (groups[key] || 0) + 1;
+  });
+  if (Object.keys(groups).length === 0) return `No ${noDataLabel} data found for **${division}** division.`;
+
+  const sorted = Object.entries(groups).sort((a, b) => b[1] - a[1]);
+  return `${emoji} **${title} — ${division} Division**\n\n` +
+    sorted.map(([g, c]) => `• **${g}** — ${c} project${c !== 1 ? 's' : ''}`).join('\n');
+};
+
+// ─── Conversational / Meta Responses ───────────────────────────────────────────
+const CHATBOT_JOKES = [
+  `Why did the civil engineer break up with the architect? Too many unresolved *load-bearing* issues. 🏗️😄`,
+  `Why don't engineers ever get lost on site? They always know where True North is. 🧭`,
+  `What did the beam say to the column? "I've got you supported." 😄`,
+  `Why was the estimator always calm? Because they had everything under budget. 💰😄`,
+];
+
+const generateIdentity = (division) =>
+  `🤖 I'm the **CEMS AI Assistant**, built into your Engineer Dashboard for the **${division} division**.\n\n` +
+  `I'm not a general-purpose chatbot — everything I tell you is pulled live from your division's real project data: summaries, trends, overdue items, budgets, work-type and department breakdowns, team info, and direct job lookups.\n\n` +
+  `Type **"help"** to see everything I can do.`;
+
+const generateDateTime = () => {
+  const now = new Date();
+  return `🗓️ Right now it's **${now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}**, **${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}** (server time).`;
 };
 
 // ─── Smart Fallback ────────────────────────────────────────────────────────────
@@ -389,6 +490,42 @@ exports.handleChat = async (req, res) => {
         break;
       case 'trend':
         response = generateTrendReport(projects, division);
+        break;
+      case 'worktype':
+        response = generateWorkTypeReport(projects, division);
+        break;
+      case 'costextremes':
+        response = generateCostExtremesReport(projects, division);
+        break;
+      case 'turnaround':
+        response = generateTurnaroundReport(projects, division);
+        break;
+      case 'dsdivision':
+        response = generateGroupedReport(projects, division, 'dsDivision', 'DS Division Breakdown', '🗺️', 'DS Division');
+        break;
+      case 'source':
+        response = generateGroupedReport(projects, division, 'source', 'Request Source Breakdown', '📥', 'source');
+        break;
+      case 'department':
+        response = generateGroupedReport(projects, division, 'department', 'Department Distribution', '🏢', 'department');
+        break;
+      case 'thanks':
+        response = `You're very welcome! Let me know if there's anything else about your division you'd like to check. 🙌`;
+        break;
+      case 'bye':
+        response = `Goodbye! Come back anytime you need a project update. 👋`;
+        break;
+      case 'howareyou':
+        response = `I'm running smoothly and ready to help! How can I assist you with your division's projects today? 😊`;
+        break;
+      case 'identity':
+        response = generateIdentity(division);
+        break;
+      case 'joke':
+        response = CHATBOT_JOKES[Math.floor(Math.random() * CHATBOT_JOKES.length)];
+        break;
+      case 'datetime':
+        response = generateDateTime();
         break;
       default:
         response = generateSmartFallback(projects, division, message);

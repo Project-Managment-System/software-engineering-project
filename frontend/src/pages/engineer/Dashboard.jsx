@@ -2261,6 +2261,9 @@ const EngineerDashboard = () => {
                       { emoji: '💰', label: 'Allocation report' },
                       { emoji: '🏛️', label: 'Ministry report' },
                       { emoji: '👥', label: 'Team report' },
+                      { emoji: '🏗️', label: 'Work type breakdown' },
+                      { emoji: '💵', label: 'Most expensive project' },
+                      { emoji: '🏢', label: 'Department distribution' },
                     ].map(chip => (
                       <button
                         key={chip.label}

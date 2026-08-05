@@ -30,6 +30,9 @@ const UserSchema = new mongoose.Schema({
   profilePic: { type: String, default: '' },
 }, { timestamps: true });
 
+// Backs the division-scoped user lookups (team report, /api/users/division/:division).
+UserSchema.index({ division: 1 });
+
 UserSchema.pre("save", async function () {
   // Ensure that a division has only one engineer, only when role/division changes or user is new
   if (this.role === "engineer" && this.division && (this.isNew || this.isModified("role") || this.isModified("division"))) {
