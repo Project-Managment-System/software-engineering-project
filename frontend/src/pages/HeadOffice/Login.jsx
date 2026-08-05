@@ -62,6 +62,19 @@ export default function HeadOfficeLogin() {
 
       const { role, userId, employeeId, fullName, email, branch, profilePic } = res.data;
 
+      // Reject accounts that don't belong on this portal BEFORE writing any session
+      // data — otherwise a Division-side login "fails" here but silently succeeds the
+      // moment the user navigates anywhere else (e.g. RedirectIfAuthenticated picks up
+      // the role/userId that got saved and bounces them straight into their real dashboard).
+      const isValidHeadOfficeRole =
+        role === 'headoffice_admin' ||
+        ((role === 'branch_engineer' || role === 'branch_director') && BRANCH_ROUTE_SLUGS.includes(branch));
+
+      if (!isValidHeadOfficeRole) {
+        setError('This portal is not available for your account.');
+        return;
+      }
+
       localStorage.setItem('userId', userId);
       localStorage.setItem('employeeId', employeeId);
       localStorage.setItem('fullName', fullName);
@@ -73,12 +86,10 @@ export default function HeadOfficeLogin() {
 
       if (role === 'headoffice_admin') {
         navigate('/headoffice/dashboard', { replace: true });
-      } else if (role === 'branch_engineer' && BRANCH_ROUTE_SLUGS.includes(branch)) {
+      } else if (role === 'branch_engineer') {
         navigate(`/${branch}/engineer/dashboard`, { replace: true });
-      } else if (role === 'branch_director' && BRANCH_ROUTE_SLUGS.includes(branch)) {
-        navigate(`/${branch}/director/dashboard`, { replace: true });
       } else {
-        setError('This portal is not available for your account.');
+        navigate(`/${branch}/director/dashboard`, { replace: true });
       }
     } catch (err) {
       const code = err.response?.data?.error;
