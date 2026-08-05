@@ -363,7 +363,7 @@ const generateStatusFilter = (projects, status, division) => {
 };
 
 const generateTeamReport = async (division) => {
-  const users = await User.find({ division: { $regex: new RegExp(`^${division}$`, 'i') } }).select('-password');
+  const users = await User.find({ division: { $regex: new RegExp(`^${division}$`, 'i') } }).select('-password').lean();
   if (users.length === 0) return `👥 No team members found in the **${division}** division.`;
 
   const roleMap = { division_assistant: 'Division Assistant', user: 'Field User', clerk: 'Clerk', engineer: 'Engineer' };
@@ -379,7 +379,7 @@ const generateAllocationReport = (projects, division) => {
   if (withAlloc.length === 0) return `No allocation data found for **${division}** division.`;
 
   const sorted = withAlloc
-    .map(p => ({ ...p._doc, allocNum: parseFloat(p.allocation) }))
+    .map(p => ({ ...p, allocNum: parseFloat(p.allocation) }))
     .sort((a, b) => b.allocNum - a.allocNum);
   const total = sorted.reduce((acc, p) => acc + p.allocNum, 0);
 
@@ -420,7 +420,7 @@ exports.handleChat = async (req, res) => {
       return res.status(400).json({ error: 'Message and division are required.' });
     }
 
-    const projects = await Project.find({ division }).sort({ updatedAt: -1 });
+    const projects = await Project.find({ division }).sort({ updatedAt: -1 }).lean();
 
     // A job number or job name in the message takes priority over generic intents —
     // it lets the assistant answer with one real project's data instead of a canned report.

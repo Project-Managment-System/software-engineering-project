@@ -87,7 +87,7 @@ router.delete('/:id', async (req, res) => {
 // Get all users
 router.get('/', async (req, res) => {
     try {
-        const users = await User.find();
+        const users = await User.find().select('-password').lean();
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -99,10 +99,10 @@ router.get('/', async (req, res) => {
 router.get('/division/:division', async (req, res) => {
     try {
         const division = req.params.division;
-        const users = await User.find({ 
+        const users = await User.find({
             division: { $regex: new RegExp(`^${division}$`, 'i') },
             role: { $ne: 'admin' }
-        }).select('-password');
+        }).select('-password').lean();
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -118,7 +118,11 @@ router.put('/:id', async (req, res) => {
                 error: `Invalid role. Allowed values: ${ALLOWED_STAFF_ROLES.join(', ')}`
             });
         }
-        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // findByIdAndUpdate bypasses the schema's pre('save') hashing hook, so a password
+        // field here would be written to the database in plaintext. Password changes must
+        // go through PATCH /:id/password instead, which uses .save() and hashes correctly.
+        const { password, ...safeUpdates } = req.body;
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, safeUpdates, { new: true }).select('-password');
         if (!updatedUser) {
             return res.status(404).json({ message: "User not found" });
         }

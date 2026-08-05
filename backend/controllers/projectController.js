@@ -111,7 +111,10 @@ exports.createProject = async (req, res) => {
 // job, so list views exclude it — GET /api/projects/job/:jobNo fetches it for a single job.
 exports.getAllProjects = async (req, res) => {
     try {
-        const projects = await Project.find().select('-drawingFileUrl').sort({ createdAt: -1 });
+        // .lean() skips hydrating full Mongoose Documents (getters, virtuals, instance
+        // methods) since this result is only ever serialized to JSON, never saved —
+        // verified byte-identical JSON output for this schema.
+        const projects = await Project.find().select('-drawingFileUrl').sort({ createdAt: -1 }).lean();
         res.json(projects);
     } catch (error) {
         res.status(500).json({ message: "Error fetching projects", error: error.message });
@@ -123,7 +126,7 @@ exports.getProjectsByDivision = async (req, res) => {
     try {
         const { division } = req.params;
         // Using strict match as the division name is passed from the logged-in engineer's session
-        const projects = await Project.find({ division: division }).select('-drawingFileUrl').sort({ createdAt: -1 });
+        const projects = await Project.find({ division: division }).select('-drawingFileUrl').sort({ createdAt: -1 }).lean();
         res.json(projects);
     } catch (error) {
         res.status(500).json({ message: "Error fetching division projects", error: error.message });
