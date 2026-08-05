@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const escapeRegex = require('../utils/escapeRegex');
 
 // Allowed roles an engineer can assign to staff they add
 const ALLOWED_STAFF_ROLES = ['division_assistant', 'user', 'clerk'];
@@ -101,7 +100,7 @@ router.get('/division/:division', async (req, res) => {
     try {
         const division = req.params.division;
         const users = await User.find({
-            division: { $regex: new RegExp(`^${escapeRegex(division)}$`, 'i') },
+            division: { $regex: new RegExp(`^${division}$`, 'i') },
             role: { $ne: 'admin' }
         }).select('-password').lean();
         res.json(users);

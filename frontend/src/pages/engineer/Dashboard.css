@@ -180,20 +180,19 @@
   overflow-x: hidden;
 }
 
-/* Blueprint dot grid — Dark mode. Tinted with the selected accent theme (was hardcoded to
-   cyan regardless of theme choice) so switching themes in Settings changes the background too. */
+/* Blueprint dot grid — Dark mode */
 #cems-user-dashboard.dark-mode {
   background-image:
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--accent-primary) 16%, transparent) 1px, transparent 0),
-    radial-gradient(ellipse 80% 60% at 15% 10%, color-mix(in srgb, var(--accent-primary) 12%, transparent) 0%, transparent 60%);
+    radial-gradient(circle at 1px 1px, rgba(6,182,212,0.1) 1px, transparent 0),
+    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(6,182,212,0.06) 0%, transparent 60%);
   background-size: 32px 32px, 100% 100%;
 }
 
 /* Blueprint dot grid — Light mode */
 #cems-user-dashboard.light-mode {
   background-image:
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--accent-primary) 11%, transparent) 1px, transparent 0),
-    radial-gradient(ellipse 70% 50% at 0% 0%, color-mix(in srgb, var(--accent-primary) 7%, transparent) 0%, transparent 60%);
+    radial-gradient(circle at 1px 1px, rgba(8,145,178,0.07) 1px, transparent 0),
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(8,145,178,0.04) 0%, transparent 60%);
   background-size: 28px 28px, 100% 100%;
 }
 
