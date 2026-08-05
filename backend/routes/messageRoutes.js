@@ -3,6 +3,11 @@ const router = express.Router();
 const mongoose = require("mongoose");
 const Message = require("../models/Message");
 
+// Mirrors the 5MB client-side cap (DivisionChat.jsx) — that limit is UI-only, so without this
+// check a request sent directly to the API could store an attachment up to the 50mb JSON body
+// limit, bloating the messages collection.
+const MAX_ATTACHMENT_BASE64_LENGTH = 7 * 1024 * 1024; // ~5MB raw file, base64-inflated (~4/3)
+
 // Send a new message
 router.post("/", async (req, res) => {
   try {
@@ -12,6 +17,9 @@ router.post("/", async (req, res) => {
     }
     if (!content?.trim() && !attachment?.fileData) {
       return res.status(400).json({ error: "Message must have text content or an attachment" });
+    }
+    if (attachment?.fileData?.length > MAX_ATTACHMENT_BASE64_LENGTH) {
+      return res.status(413).json({ error: "Attachment is too large (max 5MB)" });
     }
 
     const newMessage = new Message({

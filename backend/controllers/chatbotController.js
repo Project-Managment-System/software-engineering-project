@@ -1,5 +1,6 @@
 const Project = require('../models/Project');
 const User = require('../models/User');
+const escapeRegex = require('../utils/escapeRegex');
 
 // ─── Intent Detection ────────────────────────────────────────────────────────
 // Ordered from most specific/narrow to most general — the first match wins, so
@@ -363,7 +364,7 @@ const generateStatusFilter = (projects, status, division) => {
 };
 
 const generateTeamReport = async (division) => {
-  const users = await User.find({ division: { $regex: new RegExp(`^${division}$`, 'i') } }).select('-password').lean();
+  const users = await User.find({ division: { $regex: new RegExp(`^${escapeRegex(division)}$`, 'i') } }).select('-password').lean();
   if (users.length === 0) return `👥 No team members found in the **${division}** division.`;
 
   const roleMap = { division_assistant: 'Division Assistant', user: 'Field User', clerk: 'Clerk', engineer: 'Engineer' };

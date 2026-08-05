@@ -117,7 +117,6 @@ exports.login = async (req, res, next) => {
     res.json({
       status: "LOGIN_SUCCESS",
       role: user.role,
-      division: user.division,
       userId: user._id,
       employeeId: user.employeeId,
       fullName: user.fullName,
