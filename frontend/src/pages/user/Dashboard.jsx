@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import './Dashboard.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -502,8 +502,10 @@ const UserDashboard = () => {
     setActiveTab('my-jobs');
   };
 
-  // Only show jobs specifically assigned to this logged-in user
-  const myJobs = jobData.filter(job => job.assignee && job.assignee === profileName);
+  // Only show jobs specifically assigned to this logged-in user. Memoized because it's the
+  // dependency for several stats below — without this, .filter() would return a new array
+  // reference every render and defeat those useMemo calls entirely.
+  const myJobs = useMemo(() => jobData.filter(job => job.assignee && job.assignee === profileName), [jobData, profileName]);
 
   const selectedJob = myJobs.find(job => job.jobNo === selectedJobId);
 
@@ -698,21 +700,25 @@ const UserDashboard = () => {
 
 
   /* ─── Computed stats ─── */
+  // Memoized: each does a full pass over myJobs, which would otherwise re-run on every
+  // render — including renders from unrelated UI state changes elsewhere on this page.
   const totalMyJobs = myJobs.length;
   const totalSubmittedEstimates = submittedEstimates.length;
-  const pendingApprovalsCount = myJobs.filter(j => !j.status || j.status === 'Pending').length;
-  const approvedJobsCount = myJobs.filter(j => j.status === 'Approved').length;
-  const rejectedJobsCount = myJobs.filter(j => j.status === 'Rejected').length;
-  const drawingsReceivedCount = myJobs.filter(j => j.drawingReceived).length;
+  const pendingApprovalsCount = useMemo(() => myJobs.filter(j => !j.status || j.status === 'Pending').length, [myJobs]);
+  const approvedJobsCount = useMemo(() => myJobs.filter(j => j.status === 'Approved').length, [myJobs]);
+  const rejectedJobsCount = useMemo(() => myJobs.filter(j => j.status === 'Rejected').length, [myJobs]);
+  const drawingsReceivedCount = useMemo(() => myJobs.filter(j => j.drawingReceived).length, [myJobs]);
 
   /* ─── Allocation-wise breakdown (for Overview chart) ─── */
-  const allocationBreakdown = myJobs.reduce((acc, j) => {
-    const a = j.allocation || 'Unassigned';
-    if (!acc[a]) acc[a] = { allocation: a, total: 0 };
-    acc[a].total++;
-    return acc;
-  }, {});
-  const allocationData = Object.values(allocationBreakdown);
+  const allocationData = useMemo(() => {
+    const allocationBreakdown = myJobs.reduce((acc, j) => {
+      const a = j.allocation || 'Unassigned';
+      if (!acc[a]) acc[a] = { allocation: a, total: 0 };
+      acc[a].total++;
+      return acc;
+    }, {});
+    return Object.values(allocationBreakdown);
+  }, [myJobs]);
 
   return (
     <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>

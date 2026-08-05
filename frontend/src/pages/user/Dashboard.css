@@ -178,16 +178,17 @@
   overflow-x: hidden;
 }
 
-/* Ambient background for light mode */
+/* Ambient background for light mode — tinted with the selected accent theme (was hardcoded
+   to violet regardless of theme choice) so switching themes in Settings changes it too. */
 #cems-user-dashboard.light-mode {
   background-image:
-    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(124,58,237,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 0% 0%, color-mix(in srgb, var(--accent-primary) 8%, transparent) 0%, transparent 60%),
     repeating-linear-gradient(
       45deg,
       transparent,
       transparent 36px,
-      rgba(124,58,237,0.012) 36px,
-      rgba(124,58,237,0.012) 37px
+      color-mix(in srgb, var(--accent-primary) 4%, transparent) 36px,
+      color-mix(in srgb, var(--accent-primary) 4%, transparent) 37px
     );
 }
 
@@ -199,7 +200,7 @@
   right: -10%;
   width: 70vw;
   height: 70vh;
-  background: radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 65%);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--accent-primary) 13%, transparent) 0%, transparent 65%);
   pointer-events: none;
   z-index: 0;
 }
@@ -211,7 +212,7 @@
   left: -10%;
   width: 60vw;
   height: 60vh;
-  background: radial-gradient(ellipse, rgba(99,102,241,0.05) 0%, transparent 65%);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--accent-dark) 10%, transparent) 0%, transparent 65%);
   pointer-events: none;
   z-index: 0;
 }

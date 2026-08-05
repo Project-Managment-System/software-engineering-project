@@ -204,21 +204,23 @@
   overflow-x: hidden;
 }
 
-/* Subtle diagonal background pattern */
+/* Subtle diagonal background pattern — tinted with the selected accent theme (was hardcoded
+   to crimson-rose regardless of theme choice) so switching themes in Settings actually
+   changes the background, not just buttons/badges. */
 #cems-user-dashboard.light-mode .user-dashboard-layout {
   background-image:
-    linear-gradient(135deg, rgba(225, 29, 72, 0.025) 0%, transparent 60%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 7%, transparent) 0%, transparent 60%),
     repeating-linear-gradient(45deg,
       transparent,
       transparent 40px,
-      rgba(225, 29, 72, 0.012) 40px,
-      rgba(225, 29, 72, 0.012) 41px);
+      color-mix(in srgb, var(--accent-primary) 4%, transparent) 40px,
+      color-mix(in srgb, var(--accent-primary) 4%, transparent) 41px);
 }
 
 #cems-user-dashboard.dark-mode .user-dashboard-layout {
   background-image:
-    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(244, 63, 94, 0.07) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 90%, rgba(251, 191, 36, 0.04) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 60% at 20% 10%, color-mix(in srgb, var(--accent-primary) 12%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, color-mix(in srgb, var(--gold) 7%, transparent) 0%, transparent 50%);
 }
 
 /* ============================================================
