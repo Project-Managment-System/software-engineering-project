@@ -711,21 +711,24 @@ const EngineerDashboard = () => {
   };
 
   /* ─── Computed stats (division-scoped) ─── */
+  // Memoized: each of these does a full pass over approvalData/jobTrackingData, so without
+  // useMemo they'd re-run on every render — including renders from unrelated UI state like
+  // typing in a filter box or toggling a modal.
   const totalDivisionJobs = approvalData.length;
-  const pendingApprovals = approvalData.filter(j => !j.status || j.status === 'Pending').length;
-  const approvedCount = approvalData.filter(j => j.status === 'Approved').length;
-  const rejectedCount = approvalData.filter(j => j.status === 'Rejected').length;
+  const pendingApprovals = React.useMemo(() => approvalData.filter(j => !j.status || j.status === 'Pending').length, [approvalData]);
+  const approvedCount = React.useMemo(() => approvalData.filter(j => j.status === 'Approved').length, [approvalData]);
+  const rejectedCount = React.useMemo(() => approvalData.filter(j => j.status === 'Rejected').length, [approvalData]);
 
   /* ─── Assignee table only shows jobs approved in the Approval Requests tab ─── */
-  const trackedJobs = jobTrackingData.filter(j => j.status === 'Approved');
+  const trackedJobs = React.useMemo(() => jobTrackingData.filter(j => j.status === 'Approved'), [jobTrackingData]);
 
   /* ─── Final estimates submitted by users, awaiting Engineer review (goes straight to the
        Engineer now — no Divisional Assistant approval gate in this step) ─── */
-  const daApprovedJobs = approvalData.filter(j => j.finalEstimateCost != null);
-  const pendingDaReviewCount = daApprovedJobs.filter(j => (j.engineerReviewStatus || 'Pending') === 'Pending').length;
+  const daApprovedJobs = React.useMemo(() => approvalData.filter(j => j.finalEstimateCost != null), [approvalData]);
+  const pendingDaReviewCount = React.useMemo(() => daApprovedJobs.filter(j => (j.engineerReviewStatus || 'Pending') === 'Pending').length, [daApprovedJobs]);
 
   /* ─── Drawing Tracking: read-only progress of drawing requests in this division ─── */
-  const drawingTrackingJobs = approvalData.filter(j => j.drawingWorkflowStatus && j.drawingWorkflowStatus !== 'NotRequested');
+  const drawingTrackingJobs = React.useMemo(() => approvalData.filter(j => j.drawingWorkflowStatus && j.drawingWorkflowStatus !== 'NotRequested'), [approvalData]);
   const getDrawingTrackingInfo = (j) => {
     if (j.drawingWorkflowStatus === 'PendingDA') {
       if (j.drawingDaStatus === 'Rejected') return { label: 'Rejected by DA', badge: 'status-rejected' };
@@ -779,7 +782,8 @@ const EngineerDashboard = () => {
   }, [approvalData]);
 
   /* ─── Compute Smart Suggestions & Recommendations ─── */
-  const usersWithJobs = allSystemUsers.map(user => {
+  // Memoized: this is an O(users × jobs) nested pass, the most expensive derived value here.
+  const usersWithJobs = React.useMemo(() => allSystemUsers.map(user => {
     const name = user.fullName || `${user.firstName || ''} ${user.secondName || ''}`.trim();
     const jobCount = approvalData.filter(job => job.assignee === name && job.status !== 'Approved' && job.status !== 'Rejected').length;
     return {
@@ -787,7 +791,7 @@ const EngineerDashboard = () => {
       displayName: name || 'Unnamed User',
       jobCount
     };
-  });
+  }), [allSystemUsers, approvalData]);
 
   const getRecommendations = () => {
     const recs = [];
@@ -2252,6 +2256,8 @@ const EngineerDashboard = () => {
                     {[
                       { emoji: '📊', label: 'Division Summary' },
                       { emoji: '📅', label: 'Weekly Progress' },
+                      { emoji: '📈', label: '6-month trend' },
+                      { emoji: '⏰', label: 'Overdue projects' },
                       { emoji: '💡', label: 'Give me ideas' },
                       { emoji: '🕐', label: 'Pending projects' },
                       { emoji: '🔧', label: 'Ongoing projects' },
@@ -2259,6 +2265,9 @@ const EngineerDashboard = () => {
                       { emoji: '💰', label: 'Allocation report' },
                       { emoji: '🏛️', label: 'Ministry report' },
                       { emoji: '👥', label: 'Team report' },
+                      { emoji: '🏗️', label: 'Work type breakdown' },
+                      { emoji: '💵', label: 'Most expensive project' },
+                      { emoji: '🏢', label: 'Department distribution' },
                     ].map(chip => (
                       <button
                         key={chip.label}

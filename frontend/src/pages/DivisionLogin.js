@@ -58,6 +58,17 @@ export default function DivisionLogin() {
 
       const { role, userId, employeeId, fullName, email, division, profilePic } = res.data;
 
+      // Only this portal's own roles are allowed here. Session data must not be written to
+      // localStorage until AFTER that check passes — otherwise a rejected login still leaves
+      // the account "signed in" behind the scenes, and clicking Back to Portal would silently
+      // bounce straight into that account's real dashboard instead of requiring a proper login
+      // through the correct portal.
+      const DIVISION_PORTAL_ROLES = ['admin', 'clerk', 'engineer', 'user', 'division_assistant'];
+      if (!DIVISION_PORTAL_ROLES.includes(role)) {
+        alert('This portal is not yet available for your account role.');
+        return;
+      }
+
       // Reject accounts that don't belong on this portal BEFORE writing any session
       // data — otherwise a Head Office/branch login "fails" here but silently succeeds
       // the moment the user navigates anywhere else (RedirectIfAuthenticated picks up

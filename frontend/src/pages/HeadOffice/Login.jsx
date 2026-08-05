@@ -62,6 +62,7 @@ export default function HeadOfficeLogin() {
 
       const { role, userId, employeeId, fullName, email, branch, profilePic } = res.data;
 
+<<<<<<< HEAD
       // Reject accounts that don't belong on this portal BEFORE writing any session
       // data — otherwise a Division-side login "fails" here but silently succeeds the
       // moment the user navigates anywhere else (e.g. RedirectIfAuthenticated picks up
@@ -71,6 +72,17 @@ export default function HeadOfficeLogin() {
         ((role === 'branch_engineer' || role === 'branch_director') && BRANCH_ROUTE_SLUGS.includes(branch));
 
       if (!isValidHeadOfficeRole) {
+=======
+      // Only this portal's own roles are allowed here. Session data must not be written to
+      // localStorage until AFTER that check passes — otherwise a rejected login still leaves
+      // the account "signed in" behind the scenes, and clicking Back to Portal would silently
+      // bounce straight into that account's real dashboard instead of requiring a proper login
+      // through the correct portal.
+      const isHeadOfficeRole = role === 'headoffice_admin';
+      const isBranchRole = (role === 'branch_engineer' || role === 'branch_director') && BRANCH_ROUTE_SLUGS.includes(branch);
+
+      if (!isHeadOfficeRole && !isBranchRole) {
+>>>>>>> Dinujaya1_dev
         setError('This portal is not available for your account.');
         return;
       }
