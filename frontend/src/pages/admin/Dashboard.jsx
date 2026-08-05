@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -703,12 +703,15 @@ const AdminDashboard = () => {
     return [...new Set(values)].sort();
   };
 
-  const ministryOptions = [...new Set([
+  // Memoized: these each do a full pass over `jobs` (or `users` below), so without useMemo
+  // they'd re-run on every render — including every keystroke while filling in the New Job
+  // form, since that updates unrelated `formData` state on the same component.
+  const ministryOptions = useMemo(() => [...new Set([
     ...Object.keys(MINISTRY_DEPARTMENTS),
     ...getUniqueValues('ministry')
-  ])].sort();
+  ])].sort(), [jobs]);
 
-  const divisionOptions = [...new Set([
+  const divisionOptions = useMemo(() => [...new Set([
     'Anuradhapura-East',
     'Anuradhapura-West',
     'Medawachchiya',
@@ -718,9 +721,9 @@ const AdminDashboard = () => {
     'Polonnaruwa',
     'Higurakgoda',
     ...getUniqueValues('division')
-  ])].sort();
+  ])].sort(), [jobs]);
 
-  const departmentOptions = filters.ministry
+  const departmentOptions = useMemo(() => filters.ministry
     ? [...new Set([
       ...(MINISTRY_DEPARTMENTS[filters.ministry] || []),
       ...jobs.filter(j => j.ministry === filters.ministry).map(j => j.department).filter(Boolean)
@@ -728,14 +731,14 @@ const AdminDashboard = () => {
     : [...new Set([
       ...Object.values(MINISTRY_DEPARTMENTS).flat(),
       ...getUniqueValues('department')
-    ])].sort();
+    ])].sort(), [jobs, filters.ministry]);
 
-  const filteredJobs = jobs.filter((j) => {
+  const filteredJobs = useMemo(() => jobs.filter((j) => {
     if (filters.department && j.department !== filters.department) return false;
     if (filters.ministry && j.ministry !== filters.ministry) return false;
     if (filters.division && j.division !== filters.division) return false;
     return true;
-  });
+  }), [jobs, filters]);
 
   const handleClearFilters = () => {
     setFilters({ department: '', ministry: '', division: '' });
@@ -749,23 +752,23 @@ const AdminDashboard = () => {
 
   /* ─── Computed stats ─── */
   const totalJobs = jobs.length;
-  const pendingJobs = jobs.filter(j => !j.status || j.status === 'Pending').length;
-  const approvedJobs = jobs.filter(j => j.status === 'Approved').length;
-  const rejectedJobs = jobs.filter(j => j.status === 'Rejected').length;
+  const pendingJobs = useMemo(() => jobs.filter(j => !j.status || j.status === 'Pending').length, [jobs]);
+  const approvedJobs = useMemo(() => jobs.filter(j => j.status === 'Approved').length, [jobs]);
+  const rejectedJobs = useMemo(() => jobs.filter(j => j.status === 'Rejected').length, [jobs]);
 
   /* ─── Computed user stats (across all divisions) ─── */
   const totalUsers = users.length;
-  const divisionsWithUsers = new Set(users.map(u => u.division).filter(Boolean)).size;
-  const usersByDivision = divisionOptions.map((dv) => ({
+  const divisionsWithUsers = useMemo(() => new Set(users.map(u => u.division).filter(Boolean)).size, [users]);
+  const usersByDivision = useMemo(() => divisionOptions.map((dv) => ({
     name: dv,
     count: users.filter(u => u.division === dv).length,
-  }));
+  })), [divisionOptions, users]);
 
   /* ─── Computed filtered stats (for charts) ─── */
   const totalFilteredJobs = filteredJobs.length;
-  const pendingFilteredJobs = filteredJobs.filter(j => !j.status || j.status === 'Pending').length;
-  const approvedFilteredJobs = filteredJobs.filter(j => j.status === 'Approved').length;
-  const rejectedFilteredJobs = filteredJobs.filter(j => j.status === 'Rejected').length;
+  const pendingFilteredJobs = useMemo(() => filteredJobs.filter(j => !j.status || j.status === 'Pending').length, [filteredJobs]);
+  const approvedFilteredJobs = useMemo(() => filteredJobs.filter(j => j.status === 'Approved').length, [filteredJobs]);
+  const rejectedFilteredJobs = useMemo(() => filteredJobs.filter(j => j.status === 'Rejected').length, [filteredJobs]);
 
   const statCards = [
     { label: 'Total Jobs', value: totalJobs, icon: Briefcase, color: 'var(--accent-primary)' },
