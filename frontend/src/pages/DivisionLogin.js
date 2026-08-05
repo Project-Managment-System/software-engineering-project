@@ -69,16 +69,6 @@ export default function DivisionLogin() {
         return;
       }
 
-      // Reject accounts that don't belong on this portal BEFORE writing any session
-      // data — otherwise a Head Office/branch login "fails" here but silently succeeds
-      // the moment the user navigates anywhere else (RedirectIfAuthenticated picks up
-      // the role/userId that got saved and bounces them straight into their real dashboard).
-      const DIVISION_PORTAL_ROLES = ['admin', 'clerk', 'engineer', 'user', 'division_assistant'];
-      if (!DIVISION_PORTAL_ROLES.includes(role)) {
-        alert('This portal is not yet available for your account role.');
-        return;
-      }
-
       // Store session info for the dashboards to use
       localStorage.setItem('userId', userId);
       localStorage.setItem('employeeId', employeeId);
