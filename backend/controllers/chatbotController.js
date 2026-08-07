@@ -1,6 +1,13 @@
 const Project = require('../models/Project');
 const User = require('../models/User');
 const escapeRegex = require('../utils/escapeRegex');
+const { computeRiskWithPeers } = require('./riskController');
+const { computePortfolioSummary } = require('../services/riskService');
+
+// Shared between detectIntent() (portfolio-level "which projects are at risk")
+// and the job-lookup branch in handleChat() ("why is JB-1234 risky") so both
+// surfaces recognize the same vocabulary and can't quietly drift apart.
+const RISK_KEYWORDS = /\b(risk\w*|at-risk|riskiest|attention|critical project\w*|problem project\w*|flagged|red flag\w*|concern\w*|vulnerable|danger\w*|troubl\w*|watch ?list|worrying|exposure|need\w* review)\b/i;
 
 // ─── Intent Detection ────────────────────────────────────────────────────────
 // Ordered from most specific/narrow to most general — the first match wins, so
@@ -29,6 +36,10 @@ const detectIntent = (message) => {
   if (/\b(team|staff|user\w*|member\w*|person\w*|who)\b/.test(msg)) return 'team';
   if (/\b(allocation\w*|budget\w*|fund\w*|amount|money|cost)\b/.test(msg)) return 'allocation';
   if (/\b(ministry|ministries|sector\w*)\b/.test(msg)) return 'ministry';
+  // Checked ahead of 'overdue' so an explicit risk/attention question isn't
+  // shadowed by "delay" — e.g. "which projects are at risk of delay" should
+  // get the Risk Intelligence report, not the plain overdue-staleness list.
+  if (RISK_KEYWORDS.test(msg)) return 'risk';
   if (/\b(overdue|delay\w*|stuck|behind|stalled|late)\b/.test(msg)) return 'overdue';
   if (/\b(trend\w*|compar\w*|growth|history|over time|month\w*)\b/.test(msg)) return 'trend';
   if (/\b(week\w*|7 day|recent|last week|this week|progress)\b/.test(msg)) return 'weekly';
@@ -85,6 +96,51 @@ const generateJobDetail = (matches, division) => {
     matches.slice(0, 8).map((p, i) => `**${i + 1}. [${p.jobNo}] ${p.jobName}** — *${p.status}*`).join('\n') +
     (matches.length > 8 ? `\n\n*...and ${matches.length - 8} more*` : '') +
     `\n\nAsk me for one specific job number for full details.`;
+};
+
+// ─── Risk Intelligence (COMPUTED, rule-based — see docs/RISK_INTELLIGENCE.md) ─
+// Reuses the exact same scoring engine as GET /api/projects/risk/summary and
+// GET /api/projects/risk/:jobNo (backend/services/riskService.js via
+// riskController.computeRiskWithPeers), so the chatbot's numbers can never
+// drift from the dashboard's. Nothing here is an ML prediction.
+const RISK_LEVEL_EMOJI = { LOW: '🟢', MEDIUM: '🟡', HIGH: '🟠', CRITICAL: '🔴' };
+
+const generateRiskOverview = (projects, division) => {
+  const summary = computePortfolioSummary(projects);
+  if (summary.scoredProjects === 0) {
+    return `🛡️ **Risk Intelligence — ${division} Division**\n\nNo projects could be risk-scored yet — there isn't enough data on file for this division.`;
+  }
+
+  const d = summary.riskDistribution;
+  let out = `🛡️ **Risk Intelligence — ${division} Division**\n` +
+    `*Rule-based assessment (COMPUTED) — not a machine-learning prediction.*\n\n` +
+    `**Risk Distribution:** 🔴 Critical: ${d.CRITICAL} · 🟠 High: ${d.HIGH} · 🟡 Medium: ${d.MEDIUM} · 🟢 Low: ${d.LOW}\n` +
+    `**Average Risk Score:** ${summary.averageScore}/100\n` +
+    (summary.topPortfolioRiskFactor ? `**Top Contributing Factor:** ${summary.topPortfolioRiskFactor}\n` : '');
+
+  const atRisk = summary.topAtRiskProjects.filter(p => p.level === 'HIGH' || p.level === 'CRITICAL');
+  if (atRisk.length > 0) {
+    out += `\n**⚠️ Projects Needing Attention:**\n` +
+      atRisk.slice(0, 5).map((p, i) =>
+        `${i + 1}. ${RISK_LEVEL_EMOJI[p.level]} **[${p.jobNo}] ${p.jobName}** — ${p.score}/100 (${p.level})\n   ${p.topFactors[0] ? p.topFactors[0].evidence : ''}`
+      ).join('\n');
+  } else {
+    out += `\n✅ No projects currently in the HIGH or CRITICAL risk range.`;
+  }
+
+  return out + `\n\nAsk me *"why is [job number] risky"* for a full factor breakdown on any specific job.`;
+};
+
+const generateJobRiskDetail = (project, risk, division) => {
+  if (risk.status === 'INSUFFICIENT_DATA') {
+    return `🛡️ **Risk Assessment — [${project.jobNo}] ${project.jobName}**\n\nNot enough data is available to compute a risk score for this project yet.`;
+  }
+  return `🛡️ **Risk Assessment — [${project.jobNo}] ${project.jobName}** — ${division} Division\n\n` +
+    `${RISK_LEVEL_EMOJI[risk.level] || '⚪'} **${risk.score}/100 — ${risk.level}**\n` +
+    `*Rule-based (COMPUTED) assessment — not a machine-learning prediction.*\n\n` +
+    `**Contributing Factors:**\n` +
+    risk.factors.map(f => `• **${f.name}** (${f.score}/100, weight ${Math.round(f.weight * 100)}%): ${f.evidence}`).join('\n') +
+    (risk.limitations.length ? `\n\n**Not factored in:**\n` + risk.limitations.map(l => `• ${l}`).join('\n') : '');
 };
 
 // ─── Overdue / Trend Analysis ─────────────────────────────────────────────────
@@ -205,7 +261,7 @@ const CHATBOT_JOKES = [
 
 const generateIdentity = (division) =>
   `🤖 I'm the **CEMS AI Assistant**, built into your Engineer Dashboard for the **${division} division**.\n\n` +
-  `I'm not a general-purpose chatbot — everything I tell you is pulled live from your division's real project data: summaries, trends, overdue items, budgets, work-type and department breakdowns, team info, and direct job lookups.\n\n` +
+  `I'm not a general-purpose chatbot — everything I tell you is pulled live from your division's real project data: summaries, trends, overdue items, budgets, work-type and department breakdowns, team info, direct job lookups, and rule-based risk scoring (COMPUTED, not a machine-learning prediction).\n\n` +
   `Type **"help"** to see everything I can do.`;
 
 const generateDateTime = () => {
@@ -427,6 +483,12 @@ exports.handleChat = async (req, res) => {
     // it lets the assistant answer with one real project's data instead of a canned report.
     const jobMatches = findJobMatches(projects, message);
     if (jobMatches.length > 0) {
+      // "why is JB-1234 risky" etc. — a single matched job plus a risk-flavored
+      // word gets the factor breakdown instead of the plain job-detail card.
+      if (jobMatches.length === 1 && RISK_KEYWORDS.test(message)) {
+        const risk = await computeRiskWithPeers(jobMatches[0]);
+        return res.json({ response: generateJobRiskDetail(jobMatches[0], risk, division), intent: 'risk-lookup' });
+      }
       return res.json({ response: generateJobDetail(jobMatches, division), intent: 'lookup' });
     }
 
@@ -435,13 +497,15 @@ exports.handleChat = async (req, res) => {
 
     switch (intent) {
       case 'greeting':
-        response = `👋 **Hello! I'm CEMS AI Assistant.**\n\nI'm here to help you stay on top of your **${division} division** projects.\n\nHere's what I can do:\n• 📊 **Overall Summary** — Full division report\n• 📅 **Weekly Progress** — Last 7 days activity\n• 📈 **6-Month Trend** — Job intake over time\n• ⏰ **Overdue Check** — Stalled projects\n• 💡 **Recommendations** — Smart project insights\n• 🔍 **Status Filters** — Pending, Ongoing, Completed\n• 👥 **Team Report** — Division staff directory\n• 💰 **Allocation Report** — Budget breakdown\n• 🏛️ **Ministry Report** — Ministry distribution\n• 🔎 **Job Lookup** — Just type a job number or job name\n\nJust ask me anything about your division! 🚀`;
+        response = `👋 **Hello! I'm CEMS AI Assistant.**\n\nI'm here to help you stay on top of your **${division} division** projects.\n\nHere's what I can do:\n• 📊 **Overall Summary** — Full division report\n• 📅 **Weekly Progress** — Last 7 days activity\n• 📈 **6-Month Trend** — Job intake over time\n• 🛡️ **Risk Intelligence** — Which projects need attention, and why\n• ⏰ **Overdue Check** — Stalled projects\n• 💡 **Recommendations** — Smart project insights\n• 🔍 **Status Filters** — Pending, Ongoing, Completed\n• 👥 **Team Report** — Division staff directory\n• 💰 **Allocation Report** — Budget breakdown\n• 🏛️ **Ministry Report** — Ministry distribution\n• 🔎 **Job Lookup** — Just type a job number or job name\n\nJust ask me anything about your division! 🚀`;
         break;
       case 'help':
         response = `🤖 **CEMS AI Assistant — Help Guide**\n\nHere are things you can ask me:\n\n` +
           `• *"Give me a summary"* → Full division overview\n` +
           `• *"Weekly progress"* → This week's activity\n` +
           `• *"6-month trend"* → Job intake trend chart\n` +
+          `• *"Which projects are at risk?"* → Risk Intelligence report\n` +
+          `• *"Why is JB-1234 risky?"* → Full risk factor breakdown for one job\n` +
           `• *"Overdue projects"* → Projects with no recent activity\n` +
           `• *"Ideas or recommendations"* → Strategic suggestions\n` +
           `• *"Show pending projects"* → List pending items\n` +
@@ -485,6 +549,9 @@ exports.handleChat = async (req, res) => {
         break;
       case 'ministry':
         response = generateMinistryReport(projects, division);
+        break;
+      case 'risk':
+        response = generateRiskOverview(projects, division);
         break;
       case 'overdue':
         response = generateOverdueReport(projects, division);

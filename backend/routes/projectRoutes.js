@@ -11,6 +11,7 @@ const {
     undoProjectStatus, // Ensure this is exported from your controller
     undoEngineerReview
 } = require('../controllers/projectController');
+const { getProjectRisk, getRiskSummary } = require('../controllers/riskController');
 const Project = require('../models/Project'); // Adjust path to your Project model
 // 1. Admin: Create a new job
 router.post('/add', createProject);
@@ -23,6 +24,12 @@ router.get('/division/:division', getProjectsByDivision);
 
 // 3b. Get a single job by jobNo (includes drawingFileUrl, which list endpoints omit)
 router.get('/job/:jobNo', getProjectByJobNo);
+
+// 3c. Rule-based Risk Intelligence (COMPUTED, not ML) — see docs/RISK_INTELLIGENCE.md
+// '/risk/summary' must be registered before '/risk/:jobNo' or Express would match
+// "summary" as a jobNo on the dynamic route below.
+router.get('/risk/summary', getRiskSummary);
+router.get('/risk/:jobNo', getProjectRisk);
 
 // 4. Update general job details
 router.put('/update/:jobNo', updateProject); 
