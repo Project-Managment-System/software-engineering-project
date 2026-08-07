@@ -6,7 +6,8 @@ import {
   Check, X, Menu, UserPlus, Undo, Trash2, Shield, Clock,
   CheckCircle, XCircle, AlertTriangle, Users, BarChart3, Wrench, Filter,
   Globe, Sun, Moon, Lightbulb, Camera, TrendingUp, Activity,
-  FileText, FileSpreadsheet, Printer, MessageSquare, Send, ClipboardCheck
+  FileText, FileSpreadsheet, Printer, MessageSquare, Send, ClipboardCheck, MapPin,
+  Volume2, VolumeX
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -17,6 +18,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, RadialBarChart, RadialBar
 } from 'recharts';
 import DivisionChat from '../../components/DivisionChat';
+import JobTrackingTimeline from '../../components/JobTrackingTimeline';
+import { getHistoryActor } from '../../utils/jobTracking';
+import { formatCurrency } from '../../utils/formatCurrency';
+import ToastStack from '../../components/ToastStack';
+import { playSound, getSoundPrefs, setSoundPrefs } from '../../utils/sounds';
 
 
 /* ─── Animation variants ─── */
@@ -108,12 +114,19 @@ const DIVISION_DS_DIVISIONS = {
   'Thambuththegama': ['Thambuttegama'],
 };
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'engineer-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'engineer-dashboard-accentTheme';
+
 /* ─────────────────────────────────────── */
 const EngineerDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
+  const [soundMuted, setSoundMuted] = useState(() => getSoundPrefs().muted);
+  const [soundVolume, setSoundVolume] = useState(() => getSoundPrefs().volume);
   // Restored from sessionStorage so that navigating to a job's details page and clicking
   // Back returns to whichever tab the user was actually on, instead of resetting to Overview.
   const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('engineerDashboardActiveTab') || 'overview');
@@ -175,16 +188,17 @@ const EngineerDashboard = () => {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const chatEndRef = useRef(null);
+  // Dismiss timing/animation/sound is owned by <ToastStack> so hovering a toast can
+  // genuinely pause its countdown — this just appends to the queue.
   const addToast = (message, type = 'success') => {
-    const id = Date.now();
+    const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
 
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
     addToast(`${nextDark ? 'Dark' : 'Light'} theme activated`, 'info');
   };
 
@@ -454,9 +468,10 @@ const EngineerDashboard = () => {
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
+      playSound('logout');
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY); // preserve theme across logout
       localStorage.clear();
-      if (savedTheme) localStorage.setItem('theme', savedTheme);
+      if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
       sessionStorage.removeItem('engineerDashboardActiveTab');
       sessionStorage.removeItem('engineerDashboardExpandedPill');
       navigate('/');
@@ -520,7 +535,11 @@ const EngineerDashboard = () => {
 
   const handleApprove = async (jobNo, status) => {
     try {
-      await axios.patch(`http://127.0.0.1:5000/api/projects/status/${jobNo}`, { status });
+      await axios.patch(`http://127.0.0.1:5000/api/projects/status/${jobNo}`, {
+        status,
+        historyEvent: status === 'Approved' ? 'Approved by Engineer' : 'Rejected by Engineer',
+        historyActor: getHistoryActor()
+      });
       fetchData();
       addToast(`Job ${status.toLowerCase()} successfully!`, status === 'Approved' ? 'success' : 'warning');
     } catch (err) {
@@ -547,7 +566,9 @@ const EngineerDashboard = () => {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
         engineerReviewStatus,
         engineerReviewedAt: new Date().toISOString(),
-        engineerReviewNote
+        engineerReviewNote,
+        historyEvent: engineerReviewStatus === 'Approved' ? 'Final estimate approved by Engineer' : 'Final estimate rejected by Engineer',
+        historyActor: getHistoryActor()
       });
       fetchData();
       addToast(`Submission ${engineerReviewStatus.toLowerCase()}!`, engineerReviewStatus === 'Approved' ? 'success' : 'warning');
@@ -722,9 +743,9 @@ const EngineerDashboard = () => {
   /* ─── Assignee table only shows jobs approved in the Approval Requests tab ─── */
   const trackedJobs = React.useMemo(() => jobTrackingData.filter(j => j.status === 'Approved'), [jobTrackingData]);
 
-  /* ─── Final estimates submitted by users, awaiting Engineer review (goes straight to the
-       Engineer now — no Divisional Assistant approval gate in this step) ─── */
-  const daApprovedJobs = React.useMemo(() => approvalData.filter(j => j.finalEstimateCost != null), [approvalData]);
+  /* ─── Final estimates submitted by users, awaiting Engineer review — only surfaces once
+       the Divisional Assistant has approved the submission (daReviewStatus gate) ─── */
+  const daApprovedJobs = React.useMemo(() => approvalData.filter(j => j.finalEstimateCost != null && j.daReviewStatus === 'Approved'), [approvalData]);
   const pendingDaReviewCount = React.useMemo(() => daApprovedJobs.filter(j => (j.engineerReviewStatus || 'Pending') === 'Pending').length, [daApprovedJobs]);
 
   /* ─── Drawing Tracking: read-only progress of drawing requests in this division ─── */
@@ -902,6 +923,7 @@ const EngineerDashboard = () => {
               { id: 'all-jobs', icon: Globe, label: 'All Jobs' },
               { id: 'drawing-tracking', icon: Clock, label: 'Drawing Tracking' },
               { id: 'review-da', icon: ClipboardCheck, label: 'Review Final Estimates' },
+              { id: 'job-tracking', icon: MapPin, label: 'Job Tracking' },
               { id: 'add-user', icon: UserPlus, label: 'Add User' },
               { id: 'view-progress', icon: TrendingUp, label: 'View Progress' },
               { id: 'ai-chatbot', icon: MessageSquare, label: 'AI Assistant' },
@@ -1544,7 +1566,7 @@ const EngineerDashboard = () => {
                           job.estimationNo || '—',
                           job.jobName,
                           job.assignee || '—',
-                          job.finalEstimateCost?.toLocaleString() || '',
+                          job.finalEstimateCost != null ? formatCurrency(job.finalEstimateCost) : '',
                           job.finalEstimateDate ? formatDate(job.finalEstimateDate) : 'N/A',
                           job.directorApprovedAt ? formatDate(job.directorApprovedAt) : 'N/A',
                           job.assignedDesignEngineerName || '—',
@@ -1591,7 +1613,7 @@ const EngineerDashboard = () => {
                               <td className="font-mono">{job.estimationNo || '—'}</td>
                               <td className="font-bold">{job.jobName}</td>
                               <td>{job.assignee || '—'}</td>
-                              <td className="font-bold">{job.finalEstimateCost?.toLocaleString()}</td>
+                              <td className="font-bold">{job.finalEstimateCost != null ? formatCurrency(job.finalEstimateCost) : ''}</td>
                               <td>{job.finalEstimateDate ? formatDate(job.finalEstimateDate) : 'N/A'}</td>
                               <td>{job.directorApprovedAt ? formatDate(job.directorApprovedAt) : 'N/A'}</td>
                               <td>{job.assignedDesignEngineerName || '—'}</td>
@@ -1632,6 +1654,13 @@ const EngineerDashboard = () => {
                     </table>
                   </div>
                 </div>
+              </motion.div>
+            )}
+
+            {/* ── Job Tracking Tab ── */}
+            {activeTab === 'job-tracking' && (
+              <motion.div key="job-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <JobTrackingTimeline jobs={approvalData} />
               </motion.div>
             )}
 
@@ -2165,7 +2194,7 @@ const EngineerDashboard = () => {
                       onChange={(e) => {
                         const nextDark = e.target.value === 'Dark Mode';
                         setIsDark(nextDark);
-                        localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                        localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                       }}
                       className="job-select-dropdown"
                     >
@@ -2181,7 +2210,7 @@ const EngineerDashboard = () => {
                           type="button"
                           onClick={() => {
                             setAccentTheme(theme.id);
-                            localStorage.setItem('accentTheme', theme.id);
+                            localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                           }}
                           title={theme.label}
                           style={{
@@ -2198,6 +2227,36 @@ const EngineerDashboard = () => {
                           }}
                         />
                       ))}
+                    </div>
+
+                    <label style={{ marginTop: '16px' }}>Sound Effects</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px' }}>
+                      <button
+                        type="button"
+                        className="action-btn-pill secondary"
+                        onClick={() => {
+                          const next = setSoundPrefs({ muted: !soundMuted });
+                          setSoundMuted(next.muted);
+                          if (!next.muted) playSound('toggle');
+                        }}
+                      >
+                        {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />} {soundMuted ? 'Muted' : 'On'}
+                      </button>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={soundVolume}
+                        disabled={soundMuted}
+                        onChange={(e) => {
+                          const v = Number(e.target.value);
+                          setSoundVolume(v);
+                          setSoundPrefs({ volume: v });
+                        }}
+                        onMouseUp={() => playSound('info')}
+                        style={{ flex: 1, accentColor: 'var(--accent-primary)' }}
+                      />
                     </div>
 
                     <h3 style={{ marginTop: '30px', borderTop: '1px solid var(--border-base)', paddingTop: '20px' }}>Change Password</h3>
@@ -2371,30 +2430,7 @@ const EngineerDashboard = () => {
       </div>
 
       {/* ─── Toast Notifications ─── */}
-      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
-        <AnimatePresence>
-          {toasts.map(toast => (
-            <motion.div
-              key={toast.id}
-              initial={{ x: 80, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 80, opacity: 0 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className={`alert-banner alert-${toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : toast.type === 'info' ? 'info' : 'success'}`}
-              style={{ pointerEvents: 'all', minWidth: '280px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
-            >
-              {toast.type === 'success' && <CheckCircle size={18} />}
-              {toast.type === 'error' && <XCircle size={18} />}
-              {toast.type === 'warning' && <AlertTriangle size={18} />}
-              {toast.type === 'info' && <Clock size={18} />}
-              <span style={{ flex: 1, fontSize: '0.85rem' }}>{toast.message}</span>
-              <button onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px', display: 'flex' }}>
-                <X size={14} />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      <ToastStack toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
     </div>
   );
 };

@@ -20,6 +20,15 @@ router.post('/add', async (req, res) => {
             });
         }
 
+        const existingEmployeeId = await User.findOne({ employeeId: req.body.employeeId });
+        if (existingEmployeeId) {
+            return res.status(400).json({ error: 'Employee ID already exists' });
+        }
+        const existingEmail = await User.findOne({ email: (req.body.email || '').toLowerCase() });
+        if (existingEmail) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+
         const userData = {
             fullName: req.body.fullName || `${req.body.firstName || ''} ${req.body.secondName || ''}`.trim(),
             employeeId: req.body.employeeId,
@@ -50,6 +59,15 @@ router.post('/branch-add', async (req, res) => {
             return res.status(400).json({
                 error: `Invalid role. Allowed values: ${ALLOWED_BRANCH_ROLES.join(', ')}`
             });
+        }
+
+        const existingEmployeeId = await User.findOne({ employeeId: req.body.employeeId });
+        if (existingEmployeeId) {
+            return res.status(400).json({ error: 'Employee ID already exists' });
+        }
+        const existingEmail = await User.findOne({ email: (req.body.email || '').toLowerCase() });
+        if (existingEmail) {
+            return res.status(400).json({ error: 'Email already exists' });
         }
 
         const userData = {

@@ -1,0 +1,544 @@
+/* ============================================================
+   PREMIUM SYSTEM — shared, token-driven visual enhancement layer
+   ============================================================
+   Loaded once globally (see index.js). Every rule here reads the
+   #cems-user-dashboard.light-mode/.dark-mode custom properties
+   (--bg-card, --accent-primary, --shadow-card, …) already defined
+   per dashboard in pages/*/Dashboard.css, so the existing accent
+   identity of every dashboard carries through automatically.
+
+   Purely additive: nothing here renames or removes an existing
+   class, so no existing selector, handler, or test is affected.
+   ============================================================ */
+
+/* ---------- Ambient animated backdrop (applied to the existing
+   .user-dashboard-layout::before/::after background-image rules —
+   background-position drift needs no extra markup) ---------- */
+@keyframes ps-bg-drift {
+  0%, 100% { background-position: 0% 0%, 100% 100%; }
+  50%      { background-position: 8% 6%, 92% 94%; }
+}
+
+/* ---------- Glassmorphism ---------- */
+.ps-glass {
+  background: color-mix(in srgb, var(--bg-card) 72%, transparent) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+.ps-glass-strong {
+  background: color-mix(in srgb, var(--bg-card) 55%, transparent) !important;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+/* ---------- Premium card lift + accent-glow ring on hover ---------- */
+.ps-card-premium {
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s cubic-bezier(.2,.8,.2,1) !important;
+}
+.ps-card-premium:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover), 0 0 0 1px var(--accent-glow);
+}
+
+/* ---------- Button shine sweep — combine with an existing button
+   class, e.g. className="save-btn ps-btn-shine" ---------- */
+.ps-btn-shine { position: relative; overflow: hidden; }
+.ps-btn-shine::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 40%; height: 100%;
+  background: linear-gradient(115deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: skewX(-20deg);
+  transition: left .5s ease;
+  pointer-events: none;
+}
+.ps-btn-shine:hover::before { left: 130%; }
+
+/* ---------- Skeleton loading shimmer ---------- */
+@keyframes ps-shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.ps-skeleton {
+  border-radius: var(--radius-btn, 8px);
+  background: linear-gradient(90deg, var(--bg-table-alt) 0%, var(--bg-table-hover) 50%, var(--bg-table-alt) 100%);
+  background-size: 800px 100%;
+  animation: ps-shimmer 1.6s linear infinite;
+  color: transparent !important;
+}
+
+/* ---------- Fallback fade-up for elements not already wired to
+   framer-motion variants ---------- */
+@keyframes ps-fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.ps-fade-up { animation: ps-fade-up .5s cubic-bezier(.2,.8,.2,1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ps-fade-up { animation: none !important; }
+  * { --ps-bg-drift-state: paused; }
+}
+
+/* ---------- Job Tracking timeline (shared JobTrackingTimeline component) ---------- */
+.jt-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-left: 4px;
+}
+.jt-timeline-row {
+  display: flex;
+  gap: 14px;
+  position: relative;
+  padding-bottom: 22px;
+}
+.jt-timeline-row:last-child { padding-bottom: 0; }
+.jt-timeline-row::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 16px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-base);
+}
+.jt-timeline-row:last-child::before { display: none; }
+.jt-timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  flex-shrink: 0;
+  margin-top: 3px;
+  z-index: 1;
+}
+.jt-timeline-body { flex: 1; min-width: 0; }
+.jt-timeline-event {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+.jt-timeline-meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ---------- PDF Received status badge (user dashboard, Update Progress) ---------- */
+@keyframes ps-badge-glow {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+  50%      { box-shadow: 0 0 0 6px transparent; }
+}
+.pdf-received-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--success-soft), color-mix(in srgb, var(--success) 6%, transparent));
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+  animation: ps-badge-glow 2.4s ease-in-out infinite;
+}
+.pdf-received-badge-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--success);
+  color: #fff;
+}
+.pdf-received-badge-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pdf-received-badge-title {
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: var(--success);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pdf-received-badge-line {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdf-received-badge { animation: none !important; }
+}
+
+/* ---------- Instructional banner (e.g. Update Progress tab) ---------- */
+@keyframes ps-banner-fade-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.update-progress-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-soft), transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-card);
+  animation: ps-banner-fade-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.update-progress-banner svg {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .update-progress-banner { animation: none !important; }
+}
+
+/* ---------- Image crop modal (profile photo upload) ---------- */
+.crop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(8, 10, 20, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.crop-modal-panel {
+  width: 100%;
+  max-width: 460px;
+  background: var(--bg-card, #fff);
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-base, rgba(0,0,0,0.08));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.crop-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-primary, #111);
+  border-bottom: 1px solid var(--border-light, rgba(0,0,0,0.06));
+}
+.crop-modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted, #666);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+.crop-modal-close-btn:hover {
+  background: var(--danger-soft, #fee2e2);
+  color: var(--danger, #dc2626);
+}
+.crop-modal-stage {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  background: #1a1a1a;
+}
+.crop-modal-controls {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.crop-modal-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-secondary, #444);
+}
+.crop-modal-slider {
+  flex: 1;
+  accent-color: var(--accent-primary, #7c3aed);
+  cursor: pointer;
+}
+.crop-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-light, rgba(0,0,0,0.06));
+}
+
+/* ---------- Notification Center (shared NotificationCenter component) ---------- */
+.notif-center {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.notif-center-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.notif-center-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+  padding: 9px 14px;
+  border-radius: var(--radius-input, 9px);
+  border: 1.5px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-muted);
+}
+.notif-center-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+.notif-center-filter {
+  min-width: 140px;
+  width: auto;
+}
+
+.notif-center-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notif-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-base);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.notif-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+.notif-card-unread {
+  border-color: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  background: linear-gradient(135deg, var(--accent-soft), var(--bg-card) 40%);
+}
+.notif-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+}
+.notif-card-body { flex: 1; min-width: 0; }
+.notif-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+.notif-card-title {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+.notif-card-message {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.notif-card-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.notif-card-job { color: var(--accent-primary); }
+.notif-card-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.notif-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.notif-card-skeleton {
+  align-items: center;
+}
+
+.notif-center-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 50px 20px;
+  color: var(--text-muted);
+  border: 2px dashed var(--border-base);
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.notif-center-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+/* ---------- Premium scrollbar (all dashboards) ----------
+   Theme-aware (reads each dashboard's own --accent-primary/--bg-table-alt),
+   so this is scoped under #cems-user-dashboard rather than touching the
+   global scrollbar in index.css used by the Portal/login pages. Wins over
+   the flatter per-file .table-scroll-wrapper::-webkit-scrollbar-thumb rules
+   on specificity (ID beats class) without needing !important. */
+#cems-user-dashboard ::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+#cems-user-dashboard ::-webkit-scrollbar-track {
+  background: transparent;
+}
+#cems-user-dashboard ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-primary), var(--accent-dark, var(--accent-primary)));
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 99px;
+  transition: background-color 0.15s ease;
+}
+#cems-user-dashboard ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--accent-dark, var(--accent-primary)), var(--accent-primary));
+  background-clip: padding-box;
+}
+#cems-user-dashboard ::-webkit-scrollbar-thumb:active {
+  background: var(--accent-primary);
+  background-clip: padding-box;
+}
+#cems-user-dashboard {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent-primary) transparent;
+}
+
+/* ---------- Toast Stack (shared ToastStack component) ---------- */
+.toast-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 300px;
+  max-width: 380px;
+  padding: 13px 34px 13px 14px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-card) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--border-base);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+.toast-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+}
+.toast-success { border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+.toast-success::before { background: var(--success); box-shadow: 0 0 10px var(--success); }
+.toast-success .toast-card-icon { color: var(--success); }
+
+.toast-error, .toast-reject { border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+.toast-error::before, .toast-reject::before { background: var(--danger); box-shadow: 0 0 10px var(--danger); }
+.toast-error .toast-card-icon, .toast-reject .toast-card-icon { color: var(--danger); }
+
+.toast-warning { border-color: color-mix(in srgb, var(--warning) 40%, transparent); }
+.toast-warning::before { background: var(--warning); box-shadow: 0 0 10px var(--warning); }
+.toast-warning .toast-card-icon { color: var(--warning); }
+
+.toast-info { border-color: color-mix(in srgb, var(--info) 40%, transparent); }
+.toast-info::before { background: var(--info); box-shadow: 0 0 10px var(--info); }
+.toast-info .toast-card-icon { color: var(--info); }
+
+.toast-card-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.toast-card-message {
+  flex: 1;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.toast-card-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 3px;
+  border-radius: 6px;
+  display: flex;
+  transition: all 0.15s ease;
+}
+.toast-card-close:hover {
+  background: var(--bg-table-hover, rgba(0,0,0,0.06));
+  color: var(--text-primary);
+}
+.toast-card-progress {
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.55;
+}
+.toast-success .toast-card-progress { background: var(--success); }
+.toast-error .toast-card-progress, .toast-reject .toast-card-progress { background: var(--danger); }
+.toast-warning .toast-card-progress { background: var(--warning); }
+.toast-info .toast-card-progress { background: var(--info); }
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-card { transition: none !important; }
+}

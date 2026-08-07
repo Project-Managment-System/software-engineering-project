@@ -4,12 +4,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Briefcase, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
   AlertTriangle, Eye, BarChart3, Settings, User, Save, X, Camera, UserCheck, Bell, Trash2,
-  FileText, FileSpreadsheet, Printer, RefreshCw
+  FileText, FileSpreadsheet, Printer, RefreshCw, MapPin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import '../../shared/BranchDashboard.css';
+import JobTrackingTimeline from '../../../components/JobTrackingTimeline';
+import { getHistoryActor } from '../../../utils/jobTracking';
+import { playSound } from '../../../utils/sounds';
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -44,11 +47,17 @@ const openAttachment = (dataUrl) => {
   }
 };
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'design-director-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'design-director-dashboard-accentTheme';
+
+/* ─────────────────────────────────────── */
 const DesignDirectorDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -194,14 +203,16 @@ const DesignDirectorDashboard = () => {
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
+    playSound('toggle');
   };
 
   const handleLogout = () => {
     if (!window.confirm('Are you sure you want to log out?')) return;
-    const savedTheme = localStorage.getItem('theme');
+    playSound('logout');
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     localStorage.clear();
-    if (savedTheme) localStorage.setItem('theme', savedTheme);
+    if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
     navigate('/');
   };
 
@@ -284,7 +295,9 @@ const DesignDirectorDashboard = () => {
         drawingWorkflowStatus: 'PendingEngineerDesign',
         assignedDesignEngineerId: engineerId,
         assignedDesignEngineerName: engineer?.fullName || '',
-        assignedDesignEngineerAt: new Date().toISOString()
+        assignedDesignEngineerAt: new Date().toISOString(),
+        historyEvent: 'Assigned to Design Engineer',
+        historyActor: getHistoryActor()
       });
       setAssignSelections(prev => { const next = { ...prev }; delete next[jobNo]; return next; });
       await fetchData();
@@ -475,7 +488,9 @@ const DesignDirectorDashboard = () => {
         drawingWorkflowStatus: 'Completed',
         directorApprovedAt: new Date().toISOString(),
         drawingReceived: true,
-        drawingReceivedAt: new Date().toISOString()
+        drawingReceivedAt: new Date().toISOString(),
+        historyEvent: 'Drawing approved by Design Director',
+        historyActor: getHistoryActor()
       });
       await fetchData();
     } catch (err) {
@@ -560,6 +575,7 @@ const DesignDirectorDashboard = () => {
               { id: 'Assign', icon: UserCheck, label: 'Assign Engineer', count: assignJobs.length },
               { id: 'Pending', icon: Clock, label: 'Pending Approvals', count: pendingJobs.length },
               { id: 'Completed', icon: CheckCircle, label: 'Completed Jobs', count: unseenCompletedCount },
+              { id: 'Job Tracking', icon: MapPin, label: 'Job Tracking' },
               { id: 'Profile', icon: User, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
@@ -1078,6 +1094,12 @@ const DesignDirectorDashboard = () => {
               </motion.section>
             )}
 
+            {activeTab === 'Job Tracking' && (
+              <motion.section key="job-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <JobTrackingTimeline jobs={jobs} />
+              </motion.section>
+            )}
+
             {activeTab === 'Profile' && (
               <motion.section key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="profile-view">
                 <div className="field-card" style={{ maxWidth: '600px' }}>
@@ -1160,7 +1182,7 @@ const DesignDirectorDashboard = () => {
                         onChange={(e) => {
                           const nextDark = e.target.value === 'Dark Mode';
                           setIsDark(nextDark);
-                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                          localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                         }}
                         className="job-select-dropdown"
                       >
@@ -1178,7 +1200,7 @@ const DesignDirectorDashboard = () => {
                             type="button"
                             onClick={() => {
                               setAccentTheme(theme.id);
-                              localStorage.setItem('accentTheme', theme.id);
+                              localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                             }}
                             title={theme.label}
                             style={{

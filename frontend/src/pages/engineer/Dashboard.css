@@ -11,7 +11,7 @@
    1. CSS TOKENS — Light Mode
    ============================================================ */
 #cems-user-dashboard.light-mode {
-  --bg-root:         #f0f8ff;
+  --bg-root:         color-mix(in srgb, var(--accent-primary) 10%, #ffffff);
   --bg-sidebar:      #ffffff;
   --bg-card:         #ffffff;
   --bg-card-hover:   #f5fbff;
@@ -32,6 +32,7 @@
   --accent-soft:     #ecfeff;
   --accent-2:        #06b6d4;
   --accent-3:        #38bdf8;
+  --gold:            #b45309;
   --success:         #059669;
   --success-soft:    #d1fae5;
   --warning:         #d97706;
@@ -73,6 +74,7 @@
   --accent-soft:     rgba(6,182,212,0.08);
   --accent-2:        #22d3ee;
   --accent-3:        #38bdf8;
+  --gold:            #f59e0b;
   --success:         #10b981;
   --success-soft:    rgba(16,185,129,0.12);
   --warning:         #f59e0b;
@@ -580,6 +582,10 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-table-header);
 }
 
 #cems-user-dashboard .project-table td {
@@ -605,6 +611,26 @@
 }
 
 #cems-user-dashboard .project-table tbody tr:last-child td { border-bottom: none; }
+
+/* Sticky first column — explicit per-row-state background since a sticky cell
+   paints its own background rather than showing the parent row's through. */
+#cems-user-dashboard .project-table th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+#cems-user-dashboard .project-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-card);
+}
+#cems-user-dashboard .project-table tbody tr:nth-child(even) td:first-child {
+  background: var(--bg-table-alt);
+}
+#cems-user-dashboard .project-table tbody tr:hover td:first-child {
+  background: var(--bg-table-hover);
+}
 
 /* Mono job-no cells */
 #cems-user-dashboard .project-table .font-mono,
@@ -1582,7 +1608,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-2) 60%, transparent 100%);
+  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--gold) 60%, transparent 100%);
 }
 #cems-user-dashboard .field-card:hover {
   box-shadow: var(--shadow-hover);
@@ -1647,4 +1673,105 @@
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ============================================================
+   ULTRA PREMIUM VISUAL LAYER
+   Glassmorphism, ambient motion and richer depth layered on top
+   of the existing token system and selectors above - every rule
+   here targets a class that already exists in the JSX, so no
+   markup changes were needed.
+   ============================================================ */
+
+/* - Ambient drifting glow behind the whole layout - */
+#cems-user-dashboard.light-mode {
+  animation: ps-bg-drift 32s ease-in-out infinite;
+}
+#cems-user-dashboard.dark-mode {
+  animation: ps-bg-drift 32s ease-in-out infinite;
+}
+
+/* - Frosted glass sidebar (both modes) - */
+#cems-user-dashboard .sidebar {
+  background: color-mix(in srgb, var(--bg-sidebar) 78%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* - Profile photo soft glow pulse - */
+#cems-user-dashboard .profile-photo {
+  animation: ps-photo-pulse 3.6s ease-in-out infinite;
+}
+@keyframes ps-photo-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--bg-sidebar), 0 0 0 5px var(--accent-primary), var(--shadow-btn); }
+  50%      { box-shadow: 0 0 0 3px var(--bg-sidebar), 0 0 0 5px var(--accent-primary), 0 0 24px 4px var(--accent-glow); }
+}
+
+/* - Nav item glide - */
+#cems-user-dashboard .nav-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+#cems-user-dashboard .nav-item:hover {
+  transform: translateX(3px);
+}
+
+/* - Floating glass field cards - */
+#cems-user-dashboard .field-card {
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+#cems-user-dashboard .field-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover), 0 0 0 1px var(--accent-glow);
+}
+
+/* - Button glow sweep on primary actions - */
+#cems-user-dashboard .save-btn {
+  background-size: 200% auto !important;
+}
+#cems-user-dashboard .save-btn:hover:not(:disabled) {
+  box-shadow: 0 10px 28px var(--accent-glow), var(--shadow-btn) !important;
+}
+#cems-user-dashboard .approve-btn:hover,
+#cems-user-dashboard .reject-btn:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* - Table: gradient header underline + smoother row hover - */
+#cems-user-dashboard .project-table thead tr {
+  position: relative;
+}
+#cems-user-dashboard .project-table thead tr::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--gold), transparent);
+}
+#cems-user-dashboard .project-table tbody tr {
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+/* - Sidebar toggle + export buttons: consistent lift+glow - */
+#cems-user-dashboard .sidebar-toggle-menu-btn:hover,
+#cems-user-dashboard .export-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cems-user-dashboard.light-mode,
+  #cems-user-dashboard.dark-mode,
+  #cems-user-dashboard .profile-photo {
+    animation: none !important;
+  }
+}
+
+/* — Sidebar text/icon legibility boost — */
+#cems-user-dashboard .nav-item {
+  color: var(--text-secondary) !important;
+}
+#cems-user-dashboard .sidebar-toggle-menu-btn {
+  color: var(--text-secondary) !important;
 }

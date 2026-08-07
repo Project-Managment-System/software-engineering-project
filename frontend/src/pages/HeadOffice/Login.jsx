@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Building2, Lock, User, ShieldAlert, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { playSound } from '../../utils/sounds';
 
 // Maps a branch slug (from the user's DB record) to its dashboard route segment
 const BRANCH_ROUTE_SLUGS = ['design', 'branch-a', 'branch-b', 'branch-c', 'branch-d'];
@@ -83,6 +84,7 @@ export default function HeadOfficeLogin() {
       localStorage.setItem('profilePic', profilePic || '');
       localStorage.setItem('isAuthenticated', 'true');
       if (branch) localStorage.setItem('userBranch', branch);
+      playSound('login');
 
       if (role === 'headoffice_admin') {
         navigate('/headoffice/dashboard', { replace: true });

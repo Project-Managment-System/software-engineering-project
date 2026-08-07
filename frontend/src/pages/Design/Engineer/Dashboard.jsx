@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   HardHat, LogOut, Menu, Clock, CheckCircle, Sun, Moon,
   AlertTriangle, Paperclip, Send, BarChart3, Settings, User,
-  Save, X, Camera, Wallet, Building2, Bell, Trash2, RotateCcw
+  Save, X, Camera, Wallet, Building2, Bell, Trash2, RotateCcw, MapPin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -12,6 +12,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import '../../shared/BranchDashboard.css';
+import JobTrackingTimeline from '../../../components/JobTrackingTimeline';
+import { getHistoryActor } from '../../../utils/jobTracking';
+import { playSound } from '../../../utils/sounds';
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -145,11 +148,17 @@ const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'design-engineer-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'design-engineer-dashboard-accentTheme';
+
+/* ─────────────────────────────────────── */
 const DesignEngineerDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -260,14 +269,16 @@ const DesignEngineerDashboard = () => {
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
+    playSound('toggle');
   };
 
   const handleLogout = () => {
     if (!window.confirm('Are you sure you want to log out?')) return;
-    const savedTheme = localStorage.getItem('theme');
+    playSound('logout');
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     localStorage.clear();
-    if (savedTheme) localStorage.setItem('theme', savedTheme);
+    if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
     navigate('/');
   };
 
@@ -371,7 +382,9 @@ const DesignEngineerDashboard = () => {
       await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
         drawingFileUrl: dataUrl,
         drawingWorkflowStatus: 'PendingDirectorDesign',
-        drawingAttachedAt: new Date().toISOString()
+        drawingAttachedAt: new Date().toISOString(),
+        historyEvent: 'Drawing attached by Design Engineer',
+        historyActor: getHistoryActor()
       });
       setSelectedFiles(prev => { const next = { ...prev }; delete next[jobNo]; return next; });
       await fetchData();
@@ -476,6 +489,7 @@ const DesignEngineerDashboard = () => {
               { id: 'Notifications', icon: Bell, label: 'Notifications', count: unreadNotifCount },
               { id: 'Pending', icon: Clock, label: 'Pending Jobs', count: pendingJobs.length },
               { id: 'Completed', icon: CheckCircle, label: 'Completed Jobs', count: completedJobs.length },
+              { id: 'Job Tracking', icon: MapPin, label: 'Job Tracking' },
               { id: 'Profile', icon: User, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
             ].map(item => (
@@ -844,6 +858,12 @@ const DesignEngineerDashboard = () => {
               </motion.section>
             )}
 
+            {activeTab === 'Job Tracking' && (
+              <motion.section key="job-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <JobTrackingTimeline jobs={jobs} />
+              </motion.section>
+            )}
+
             {activeTab === 'Profile' && (
               <motion.section key="profile" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="profile-view">
                 <div className="field-card" style={{ maxWidth: '600px' }}>
@@ -926,7 +946,7 @@ const DesignEngineerDashboard = () => {
                         onChange={(e) => {
                           const nextDark = e.target.value === 'Dark Mode';
                           setIsDark(nextDark);
-                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                          localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                         }}
                         className="job-select-dropdown"
                       >
@@ -944,7 +964,7 @@ const DesignEngineerDashboard = () => {
                             type="button"
                             onClick={() => {
                               setAccentTheme(theme.id);
-                              localStorage.setItem('accentTheme', theme.id);
+                              localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                             }}
                             title={theme.label}
                             style={{

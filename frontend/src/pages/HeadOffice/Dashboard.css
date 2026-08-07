@@ -11,7 +11,7 @@
    1. CSS TOKENS — Light Mode
    ============================================================ */
 #cems-user-dashboard.light-mode {
-  --bg-root:         #f0f8ff;
+  --bg-root:         color-mix(in srgb, var(--accent-primary) 10%, #ffffff);
   --bg-sidebar:      #ffffff;
   --bg-card:         #ffffff;
   --bg-card-hover:   #f5fbff;
@@ -337,6 +337,8 @@
   padding: 24px;
   box-shadow: var(--shadow-card);
   transition: box-shadow 0.25s, transform 0.25s;
+  position: relative;
+  overflow: hidden;
 }
 .field-card:hover {
   box-shadow: var(--shadow-hover);
@@ -349,6 +351,19 @@
   padding: 24px;
   box-shadow: var(--shadow-card);
   margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient outline stripe shared across the flagship dashboards */
+.field-card::before,
+.recent-jobs-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary) 0%, var(--gold) 60%, transparent 100%);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
 }
 
 .recent-jobs-title {
@@ -409,6 +424,22 @@
 .project-table .font-mono { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
 
 .row-rejected { opacity: 0.65; }
+
+/* Sticky first column — explicit per-row-state background since a sticky cell
+   paints its own background rather than showing the parent row's through. */
+.project-table th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+.project-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-card);
+}
+.project-table tbody tr:nth-child(even) td:first-child { background: var(--bg-table-alt); }
+.project-table tbody tr:hover td:first-child { background: var(--bg-table-hover); }
 
 /* ============================================================
    8. STATUS BADGES
@@ -833,4 +864,150 @@
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ============================================================
+   17. ULTRA PREMIUM VISUAL LAYER
+   Glassmorphism, ambient motion and richer depth, layered on
+   top of everything above via classes that already exist in
+   the Head Office JSX. No markup changes. Head Office keeps
+   its own navy / cyan accent identity throughout.
+   ============================================================ */
+
+/* — Ambient drifting glow behind the whole layout — */
+.user-dashboard-layout {
+  position: relative;
+  overflow: hidden;
+}
+#cems-user-dashboard.light-mode .user-dashboard-layout {
+  background-image:
+    radial-gradient(ellipse 70% 55% at 15% 8%, color-mix(in srgb, var(--accent-primary) 8%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 85% 92%, color-mix(in srgb, var(--gold) 6%, transparent) 0%, transparent 55%);
+  background-size: 180% 180%, 160% 160%;
+  animation: ps-bg-drift 32s ease-in-out infinite;
+}
+#cems-user-dashboard.dark-mode .user-dashboard-layout {
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 10%, color-mix(in srgb, var(--accent-primary) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 90%, color-mix(in srgb, var(--gold) 7%, transparent) 0%, transparent 50%);
+  background-size: 180% 180%, 160% 160%;
+  animation: ps-bg-drift 32s ease-in-out infinite;
+}
+
+/* — Frosted glass sidebar (both modes) — */
+.sidebar {
+  background: color-mix(in srgb, var(--bg-sidebar) 78%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* — Profile photo soft glow pulse — */
+.profile-photo {
+  animation: ps-photo-pulse 3.6s ease-in-out infinite;
+}
+@keyframes ps-photo-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--bg-sidebar), 0 0 0 4px var(--accent-primary); }
+  50%      { box-shadow: 0 0 0 2px var(--bg-sidebar), 0 0 0 4px var(--accent-primary), 0 0 20px 4px var(--accent-glow); }
+}
+
+/* — Active nav item gets the same glow ring as the flagship dashboards — */
+.nav-item.active {
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+/* — Floating glass cards — */
+.field-card,
+.recent-jobs-card {
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+.field-card:hover,
+.recent-jobs-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover), 0 0 0 1px var(--accent-glow);
+}
+
+/* — Buttons: bring up to parity with the flagship gradient/glow/shine treatment — */
+.confirm-btn, .save-btn, .approve-btn, .reject-btn, .edit-btn, .delete-btn {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-dark)) !important;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.confirm-btn::before, .save-btn::before, .approve-btn::before,
+.reject-btn::before, .edit-btn::before, .delete-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 40%; height: 100%;
+  background: linear-gradient(115deg, transparent, rgba(255,255,255,.35), transparent);
+  transform: skewX(-20deg);
+  transition: left .5s ease;
+  pointer-events: none;
+}
+.confirm-btn:hover::before, .save-btn:hover::before, .approve-btn:hover::before,
+.reject-btn:hover::before, .edit-btn:hover::before, .delete-btn:hover::before {
+  left: 130%;
+}
+.confirm-btn:hover, .save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px var(--accent-glow), var(--shadow-btn);
+}
+.reject-btn, .delete-btn {
+  background: linear-gradient(135deg, var(--danger), color-mix(in srgb, var(--danger) 70%, black)) !important;
+  color: #fff;
+}
+.reject-btn:hover, .delete-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+/* — Table action buttons: light hover lift, existing color coding kept as-is — */
+.table-action-btn {
+  transition: all 0.15s ease, transform 0.15s ease !important;
+}
+.table-action-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* — Table: gradient header underline + smoother row hover — */
+.project-table thead th {
+  position: relative;
+}
+.project-table thead th:first-child::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -2px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--gold), transparent);
+}
+.project-table tbody tr {
+  transition: background 0.2s ease, transform 0.15s ease !important;
+}
+
+/* — Status badges: subtle glow to match the card / button treatment — */
+.status-approved, .status-pending, .status-rejected, .status-success {
+  box-shadow: 0 0 0 0 transparent;
+  transition: box-shadow 0.2s ease;
+}
+.status-approved:hover { box-shadow: 0 0 0 3px var(--success-soft); }
+.status-pending:hover  { box-shadow: 0 0 0 3px var(--warning-soft); }
+.status-rejected:hover { box-shadow: 0 0 0 3px var(--danger-soft); }
+.status-success:hover  { box-shadow: 0 0 0 3px var(--info-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .user-dashboard-layout,
+  .profile-photo {
+    animation: none !important;
+  }
+}
+
+/* — Sidebar text/icon legibility boost — */
+.nav-item {
+  color: var(--text-secondary) !important;
+}
+.sidebar-toggle-menu-btn {
+  color: var(--text-secondary) !important;
 }

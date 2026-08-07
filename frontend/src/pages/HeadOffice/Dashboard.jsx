@@ -5,7 +5,7 @@ import {
   Building2, LogOut, Menu, BarChart3, Briefcase, Clock, CheckCircle,
   XCircle, Users, Filter, X, AlertTriangle, Settings, Sun, Moon,
   Table2, ShieldCheck, Layers, Palette, UserPlus, Save, Landmark, HardHat,
-  Mail, Phone, Edit3, Trash2, ArrowLeft
+  Mail, Phone, Edit3, Trash2, ArrowLeft, Volume2, VolumeX
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,6 +13,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
 import { BRANCHES } from '../../constants/branches';
+import { playSound, getSoundPrefs, setSoundPrefs } from '../../utils/sounds';
 import './Dashboard.css';
 
 /* ─── Animation variants ─── */
@@ -60,11 +61,18 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'headoffice-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'headoffice-dashboard-accentTheme';
+
 /* ─────────────────────────────────────── */
 const HeadOfficeDashboard = () => {
   const navigate = useNavigate();
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
+  const [soundMuted, setSoundMuted] = useState(() => getSoundPrefs().muted);
+  const [soundVolume, setSoundVolume] = useState(() => getSoundPrefs().volume);
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -185,14 +193,16 @@ const HeadOfficeDashboard = () => {
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
+    playSound('toggle');
   };
 
   const handleLogout = () => {
     if (!window.confirm('Are you sure you want to log out?')) return;
-    const savedTheme = localStorage.getItem('theme');
+    playSound('logout');
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     localStorage.clear();
-    if (savedTheme) localStorage.setItem('theme', savedTheme);
+    if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
     navigate('/');
   };
 
@@ -979,7 +989,7 @@ const HeadOfficeDashboard = () => {
                         onChange={(e) => {
                           const nextDark = e.target.value === 'Dark Mode';
                           setIsDark(nextDark);
-                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                          localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                         }}
                         className="job-select-dropdown"
                       >
@@ -997,7 +1007,7 @@ const HeadOfficeDashboard = () => {
                             type="button"
                             onClick={() => {
                               setAccentTheme(theme.id);
-                              localStorage.setItem('accentTheme', theme.id);
+                              localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                             }}
                             title={theme.label}
                             style={{
@@ -1014,6 +1024,38 @@ const HeadOfficeDashboard = () => {
                             }}
                           />
                         ))}
+                      </div>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label>Sound Effects</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          className="action-btn-pill secondary"
+                          onClick={() => {
+                            const next = setSoundPrefs({ muted: !soundMuted });
+                            setSoundMuted(next.muted);
+                            if (!next.muted) playSound('toggle');
+                          }}
+                        >
+                          {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />} {soundMuted ? 'Muted' : 'On'}
+                        </button>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          value={soundVolume}
+                          disabled={soundMuted}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setSoundVolume(v);
+                            setSoundPrefs({ volume: v });
+                          }}
+                          onMouseUp={() => playSound('info')}
+                          style={{ flex: 1, accentColor: 'var(--accent-primary)' }}
+                        />
                       </div>
                     </div>
 

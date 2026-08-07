@@ -18,7 +18,7 @@
 
 /* — Light Mode Tokens — */
 #cems-user-dashboard.light-mode {
-  --bg-root: #f0f2f7;
+  --bg-root: color-mix(in srgb, var(--accent-primary) 10%, #ffffff);
   --bg-sidebar: #ffffff;
   --bg-card: #ffffff;
   --bg-card-hover: #fafbff;
@@ -856,6 +856,10 @@ select.input-field option {
   white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-table-header);
 }
 
 /* Sort arrow indicator placeholder */
@@ -890,6 +894,30 @@ select.input-field option {
 
 .project-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Sticky first column — stays visible while a wide table scrolls horizontally.
+   Explicit backgrounds per row-state are required since a sticky cell paints its
+   own background rather than showing the parent row's through. */
+.project-table th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+.project-table td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-card);
+}
+.project-table tbody tr:nth-child(even) td:first-child {
+  background: var(--bg-table-alt);
+}
+.project-table tbody tr:hover td:first-child {
+  background: var(--bg-table-hover);
+}
+.project-table tbody tr.row-rejected td:first-child {
+  background: var(--danger-soft);
 }
 
 /* Rejected row highlight — flags jobs an engineer has rejected */
@@ -1575,4 +1603,109 @@ select.input-field option {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ============================================================
+   ULTRA PREMIUM VISUAL LAYER
+   Glassmorphism, ambient motion and richer depth layered on top
+   of the existing token system and selectors above — every rule
+   here targets a class that already exists in the JSX, so no
+   markup changes were needed.
+   ============================================================ */
+
+/* — Ambient drifting glow behind the whole layout — */
+#cems-user-dashboard.light-mode .user-dashboard-layout {
+  background-size: 180% 180%, 160% 160%;
+  animation: ps-bg-drift 32s ease-in-out infinite;
+}
+#cems-user-dashboard.dark-mode .user-dashboard-layout {
+  background-size: 180% 180%, 160% 160%;
+  animation: ps-bg-drift 32s ease-in-out infinite;
+}
+
+/* — Frosted glass sidebar (both modes) — */
+.sidebar {
+  background: color-mix(in srgb, var(--bg-sidebar) 78%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* — Profile photo soft glow pulse — */
+.profile-photo {
+  animation: ps-photo-pulse 3.6s ease-in-out infinite;
+}
+@keyframes ps-photo-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--bg-sidebar), 0 0 0 5px var(--accent-primary), var(--shadow-btn); }
+  50%      { box-shadow: 0 0 0 3px var(--bg-sidebar), 0 0 0 5px var(--accent-primary), 0 0 24px 4px var(--accent-glow); }
+}
+
+/* — Nav item glide — */
+.nav-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.nav-item:hover {
+  transform: translateX(3px);
+}
+
+/* — Floating glass stat/field cards — */
+.field-card {
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+.field-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover), 0 0 0 1px var(--accent-glow);
+}
+
+/* — Button glow sweep on primary actions — */
+.save-btn,
+#cems-user-dashboard .save-btn,
+#cems-user-dashboard .form-action-row .save-btn {
+  background-size: 200% auto !important;
+}
+.save-btn:hover:not(:disabled) {
+  box-shadow: 0 10px 28px var(--accent-glow), var(--shadow-btn) !important;
+}
+#cems-user-dashboard .approve-btn:hover,
+#cems-user-dashboard .reject-btn:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* — Table: gradient header underline + smoother row hover — */
+.project-table thead tr {
+  position: relative;
+}
+.project-table thead tr::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--gold), transparent);
+}
+.project-table tbody tr {
+  transition: background 0.2s ease, transform 0.15s ease !important;
+}
+
+/* — Sidebar toggle + export/action buttons: consistent lift+glow — */
+.sidebar-toggle-menu-btn:hover,
+#cems-user-dashboard .export-btn:hover,
+.action-btn-pill:hover {
+  transform: translateY(-2px) scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #cems-user-dashboard .user-dashboard-layout,
+  .profile-photo {
+    animation: none !important;
+  }
+}
+
+/* — Sidebar text/icon legibility boost — */
+.nav-item {
+  color: var(--text-secondary) !important;
+}
+.sidebar-toggle-menu-btn {
+  color: var(--text-secondary) !important;
 }

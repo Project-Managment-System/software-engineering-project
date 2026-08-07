@@ -5,7 +5,8 @@ import {
   User, Briefcase, RefreshCw, Settings, Save, Edit3, Camera, LogOut, Menu,
   Send, Calendar, Sun, Moon, Clock, CheckCircle, XCircle, AlertTriangle, X,
   FileText, MessageSquare, Bell, RotateCcw, Check, Download, Hash, Layers,
-  LayoutDashboard, Activity, BarChart3, FileSpreadsheet, Printer, ArrowLeft
+  LayoutDashboard, Activity, BarChart3, FileSpreadsheet, Printer, ArrowLeft, MapPin,
+  Volume2, VolumeX
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -16,6 +17,13 @@ import {
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import DivisionChat from '../../components/DivisionChat';
+import JobTrackingTimeline from '../../components/JobTrackingTimeline';
+import { getHistoryActor } from '../../utils/jobTracking';
+import { formatCurrency } from '../../utils/formatCurrency';
+import ImageCropModal from '../../components/ImageCropModal';
+import NotificationCenter from '../../components/NotificationCenter';
+import ToastStack from '../../components/ToastStack';
+import { playSound, getSoundPrefs, setSoundPrefs } from '../../utils/sounds';
 
 /* ─── Custom Tooltip for Charts ─── */
 const CustomTooltip = ({ active, payload }) => {
@@ -76,13 +84,24 @@ const formatRoleName = (role) => {
   }
 };
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'user-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'user-dashboard-accentTheme';
+
 /* ─────────────────────────────────────── */
 const UserDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  // Raw (uncropped) image data URL awaiting crop confirmation — the crop modal is shown
+  // whenever this is non-null. Upload progress is tracked separately for its progress bar.
+  const [cropImageSrc, setCropImageSrc] = useState(null);
+  const [photoUploadProgress, setPhotoUploadProgress] = useState(null);
 
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
+  const [soundMuted, setSoundMuted] = useState(() => getSoundPrefs().muted);
+  const [soundVolume, setSoundVolume] = useState(() => getSoundPrefs().volume);
   const [activeTab, setActiveTab] = useState('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   // Which status the "My Jobs" tab is filtered to — set by clicking a summary card
@@ -139,10 +158,11 @@ const UserDashboard = () => {
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
   const [totalUnread, setTotalUnread] = useState(0);
+  // Dismiss timing/animation/sound is owned by <ToastStack> so hovering a toast can
+  // genuinely pause its countdown — this just appends to the queue.
   const addToast = (message, type = 'success') => {
-    const id = Date.now();
+    const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
 
   /* ─── Table exports — PDF, Excel, Print ─── */
@@ -267,7 +287,7 @@ const UserDashboard = () => {
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
     addToast(`${nextDark ? 'Dark' : 'Light'} theme activated`, 'info');
   };
 
@@ -413,9 +433,10 @@ const UserDashboard = () => {
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to log out?")) {
-      const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
+      playSound('logout');
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY); // preserve theme across logout
       localStorage.clear();
-      if (savedTheme) localStorage.setItem('theme', savedTheme);
+      if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
       navigate('/');
     }
   };
@@ -541,6 +562,30 @@ const UserDashboard = () => {
     setActiveTab('update-progress');
   };
 
+  const handleMarkNotificationRead = (id) => {
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === id ? { ...n, read: true } : n)));
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    setNotifications(prev => persistNotifications(prev.map(n => ({ ...n, read: true }))));
+    addToast("All notifications marked as read", "success");
+  };
+
+  const handleDeleteNotification = (id) => {
+    setNotifications(prev => persistNotifications(prev.filter(n => n.id !== id)));
+    addToast("Notification deleted", "info");
+  };
+
+  const handleArchiveNotification = (id) => {
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === id ? { ...n, archived: true } : n)));
+    addToast("Notification archived", "info");
+  };
+
+  const handleUnarchiveNotification = (id) => {
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === id ? { ...n, archived: false } : n)));
+    addToast("Notification restored", "info");
+  };
+
   // jobData omits drawingFileUrl for performance, so the drawing is fetched on demand here.
   const handleDownloadDrawing = async (jobNo) => {
     setDownloadingDrawingJobNo(jobNo);
@@ -580,7 +625,9 @@ const UserDashboard = () => {
         estimateSubmitted: true,
         estimateSubmittedAt: new Date().toISOString(),
         drawingWorkflowStatus: 'PendingDA',
-        drawingRequestedAt: new Date().toISOString()
+        drawingRequestedAt: new Date().toISOString(),
+        historyEvent: 'Drawing requested by User',
+        historyActor: getHistoryActor()
       });
 
       const newNotification = {
@@ -651,11 +698,19 @@ const UserDashboard = () => {
         finalEstimateCost: Number(finalEstimateCost),
         finalEstimateDate: finalEstimateDate,
         finalEstimateSubmittedAt: new Date().toISOString(),
+        // Goes to the Divisional Assistant first — the Engineer only sees it once the DA
+        // approves (see daReviewStatus gate in engineer/Dashboard.jsx's daApprovedJobs).
+        daReviewStatus: 'Pending',
+        daReviewedAt: null,
+        daReviewNote: '',
+        daReviewedBy: '',
         engineerReviewStatus: 'Pending',
         engineerReviewedAt: null,
-        engineerReviewNote: ''
+        engineerReviewNote: '',
+        historyEvent: 'Final estimate submitted by User',
+        historyActor: getHistoryActor()
       });
-      addToast('Final estimate submitted to your Engineer for review!', 'success');
+      addToast('Final estimate submitted to your Divisional Assistant for review!', 'success');
       fetchData();
     } catch (err) {
       console.error(err);
@@ -663,6 +718,8 @@ const UserDashboard = () => {
     }
   };
 
+  // Selecting a file no longer uploads immediately — it opens the crop modal first
+  // (crop/zoom/rotate/reset/preview), and the upload only happens once the user confirms.
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -675,25 +732,41 @@ const UserDashboard = () => {
     }
 
     const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64Data = reader.result;
-      setProfilePic(base64Data);
-      localStorage.setItem('profilePic', base64Data);
-
-      try {
-        const userId = localStorage.getItem('userId');
-        if (userId) {
-          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
-            profilePic: base64Data
-          });
-          addToast("Profile photo updated successfully!", "success");
-        }
-      } catch (err) {
-        console.error("Error saving profile photo to backend:", err);
-        addToast("Failed to sync photo to database", "error");
-      }
+    reader.onloadend = () => {
+      setCropImageSrc(reader.result);
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCropCancel = () => {
+    setCropImageSrc(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleCropSave = async (croppedDataUrl) => {
+    setProfilePic(croppedDataUrl);
+    localStorage.setItem('profilePic', croppedDataUrl);
+    setCropImageSrc(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    try {
+      const userId = localStorage.getItem('userId');
+      if (userId) {
+        await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+          profilePic: croppedDataUrl
+        }, {
+          onUploadProgress: (evt) => {
+            if (evt.total) setPhotoUploadProgress(Math.round((evt.loaded * 100) / evt.total));
+          }
+        });
+        addToast("Profile photo updated successfully!", "success");
+      }
+    } catch (err) {
+      console.error("Error saving profile photo to backend:", err);
+      addToast("Failed to sync photo to database", "error");
+    } finally {
+      setPhotoUploadProgress(null);
+    }
   };
 
 
@@ -779,6 +852,7 @@ const UserDashboard = () => {
               { id: 'overview', icon: LayoutDashboard, label: 'Overview' },
               { id: 'my-jobs', icon: Briefcase, label: 'My Jobs' },
               { id: 'update-progress', icon: RefreshCw, label: 'Update Progress' },
+              { id: 'job-tracking', icon: MapPin, label: 'Job Tracking' },
               { id: 'notifications', icon: Bell, label: 'Notifications' },
               { id: 'messages', icon: MessageSquare, label: 'Messages' },
               { id: 'profile', icon: Edit3, label: 'Profile' },
@@ -1079,25 +1153,51 @@ const UserDashboard = () => {
             {/* ── Update Progress Tab ── */}
             {activeTab === 'update-progress' && (
               <motion.section key="update-progress" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="update-progress-view">
+                <div className="update-progress-banner">
+                  <Activity size={20} />
+                  <span>Click a job below to update its current progress. Keeping progress updated helps customers track their project in real time.</span>
+                </div>
                 <div className="field-card" style={{ marginBottom: '24px', padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                     <RefreshCw size={20} style={{ color: 'var(--accent-primary)' }} />
                     <h3 className="recent-jobs-title" style={{ margin: 0 }}>Select Active Job to Update</h3>
                   </div>
-                  <div className="vertical-form">
-                    <div className="input-row-group">
-                      <label>Job Directory Reference</label>
-                      <select
-                        className="job-select-dropdown"
-                        value={selectedJobId}
-                        onChange={(e) => handleSelectionChange(e.target.value)}
-                      >
-                        <option value="">-- Choose Job ID --</option>
-                        {myJobs.map(job => (
-                          <option key={job.jobNo} value={job.jobNo}>{job.jobName} - {job.estimationNo || 'N/A'}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="table-scroll-wrapper">
+                    <table className="project-table">
+                      <thead>
+                        <tr>
+                          <th>Serial No</th>
+                          <th>Estimation Number</th>
+                          <th>Activity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {myJobs.length === 0 ? (
+                          <tr>
+                            <td colSpan={3}>
+                              <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
+                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                <span>No jobs assigned to you yet.</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ) : (
+                          myJobs.map((job, index) => (
+                            <tr
+                              key={job.jobNo}
+                              onClick={() => handleSelectionChange(job.jobNo)}
+                              className={job.jobNo === selectedJobId ? 'row-selected' : ''}
+                              style={{ cursor: 'pointer' }}
+                              title="Click to view and update this job"
+                            >
+                              <td>{index + 1}</td>
+                              <td className="font-mono">{job.estimationNo || '—'}</td>
+                              <td className="font-bold">{job.jobName}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
@@ -1286,6 +1386,30 @@ const UserDashboard = () => {
                                       </div>
                                     )}
 
+                                    {/* PDF Received — how many days ago the drawing arrived */}
+                                    {selectedJob.drawingReceived && (
+                                      <div className="pdf-received-badge">
+                                        <div className="pdf-received-badge-icon">
+                                          <FileText size={18} />
+                                        </div>
+                                        <div className="pdf-received-badge-body">
+                                          <span className="pdf-received-badge-title">PDF Received</span>
+                                          <span className="pdf-received-badge-line">
+                                            Received: {selectedJob.drawingReceivedAt
+                                              ? new Date(selectedJob.drawingReceivedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                              : 'N/A'}
+                                          </span>
+                                          <span className="pdf-received-badge-line">
+                                            Pending: {(() => {
+                                              if (!selectedJob.drawingReceivedAt) return '0 Days';
+                                              const diff = Math.floor(Math.abs(new Date() - new Date(selectedJob.drawingReceivedAt)) / (1000 * 60 * 60 * 24));
+                                              return `${diff} Day${diff === 1 ? '' : 's'}`;
+                                            })()}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+
                                     {/* Divisional Assistant rejected the drawing request itself */}
                                     {selectedJob.estimateSubmitted && selectedJob.drawingDaStatus === 'Rejected' && (
                                       <div style={{ margin: '0 0 14px', padding: '10px 12px', borderRadius: '8px', background: 'var(--danger-soft)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '0.8rem' }}>
@@ -1360,6 +1484,11 @@ const UserDashboard = () => {
                                                 }}
                                               />
                                             </div>
+                                            {finalEstimateCost !== '' && finalEstimateCost !== null && (
+                                              <small style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                                Rs. {formatCurrency(finalEstimateCost)}
+                                              </small>
+                                            )}
                                           </div>
 
                                           <div className="input-row-group">
@@ -1444,6 +1573,11 @@ const UserDashboard = () => {
                                           }}
                                         />
                                       </div>
+                                      {finalEstimateCost !== '' && finalEstimateCost !== null && (
+                                        <small style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                          Rs. {formatCurrency(finalEstimateCost)}
+                                        </small>
+                                      )}
                                     </div>
 
                                     <div className="input-row-group">
@@ -1550,76 +1684,30 @@ const UserDashboard = () => {
               </motion.section>
             )}
 
+            {/* ── Job Tracking Tab ── */}
+            {activeTab === 'job-tracking' && (
+              <motion.div key="job-tracking" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <JobTrackingTimeline jobs={myJobs} />
+              </motion.div>
+            )}
+
             {/* ── Notifications Tab ── */}
             {activeTab === 'notifications' && (
               <motion.section key="notifications" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="notifications-view">
                 <div className="field-card" style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Bell size={20} style={{ color: 'var(--accent-primary)' }} />
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Notifications</h3>
-                    </div>
-                    {notifications.length > 0 && (
-                      <button
-                        className="action-btn-pill secondary"
-                        onClick={() => {
-                          setNotifications(persistNotifications(notifications.map(n => ({ ...n, read: true }))));
-                          addToast("All notifications marked as read", "success");
-                        }}
-                      >
-                        Mark all as read
-                      </button>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                    <Bell size={20} style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>My Notifications</h3>
                   </div>
-
-                  {notifications.length === 0 ? (
-                    <div className="placeholder-content" style={{ height: '180px', border: 'none' }}>
-                      <Bell size={32} style={{ opacity: 0.35, marginBottom: '10px' }} />
-                      <span>You have no notifications yet.</span>
-                    </div>
-                  ) : (
-                    <div className="notification-list">
-                      {notifications.map((notif) => (
-                        <div
-                          key={notif.id}
-                          className={`notification-card-item ${notif.read ? '' : 'unread'}`}
-                          onClick={notif.jobNo ? () => handleNotificationClick(notif) : undefined}
-                          style={notif.jobNo ? { cursor: 'pointer' } : undefined}
-                          title={notif.jobNo ? 'Click to go to this job\'s estimate' : undefined}
-                        >
-                          <div className="notification-main">
-                            <div className="notification-header">
-                              <span className="notification-title">{notif.title}</span>
-                              <span className="notification-time">{notif.time}</span>
-                            </div>
-                            <p className="notification-msg">{notif.message}</p>
-                          </div>
-                          <div className="notification-btn-row" onClick={(e) => e.stopPropagation()}>
-                            {!notif.read && (
-                              <button
-                                className="action-btn-pill primary"
-                                onClick={() => {
-                                  setNotifications(persistNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n)));
-                                  addToast("Notification marked as read", "info");
-                                }}
-                              >
-                                Mark as Read
-                              </button>
-                            )}
-                            <button
-                              className="action-btn-pill secondary"
-                              onClick={() => {
-                                setNotifications(persistNotifications(notifications.filter(n => n.id !== notif.id)));
-                                addToast("Notification dismissed", "info");
-                              }}
-                            >
-                              Dismiss
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <NotificationCenter
+                    notifications={notifications}
+                    onMarkRead={handleMarkNotificationRead}
+                    onMarkAllRead={handleMarkAllNotificationsRead}
+                    onDelete={handleDeleteNotification}
+                    onArchive={handleArchiveNotification}
+                    onUnarchive={handleUnarchiveNotification}
+                    onView={handleNotificationClick}
+                  />
                 </div>
               </motion.section>
             )}
@@ -1638,6 +1726,16 @@ const UserDashboard = () => {
                           <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
                           <User size={40} />
+                        )}
+                        {photoUploadProgress !== null && (
+                          <div style={{
+                            position: 'absolute', inset: 0, borderRadius: '50%',
+                            background: 'rgba(0,0,0,0.55)', display: 'flex',
+                            alignItems: 'center', justifyContent: 'center',
+                            color: '#fff', fontSize: '0.75rem', fontWeight: 800
+                          }}>
+                            {photoUploadProgress}%
+                          </div>
                         )}
                       </div>
                       <button
@@ -1746,7 +1844,7 @@ const UserDashboard = () => {
                         onChange={(e) => {
                           const nextDark = e.target.value === 'Dark Mode';
                           setIsDark(nextDark);
-                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                          localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                         }}
                         className="job-select-dropdown"
                       >
@@ -1764,7 +1862,7 @@ const UserDashboard = () => {
                             type="button"
                             onClick={() => {
                               setAccentTheme(theme.id);
-                              localStorage.setItem('accentTheme', theme.id);
+                              localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                             }}
                             title={theme.label}
                             style={{
@@ -1781,6 +1879,38 @@ const UserDashboard = () => {
                             }}
                           />
                         ))}
+                      </div>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label>Sound Effects</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          className="action-btn-pill secondary"
+                          onClick={() => {
+                            const next = setSoundPrefs({ muted: !soundMuted });
+                            setSoundMuted(next.muted);
+                            if (!next.muted) playSound('toggle');
+                          }}
+                        >
+                          {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />} {soundMuted ? 'Muted' : 'On'}
+                        </button>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          value={soundVolume}
+                          disabled={soundMuted}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setSoundVolume(v);
+                            setSoundPrefs({ volume: v });
+                          }}
+                          onMouseUp={() => playSound('info')}
+                          style={{ flex: 1, accentColor: 'var(--accent-primary)' }}
+                        />
                       </div>
                     </div>
 
@@ -1813,30 +1943,16 @@ const UserDashboard = () => {
       </div>
 
       {/* ─── Toast Notifications ─── */}
-      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
-        <AnimatePresence>
-          {toasts.map(toast => (
-            <motion.div
-              key={toast.id}
-              initial={{ x: 80, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 80, opacity: 0 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className={`alert-banner alert-${toast.type === 'error' ? 'error' : toast.type === 'warning' ? 'warning' : toast.type === 'info' ? 'info' : 'success'}`}
-              style={{ pointerEvents: 'all', minWidth: '280px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
-            >
-              {toast.type === 'success' && <CheckCircle size={18} />}
-              {toast.type === 'error' && <XCircle size={18} />}
-              {toast.type === 'warning' && <AlertTriangle size={18} />}
-              {toast.type === 'info' && <Clock size={18} />}
-              <span style={{ flex: 1, fontSize: '0.85rem' }}>{toast.message}</span>
-              <button onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px', display: 'flex' }}>
-                <X size={14} />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      <ToastStack toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
+
+      {/* ─── Profile Photo Crop Modal ─── */}
+      {cropImageSrc && (
+        <ImageCropModal
+          imageSrc={cropImageSrc}
+          onCancel={handleCropCancel}
+          onSave={handleCropSave}
+        />
+      )}
     </div>
   );
 };

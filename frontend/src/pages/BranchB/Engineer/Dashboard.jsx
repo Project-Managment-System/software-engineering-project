@@ -11,6 +11,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { playSound } from '../../../utils/sounds';
 import '../../shared/BranchDashboard.css';
 
 const pageVariants = {
@@ -53,10 +54,15 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'branch-b-engineer-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'branch-b-engineer-dashboard-accentTheme';
+
 const BranchBEngineerDashboard = () => {
   const navigate = useNavigate();
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -81,14 +87,16 @@ const BranchBEngineerDashboard = () => {
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
+    playSound('toggle');
   };
 
   const handleLogout = () => {
     if (!window.confirm('Are you sure you want to log out?')) return;
-    const savedTheme = localStorage.getItem('theme');
+    playSound('logout');
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     localStorage.clear();
-    if (savedTheme) localStorage.setItem('theme', savedTheme);
+    if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
     navigate('/');
   };
 
@@ -414,7 +422,7 @@ const BranchBEngineerDashboard = () => {
                         onChange={(e) => {
                           const nextDark = e.target.value === 'Dark Mode';
                           setIsDark(nextDark);
-                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                          localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                         }}
                         className="job-select-dropdown"
                       >
@@ -432,7 +440,7 @@ const BranchBEngineerDashboard = () => {
                             type="button"
                             onClick={() => {
                               setAccentTheme(theme.id);
-                              localStorage.setItem('accentTheme', theme.id);
+                              localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                             }}
                             title={theme.label}
                             style={{

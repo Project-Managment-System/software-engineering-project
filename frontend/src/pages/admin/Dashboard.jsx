@@ -6,7 +6,7 @@ import {
   LogOut, Edit3, Camera, Menu, CheckCircle, XCircle, Clock,
   BarChart3, Wrench, Filter, Plus, AlertTriangle, Shield, Sun, Moon,
   FileText, MessageSquare, Lock, Bell, Check, Users, Layers,
-  FileSpreadsheet, Printer, ChevronDown
+  FileSpreadsheet, Printer, ChevronDown, MapPin, Volume2, VolumeX
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,6 +16,11 @@ import {
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import DivisionChat from '../../components/DivisionChat';
+import JobTrackingTimeline from '../../components/JobTrackingTimeline';
+import { getHistoryActor } from '../../utils/jobTracking';
+import NotificationCenter from '../../components/NotificationCenter';
+import ToastStack from '../../components/ToastStack';
+import { playSound, getSoundPrefs, setSoundPrefs } from '../../utils/sounds';
 import './Dashboard.css';
 
 /* ─── Ministry → Department mapping ─── */
@@ -135,14 +140,21 @@ const formatRoleName = (role) => {
   }
 };
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'admin-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'admin-dashboard-accentTheme';
+
 /* ─────────────────────────────────────── */
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const jobFormRef = useRef(null);
   const jobTableRef = useRef(null);
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
+  const [soundMuted, setSoundMuted] = useState(() => getSoundPrefs().muted);
+  const [soundVolume, setSoundVolume] = useState(() => getSoundPrefs().volume);
   const [activeTab, setActiveTab] = useState('Overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [jobs, setJobs] = useState([]);
@@ -164,10 +176,11 @@ const AdminDashboard = () => {
   /* ─── Toast system ─── */
   const [toasts, setToasts] = useState([]);
   const [totalUnread, setTotalUnread] = useState(0);
+  // Dismiss timing/animation/sound is owned by <ToastStack> so hovering a toast can
+  // genuinely pause its countdown — this just appends to the queue.
   const addToast = (message, type = 'success') => {
-    const id = Date.now();
+    const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   };
 
   /* ─── Table exports — PDF, Excel, Print ─── */
@@ -325,10 +338,39 @@ const AdminDashboard = () => {
     return updated;
   };
 
+  const handleMarkNotificationRead = (id) => {
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === id ? { ...n, read: true } : n)));
+  };
+
+  const handleMarkAllNotificationsRead = () => {
+    setNotifications(prev => persistNotifications(prev.map(n => ({ ...n, read: true }))));
+    addToast("All notifications marked as read", "success");
+  };
+
+  const handleDeleteNotification = (id) => {
+    setNotifications(prev => persistNotifications(prev.filter(n => n.id !== id)));
+    addToast("Notification deleted", "info");
+  };
+
+  const handleArchiveNotification = (id) => {
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === id ? { ...n, archived: true } : n)));
+    addToast("Notification archived", "info");
+  };
+
+  const handleUnarchiveNotification = (id) => {
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === id ? { ...n, archived: false } : n)));
+    addToast("Notification restored", "info");
+  };
+
+  const handleViewNotification = (notif) => {
+    setNotifications(prev => persistNotifications(prev.map(n => n.id === notif.id ? { ...n, read: true } : n)));
+    if (notif.jobNo) setActiveTab('Overview');
+  };
+
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
     addToast(`${nextDark ? 'Dark' : 'Light'} theme activated`, 'info');
   };
 
@@ -348,9 +390,21 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     try {
+      // Every clerk is scoped to their own division's jobs and users, except the
+      // unrestricted System Administrator accounts, which oversee every division.
+      const employeeId = localStorage.getItem('employeeId');
+      const division = localStorage.getItem('userDivision');
+      const isUnrestricted = UNRESTRICTED_DIVISION_EMPLOYEE_IDS.includes(employeeId);
+      const jobsUrl = (!isUnrestricted && division)
+        ? `http://127.0.0.1:5000/api/projects/division/${encodeURIComponent(division)}`
+        : 'http://127.0.0.1:5000/api/projects/all';
+      const usersUrl = (!isUnrestricted && division)
+        ? `http://127.0.0.1:5000/api/users/division/${encodeURIComponent(division)}`
+        : 'http://127.0.0.1:5000/api/users';
+
       const [jobsRes, usersRes] = await Promise.all([
-        axios.get('http://127.0.0.1:5000/api/projects/all'),
-        axios.get('http://127.0.0.1:5000/api/users'),
+        axios.get(jobsUrl),
+        axios.get(usersUrl),
       ]);
       const res = jobsRes;
       setJobs(res.data);
@@ -428,6 +482,7 @@ const AdminDashboard = () => {
   };
 
   useEffect(() => {
+    console.log('QADEBUG useEffect mount fired');
     fetchData();
     fetchUserProfile();
   }, []);
@@ -498,8 +553,8 @@ const AdminDashboard = () => {
   const handleProfileTabOpen = () => {
     setEditProfileName(profileName);
     setEditRegNo(regNo);
-    setEmail(email);
-    setPhoneNo(phoneNo);
+    setEditEmail(email);
+    setEditPhoneNo(phoneNo);
   };
 
   const handleConfirmProfile = async () => {
@@ -540,10 +595,11 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     if (!window.confirm('Are you sure you want to logout?')) return;
-    const savedTheme = localStorage.getItem('theme'); // preserve theme across logout
+    playSound('logout');
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY); // preserve theme across logout
     localStorage.removeItem('isAdmin');
     localStorage.clear();
-    if (savedTheme) localStorage.setItem('theme', savedTheme);
+    if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
     navigate('/');
   };
 
@@ -587,8 +643,8 @@ const AdminDashboard = () => {
   };
 
   const isFormValid = () => {
-    const { division, jobName, ministry, department, allocation, dateReq, ref } = formData;
-    return !!(division && jobName && ministry && department && allocation && dateReq && ref);
+    const { division, jobName, ministry, department, allocation, dateReq, ref, dsDivision, deptIdNo, source } = formData;
+    return !!(division && jobName && ministry && department && allocation && dateReq && ref && dsDivision && deptIdNo && source);
   };
 
   // While editing, the Update button stays disabled until something actually differs
@@ -606,11 +662,10 @@ const AdminDashboard = () => {
         await axios.put(`http://127.0.0.1:5000/api/projects/update/${editingId}`, formData);
         addToast('Job updated successfully!', 'success');
       } else {
-        await axios.post('http://127.0.0.1:5000/api/projects/add', formData);
+        await axios.post('http://127.0.0.1:5000/api/projects/add', { ...formData, historyActor: getHistoryActor() });
         addToast('New job created successfully!', 'success');
       }
-      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
-      setJobs(res.data);
+      await fetchData();
       handleCancel();
       jobTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
@@ -759,10 +814,6 @@ const AdminDashboard = () => {
   /* ─── Computed user stats (across all divisions) ─── */
   const totalUsers = users.length;
   const divisionsWithUsers = useMemo(() => new Set(users.map(u => u.division).filter(Boolean)).size, [users]);
-  const usersByDivision = useMemo(() => divisionOptions.map((dv) => ({
-    name: dv,
-    count: users.filter(u => u.division === dv).length,
-  })), [divisionOptions, users]);
 
   /* ─── Computed filtered stats (for charts) ─── */
   const totalFilteredJobs = filteredJobs.length;
@@ -843,6 +894,7 @@ const AdminDashboard = () => {
             {[
               { id: 'Overview', icon: BarChart3, label: 'Overview' },
               { id: 'New Job', icon: Plus, label: 'New Job' },
+              { id: 'Job Tracking', icon: MapPin, label: 'Job Tracking' },
               { id: 'Profile', icon: Edit3, label: 'Profile' },
               { id: 'Settings', icon: Settings, label: 'Settings' },
               // Clerks belong to a division and can use the messaging + notifications features
@@ -1094,12 +1146,13 @@ const AdminDashboard = () => {
                         <input name="ref" value={formData.ref} onChange={handleInputChange} className="input-field" required />
                       </div>
                       <div className="input-row-group">
-                        <label>DS Division</label>
+                        <label>DS Division <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                         <select
                           name="dsDivision"
                           value={formData.dsDivision || ''}
                           onChange={handleInputChange}
                           className="job-select-dropdown"
+                          required
                         >
                           {availableDsDivisions.length === 0 ? (
                             <option value="">Select a division first</option>
@@ -1115,22 +1168,24 @@ const AdminDashboard = () => {
                     {/* ── New fields ── */}
                     <div className="form-row">
                       <div className="input-row-group">
-                        <label>Department ID No</label>
+                        <label>Department ID No <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                         <input
                           name="deptIdNo"
                           value={formData.deptIdNo || ''}
                           onChange={handleInputChange}
                           className="input-field"
                           placeholder="e.g. DPT-001"
+                          required
                         />
                       </div>
                       <div className="input-row-group">
-                        <label>Source</label>
+                        <label>Source <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                         <select
                           name="source"
                           value={formData.source || ''}
                           onChange={handleInputChange}
                           className="job-select-dropdown"
+                          required
                         >
                           <option value="">Select source</option>
                           {SOURCE_OPTIONS.map((src) => (
@@ -1288,6 +1343,18 @@ const AdminDashboard = () => {
                     </table>
                   </div>
                 </motion.div>
+              </motion.section>
+            )}
+
+            {activeTab === 'Job Tracking' && (
+              <motion.section
+                key="job-tracking"
+                variants={pageVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                <JobTrackingTimeline jobs={jobs} />
               </motion.section>
             )}
 
@@ -1572,22 +1639,6 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    {/* Users by Division */}
-                    <div className="field-card" style={{ padding: '24px 26px 28px' }}>
-                      <h3 className="recent-jobs-title">Users by Division ({totalUsers} total)</h3>
-                      <div style={{ width: '100%', height: 300 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={usersByDivision} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
-                            <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 10, fontWeight: 600 }} interval={0} angle={-25} textAnchor="end" height={60} />
-                            <YAxis stroke="var(--text-muted)" tick={{ fontSize: 11 }} allowDecimals={false} />
-                            <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                            <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--info)" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
                   </div>
                 )}
 
@@ -1627,13 +1678,13 @@ const AdminDashboard = () => {
                     <table className="project-table">
                       <thead>
                         <tr>
-                          <th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Submit Date</th><th>Actions</th><th>Status</th><th>Submitted to DA</th><th>Submitted to Engineer</th>
+                          <th>Serial No</th><th>Est. No</th><th>Activity</th><th>Ministry</th><th>Department</th><th>Institute</th><th>Dept ID No</th><th>Source</th><th>DS Division</th><th>Request Date</th><th>Allocation</th><th>Submit Date</th><th>Actions</th><th>Status</th><th>Submitted to DA</th><th>Submitted to Engineer</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredJobs.length === 0 ? (
                           <tr>
-                            <td colSpan={15}>
+                            <td colSpan={16}>
                               <div className="placeholder-content" style={{ height: '160px', border: 'none' }}>
                                 <AlertTriangle size={28} style={{ opacity: 0.4 }} />
                                 <span>{jobs.length === 0 ? 'No jobs added yet.' : 'No jobs match the selected filters.'}</span>
@@ -1711,7 +1762,7 @@ const AdminDashboard = () => {
                         onChange={(e) => {
                           const nextDark = e.target.value === 'Dark Mode';
                           setIsDark(nextDark);
-                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                          localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                         }}
                         className="job-select-dropdown"
                       >
@@ -1729,7 +1780,7 @@ const AdminDashboard = () => {
                             type="button"
                             onClick={() => {
                               setAccentTheme(theme.id);
-                              localStorage.setItem('accentTheme', theme.id);
+                              localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                             }}
                             title={theme.label}
                             style={{
@@ -1746,6 +1797,38 @@ const AdminDashboard = () => {
                             }}
                           />
                         ))}
+                      </div>
+                    </div>
+
+                    <div className="input-row-group">
+                      <label>Sound Effects</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '4px' }}>
+                        <button
+                          type="button"
+                          className="action-btn-pill secondary"
+                          onClick={() => {
+                            const next = setSoundPrefs({ muted: !soundMuted });
+                            setSoundMuted(next.muted);
+                            if (!next.muted) playSound('toggle');
+                          }}
+                        >
+                          {soundMuted ? <VolumeX size={14} /> : <Volume2 size={14} />} {soundMuted ? 'Muted' : 'On'}
+                        </button>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          value={soundVolume}
+                          disabled={soundMuted}
+                          onChange={(e) => {
+                            const v = Number(e.target.value);
+                            setSoundVolume(v);
+                            setSoundPrefs({ volume: v });
+                          }}
+                          onMouseUp={() => playSound('info')}
+                          style={{ flex: 1, accentColor: 'var(--accent-primary)' }}
+                        />
                       </div>
                     </div>
 
@@ -1785,57 +1868,16 @@ const AdminDashboard = () => {
                 className="profile-view"
               >
                 <div className="recent-jobs-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-                    <h3 className="recent-jobs-title" style={{ margin: 0 }}>Job Rejection Notifications</h3>
-                    {notifications.length > 0 && (
-                      <button
-                        className="cancel-btn"
-                        onClick={() => setNotifications(persistNotifications(notifications.map(n => ({ ...n, read: true }))))}
-                        style={{ minHeight: '32px', padding: '6px 16px' }}
-                      >
-                        <Check size={12} /> Mark all read
-                      </button>
-                    )}
-                  </div>
-
-                  {notifications.length === 0 ? (
-                    <div className="placeholder-content" style={{ height: '180px' }}>
-                      <Bell size={28} style={{ opacity: 0.4 }} />
-                      <span>No rejection notifications yet.</span>
-                    </div>
-                  ) : (
-                    <div className="notification-list">
-                      {notifications.map((notif) => (
-                        <div key={notif.id} className={`notification-card-item ${notif.read ? '' : 'unread'}`}>
-                          <div className="notification-main">
-                            <div className="notification-header">
-                              <span className="notification-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <XCircle size={14} style={{ color: 'var(--danger)' }} /> {notif.title}
-                              </span>
-                              <span className="notification-time">{notif.time}</span>
-                            </div>
-                            <p className="notification-msg">{notif.message}</p>
-                          </div>
-                          <div className="notification-btn-row">
-                            {!notif.read && (
-                              <button
-                                className="action-btn-pill secondary"
-                                onClick={() => setNotifications(persistNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n)))}
-                              >
-                                <Check size={12} /> Read
-                              </button>
-                            )}
-                            <button
-                              className="action-btn-pill secondary"
-                              onClick={() => setNotifications(persistNotifications(notifications.filter(n => n.id !== notif.id)))}
-                            >
-                              <X size={12} /> Dismiss
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <h3 className="recent-jobs-title" style={{ margin: '0 0 16px' }}>Job Rejection Notifications</h3>
+                  <NotificationCenter
+                    notifications={notifications}
+                    onMarkRead={handleMarkNotificationRead}
+                    onMarkAllRead={handleMarkAllNotificationsRead}
+                    onDelete={handleDeleteNotification}
+                    onArchive={handleArchiveNotification}
+                    onUnarchive={handleUnarchiveNotification}
+                    onView={handleViewNotification}
+                  />
                 </div>
               </motion.section>
             )}
@@ -1856,32 +1898,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* ─── Toast Notifications ─── */}
-      <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', gap: '10px', pointerEvents: 'none' }}>
-        <AnimatePresence>
-          {toasts.map(toast => (
-            <motion.div
-              key={toast.id}
-              initial={{ x: 80, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 80, opacity: 0 }}
-              transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-              className={`alert-banner alert-${toast.type === 'error' ? 'error' : toast.type === 'info' ? 'info' : 'success'}`}
-              style={{ pointerEvents: 'all', minWidth: '280px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
-            >
-              {toast.type === 'success' && <CheckCircle size={18} />}
-              {toast.type === 'error' && <XCircle size={18} />}
-              {toast.type === 'info' && <AlertTriangle size={18} />}
-              <span style={{ flex: 1, fontSize: '0.85rem' }}>{toast.message}</span>
-              <button
-                onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px', display: 'flex' }}
-              >
-                <X size={14} />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+      <ToastStack toasts={toasts} onDismiss={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
     </div>
   );
 };
