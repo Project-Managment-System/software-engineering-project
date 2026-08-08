@@ -146,6 +146,11 @@ const EngineerDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const [currentDivision, setCurrentDivision] = useState(localStorage.getItem('userDivision') || '');
+  // Overview's Team Resource Summary shows only the first few members by default —
+  // the full system-wide user list can be long and was pushing Risk Intelligence
+  // (further down the same tab) far below the fold.
+  const [showAllTeam, setShowAllTeam] = useState(false);
+  const TEAM_PREVIEW_COUNT = 5;
   const [totalUnread, setTotalUnread] = useState(0);
   const [userRole, setUserRole] = useState(localStorage.getItem('role') || 'engineer');
 
@@ -1131,7 +1136,7 @@ const EngineerDashboard = () => {
                               </td>
                             </tr>
                           ) : (
-                            usersWithJobs.map((user, index) => (
+                            (showAllTeam ? usersWithJobs : usersWithJobs.slice(0, TEAM_PREVIEW_COUNT)).map((user, index) => (
                               <tr key={user._id}>
                                 <td>{index + 1}</td>
                                 <td className="font-bold">{user.displayName}</td>
@@ -1160,6 +1165,20 @@ const EngineerDashboard = () => {
                         </tbody>
                       </table>
                     </div>
+                    {usersWithJobs.length > TEAM_PREVIEW_COUNT && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAllTeam(v => !v)}
+                        style={{
+                          marginTop: '12px', width: '100%', padding: '10px', borderRadius: 'var(--radius-btn)',
+                          border: '1.5px solid var(--border-base)', background: 'var(--bg-input)',
+                          color: 'var(--accent-primary)', fontWeight: 700, fontSize: '0.82rem',
+                          fontFamily: "'Outfit', sans-serif", cursor: 'pointer',
+                        }}
+                      >
+                        {showAllTeam ? 'Show Less' : `View All ${usersWithJobs.length} Members`}
+                      </button>
+                    )}
                   </motion.div>
 
                   {/* Right Column: AI Suggestions */}
@@ -1199,6 +1218,8 @@ const EngineerDashboard = () => {
                   </motion.div>
 
                 </div>
+
+                <RiskIntelligencePanel division={currentDivision || undefined} />
               </motion.div>
               );
             })()}
