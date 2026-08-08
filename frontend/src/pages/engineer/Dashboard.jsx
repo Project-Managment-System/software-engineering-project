@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import DivisionChat from '../../components/DivisionChat';
 import JobTrackingTimeline from '../../components/JobTrackingTimeline';
+import RiskIntelligencePanel from '../../components/RiskIntelligencePanel';
 import { getHistoryActor } from '../../utils/jobTracking';
 import { formatCurrency } from '../../utils/formatCurrency';
 import ToastStack from '../../components/ToastStack';
@@ -1332,12 +1333,12 @@ const EngineerDashboard = () => {
                       <div className="table-scroll-wrapper">
                         <table className="project-table">
                           <thead>
-                            <tr><th>Serial No</th><th>No</th><th>Estimation Number</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr>
+                            <tr><th>Serial No</th><th>Estimation Number</th><th>Division</th><th>Job Name</th><th>Allocation</th><th>Assignee</th><th>Action</th></tr>
                           </thead>
                           <tbody>
                             {trackedJobs.length === 0 ? (
                               <tr>
-                                <td colSpan={8}>
+                                <td colSpan={7}>
                                   <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
                                     <AlertTriangle size={24} style={{ opacity: 0.35 }} />
                                     <span>No jobs to track</span>
