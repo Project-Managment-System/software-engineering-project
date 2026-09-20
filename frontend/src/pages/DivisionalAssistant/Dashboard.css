@@ -319,6 +319,7 @@
    ============================================================ */
 .dashboard-content {
   flex: 1;
+  min-width: 0;
   padding: 68px 28px 40px;
   transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
   min-height: 100vh;
@@ -567,17 +568,17 @@
 }
 .cancel-btn:hover { background: var(--bg-subtle); }
 
-.approve-btn { background: var(--success-soft); color: var(--success); border: 1px solid var(--success); padding: 6px 12px; font-size: 0.78rem; }
-.approve-btn:hover { background: var(--success); color: #fff; }
+.approve-btn { background: var(--success); color: #fff; border: 1px solid var(--success); padding: 6px 12px; font-size: 0.78rem; box-shadow: 0 1px 4px rgba(5,150,105,0.3); }
+.approve-btn:hover { filter: brightness(1.12); }
 
-.reject-btn { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); padding: 6px 12px; font-size: 0.78rem; }
-.reject-btn:hover { background: var(--danger); color: #fff; }
+.reject-btn { background: var(--danger); color: #fff; border: 1px solid var(--danger); padding: 6px 12px; font-size: 0.78rem; box-shadow: 0 1px 4px rgba(220,38,38,0.3); }
+.reject-btn:hover { filter: brightness(1.12); }
 
-.edit-btn { background: var(--info-soft); color: var(--info); border: 1px solid var(--info); padding: 6px 10px; font-size: 0.78rem; border-radius: 8px; }
-.edit-btn:hover { background: var(--info); color: #fff; }
+.edit-btn { background: var(--info); color: #fff; border: 1px solid var(--info); padding: 6px 10px; font-size: 0.78rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(56,189,248,0.3); }
+.edit-btn:hover { filter: brightness(1.12); }
 
-.delete-btn { background: var(--danger-soft); color: var(--danger); border: 1px solid var(--danger); padding: 6px 10px; font-size: 0.78rem; border-radius: 8px; }
-.delete-btn:hover { background: var(--danger); color: #fff; }
+.delete-btn { background: var(--danger); color: #fff; border: 1px solid var(--danger); padding: 6px 10px; font-size: 0.78rem; border-radius: 8px; box-shadow: 0 1px 4px rgba(220,38,38,0.3); }
+.delete-btn:hover { filter: brightness(1.12); }
 
 /* ============================================================
    11. PROFILE & SETTINGS

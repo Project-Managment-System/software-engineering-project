@@ -435,6 +435,7 @@
    ============================================================ */
 #cems-user-dashboard .dashboard-content {
   flex: 1;
+  min-width: 0;
   padding: 32px 32px 48px;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 100vh;
@@ -712,17 +713,17 @@
   justify-content: center;
   padding: 7px 10px;
   border-radius: 8px;
-  background: var(--success-soft);
-  color: var(--success);
-  border: 1px solid rgba(5,150,105,0.2);
+  background: var(--success);
+  color: #fff;
+  border: 1px solid var(--success);
   cursor: pointer;
   transition: all 0.18s ease;
   margin-right: 6px;
+  box-shadow: 0 1px 4px rgba(5,150,105,0.3);
 }
 
 #cems-user-dashboard .approve-btn:hover {
-  background: var(--success);
-  color: white;
+  filter: brightness(1.12);
   transform: scale(1.08);
 }
 
@@ -732,16 +733,16 @@
   justify-content: center;
   padding: 7px 10px;
   border-radius: 8px;
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid rgba(220,38,38,0.2);
+  background: var(--danger);
+  color: #fff;
+  border: 1px solid var(--danger);
   cursor: pointer;
   transition: all 0.18s ease;
+  box-shadow: 0 1px 4px rgba(220,38,38,0.3);
 }
 
 #cems-user-dashboard .reject-btn:hover {
-  background: var(--danger);
-  color: white;
+  filter: brightness(1.12);
   transform: scale(1.08);
 }
 
@@ -752,9 +753,9 @@
   gap: 4px;
   padding: 7px 10px;
   border-radius: 8px;
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: #d97706;
+  color: #fff;
+  border: 1px solid #d97706;
   cursor: pointer;
   transition: all 0.18s ease;
   font-size: 0.72rem;
@@ -762,12 +763,11 @@
   font-family: 'Outfit', sans-serif;
   letter-spacing: 0.04em;
   white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(217, 119, 6, 0.3);
 }
 
 #cems-user-dashboard .undo-review-btn:hover {
-  background: #d97706;
-  color: white;
-  border-color: #d97706;
+  filter: brightness(1.12);
   transform: scale(1.08);
   box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
 }
@@ -778,19 +778,19 @@
   gap: 5px;
   padding: 6px 12px;
   border-radius: 8px;
-  background: var(--accent-soft);
-  color: var(--accent-primary);
-  border: 1px solid var(--border-base);
+  background: var(--accent-primary);
+  color: #fff;
+  border: 1px solid var(--accent-primary);
   cursor: pointer;
   transition: all 0.18s ease;
   font-size: 0.8rem;
   font-weight: 600;
   margin-right: 6px;
+  box-shadow: 0 1px 4px var(--accent-glow);
 }
 
 #cems-user-dashboard .edit-btn:hover {
-  background: var(--accent-primary);
-  color: white;
+  filter: brightness(1.1);
   transform: scale(1.05);
   box-shadow: var(--shadow-btn);
 }
@@ -800,16 +800,16 @@
   align-items: center;
   padding: 6px 10px;
   border-radius: 8px;
-  background: var(--danger-soft);
-  color: var(--danger);
-  border: 1px solid rgba(220,38,38,0.18);
+  background: var(--danger);
+  color: #fff;
+  border: 1px solid var(--danger);
   cursor: pointer;
   transition: all 0.18s ease;
+  box-shadow: 0 1px 4px rgba(220,38,38,0.3);
 }
 
 #cems-user-dashboard .delete-btn:hover {
-  background: var(--danger);
-  color: white;
+  filter: brightness(1.12);
   transform: scale(1.05);
 }
 

@@ -23,6 +23,10 @@ import ToastStack from '../../components/ToastStack';
 import { playSound, getSoundPrefs, setSoundPrefs } from '../../utils/sounds';
 import './Dashboard.css';
 
+/* Below this window width the sidebar auto-collapses (e.g. two windows snapped
+   side by side); the menu button still opens it on demand. */
+const SIDEBAR_AUTO_HIDE_WIDTH = 1024;
+
 /* ─── Ministry → Department mapping ─── */
 const MINISTRY_DEPARTMENTS = {
   'CHIEF MINISTRY': [
@@ -156,7 +160,41 @@ const AdminDashboard = () => {
   const [soundMuted, setSoundMuted] = useState(() => getSoundPrefs().muted);
   const [soundVolume, setSoundVolume] = useState(() => getSoundPrefs().volume);
   const [activeTab, setActiveTab] = useState('Overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= SIDEBAR_AUTO_HIDE_WIDTH);
+  // Tracks whether the window was already narrow, so resize only auto-hides
+  // the sidebar on the wide→narrow crossing — not on every resize event while
+  // already narrow, which would fight a user who manually reopened it.
+  const wasNarrowRef = useRef(window.innerWidth < SIDEBAR_AUTO_HIDE_WIDTH);
+  useEffect(() => {
+    const handleResize = () => {
+      const isNarrow = window.innerWidth < SIDEBAR_AUTO_HIDE_WIDTH;
+      if (isNarrow && !wasNarrowRef.current) {
+        setIsSidebarOpen(false);
+      }
+      wasNarrowRef.current = isNarrow;
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Click-outside-to-close — only while the sidebar is acting as an overlay
+  // on a narrow window; on the wide desktop layout it stays open as part of
+  // the persistent page structure, so outside clicks shouldn't close it there.
+  const sidebarRef = useRef(null);
+  const sidebarToggleBtnRef = useRef(null);
+  useEffect(() => {
+    if (!isSidebarOpen || window.innerWidth >= SIDEBAR_AUTO_HIDE_WIDTH) return;
+    const handleClickOutside = (e) => {
+      if (
+        sidebarRef.current && !sidebarRef.current.contains(e.target) &&
+        sidebarToggleBtnRef.current && !sidebarToggleBtnRef.current.contains(e.target)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
   const [jobs, setJobs] = useState([]);
   const [users, setUsers] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -834,6 +872,7 @@ const AdminDashboard = () => {
     <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
       {/* Hamburger */}
       <button
+        ref={sidebarToggleBtnRef}
         className="sidebar-toggle-menu-btn"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         title={isSidebarOpen ? "Collapse Menu" : "Expand Menu"}
@@ -843,7 +882,7 @@ const AdminDashboard = () => {
 
       <div className="user-dashboard-layout">
         {/* ─── Sidebar ─── */}
-        <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <aside ref={sidebarRef} className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
             <div className="profile-photo">
               {profilePic ? (
