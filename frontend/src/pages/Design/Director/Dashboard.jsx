@@ -14,6 +14,10 @@ import JobTrackingTimeline from '../../../components/JobTrackingTimeline';
 import { getHistoryActor } from '../../../utils/jobTracking';
 import { playSound } from '../../../utils/sounds';
 
+/* Below this window width the sidebar auto-collapses (e.g. two windows snapped
+   side by side); the menu button still opens it on demand. */
+const SIDEBAR_AUTO_HIDE_WIDTH = 1024;
+
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
@@ -59,7 +63,41 @@ const DesignDirectorDashboard = () => {
   const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
   const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= SIDEBAR_AUTO_HIDE_WIDTH);
+  // Tracks whether the window was already narrow, so resize only auto-hides
+  // the sidebar on the wide→narrow crossing — not on every resize event while
+  // already narrow, which would fight a user who manually reopened it.
+  const wasNarrowRef = useRef(window.innerWidth < SIDEBAR_AUTO_HIDE_WIDTH);
+  useEffect(() => {
+    const handleResize = () => {
+      const isNarrow = window.innerWidth < SIDEBAR_AUTO_HIDE_WIDTH;
+      if (isNarrow && !wasNarrowRef.current) {
+        setIsSidebarOpen(false);
+      }
+      wasNarrowRef.current = isNarrow;
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Click-outside-to-close — only while the sidebar is acting as an overlay
+  // on a narrow window; on the wide desktop layout it stays open as part of
+  // the persistent page structure, so outside clicks shouldn't close it there.
+  const sidebarRef = useRef(null);
+  const sidebarToggleBtnRef = useRef(null);
+  useEffect(() => {
+    if (!isSidebarOpen || window.innerWidth >= SIDEBAR_AUTO_HIDE_WIDTH) return;
+    const handleClickOutside = (e) => {
+      if (
+        sidebarRef.current && !sidebarRef.current.contains(e.target) &&
+        sidebarToggleBtnRef.current && !sidebarToggleBtnRef.current.contains(e.target)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -545,12 +583,12 @@ const DesignDirectorDashboard = () => {
 
   return (
     <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
-      <button className="sidebar-toggle-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? 'Collapse Menu' : 'Expand Menu'}>
+      <button ref={sidebarToggleBtnRef} className="sidebar-toggle-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? 'Collapse Menu' : 'Expand Menu'}>
         <Menu size={20} />
       </button>
 
       <div className="user-dashboard-layout">
-        <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <aside ref={sidebarRef} className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
             <div className="profile-photo">
               {profilePic ? <img src={profilePic} alt="Profile" /> : <Briefcase size={32} />}

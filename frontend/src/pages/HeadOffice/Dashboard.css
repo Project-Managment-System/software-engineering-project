@@ -320,6 +320,7 @@
    ============================================================ */
 .dashboard-content {
   flex: 1;
+  min-width: 0;
   padding: 68px 28px 40px;
   transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
   min-height: 100vh;
