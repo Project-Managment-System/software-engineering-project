@@ -1011,7 +1011,7 @@ const EngineerDashboard = () => {
           {/* Division Banner */}
           {currentDivision && (
             <motion.div
-              className={`division-banner ${activeTab === 'add-user' ? 'division-banner-narrow' : ''}`}
+              className={`division-banner ${['add-user', 'profile', 'settings'].includes(activeTab) ? 'division-banner-narrow' : ''}`}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
