@@ -69,14 +69,14 @@ const MINISTRY_DEPARTMENTS = {
 
 /* ─── Division → DS Divisions Covered mapping ─── */
 const DIVISION_DS_DIVISIONS = {
-  'Anuradhapura-East': ['Nuwaragam Palatha East', 'Mihinthale', 'Kahatagasdigiliya', 'Rambewa'],
-  'Anuradhapura-West': ['Nuwaragam Palatha Central', 'Nochchiyagama', 'Rajanganaya', 'Thalawa'],
-  'Hingurakgoda': ['Hingurakgoda', 'Medirigiriya'],
-  'Kekirawa': ['Kekirawa', 'Galnewa', 'Palagala'],
-  'Medawachchiya': ['Medawachchiya', 'Padaviya', 'Kebithigollewa', 'Horowpothana', 'Mahawilachchiya'],
-  'Mihinthale': ['Galenbindunuwewa', 'Nachchaduwa', 'Ipalogama', 'Thirappane'],
-  'Polonnaruwa': ['Thamankaduwa', 'Dimbulagala'],
-  'Thambuttegama': ['Thambuttegama'],
+  'Anuradhapura-East': ['Nuwaragam Palatha East', 'Rambewa', 'Nachchaduwa'],
+  'Anuradhapura-West': ['Nuwaragam Palatha Central', 'Mahawilachchiya', 'Nochchiyagama'],
+  'Hingurakgoda': ['Hingurakgoda', 'Medirigiriya', 'Elahera'],
+  'Kekirawa': ['Kekirawa', 'Thirappane', 'Ipalogama', 'Palugaswewa', 'Palagala'],
+  'Medawachchiya': ['Padaviya', 'Kebithigollewa', 'Horowpothana'],
+  'Mihinthale': ['Mihinthale', 'Galenbindunuwewa'],
+  'Polonnaruwa': ['Thamankaduwa', 'Lankapura', 'Dimbulagala', 'Welikanda'],
+  'Thambuttegama': ['Rajanganaya', 'Thambuttegama', 'Thalawa', 'Galnewa'],
 };
 
 // System Administrator oversight account — monitors every division, so its New Job

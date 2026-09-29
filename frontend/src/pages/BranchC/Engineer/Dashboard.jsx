@@ -230,7 +230,7 @@ const BranchCEngineerDashboard = () => {
             <div className="profile-photo"><HardHat size={32} /></div>
             <div className="profile-info">
               <h3>Engineer</h3>
-              <p className="reg-number">Branch C</p>
+              <p className="reg-number">Works</p>
               <span className="role-title" style={{
                 fontSize: '0.68rem', color: '#ffffff', backgroundColor: 'var(--accent-primary)',
                 fontWeight: '800', padding: '3px 10px', borderRadius: '12px', marginTop: '6px',

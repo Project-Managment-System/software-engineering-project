@@ -109,14 +109,14 @@ const MINISTRY_COLORS = [
 /* ─── Division → DS Divisions Covered mapping (keys match the exact division string
    stored on the engineer's own account) ─── */
 const DIVISION_DS_DIVISIONS = {
-  'Anuradhapura-East': ['Nuwaragam Palatha East', 'Mihinthale', 'Kahatagasdigiliya', 'Rambewa'],
-  'Anuradhapura-West': ['Nuwaragam Palatha Central', 'Nochchiyagama', 'Rajanganaya', 'Thalawa'],
-  'Higurakgoda': ['Hingurakgoda', 'Medirigiriya'],
-  'Kekirawa': ['Kekirawa', 'Galnewa', 'Palagala'],
-  'Medawachchiya': ['Medawachchiya', 'Padaviya', 'Kebithigollewa', 'Horowpothana', 'Mahawilachchiya'],
-  'Mihinthale': ['Galenbindunuwewa', 'Nachchaduwa', 'Ipalogama', 'Thirappane'],
-  'Polonnaruwa': ['Thamankaduwa', 'Dimbulagala'],
-  'Thambuththegama': ['Thambuttegama'],
+  'Anuradhapura-East': ['Nuwaragam Palatha East', 'Rambewa', 'Nachchaduwa'],
+  'Anuradhapura-West': ['Nuwaragam Palatha Central', 'Mahawilachchiya', 'Nochchiyagama'],
+  'Higurakgoda': ['Hingurakgoda', 'Medirigiriya', 'Elahera'],
+  'Kekirawa': ['Kekirawa', 'Thirappane', 'Ipalogama', 'Palugaswewa', 'Palagala'],
+  'Medawachchiya': ['Padaviya', 'Kebithigollewa', 'Horowpothana'],
+  'Mihinthale': ['Mihinthale', 'Galenbindunuwewa'],
+  'Polonnaruwa': ['Thamankaduwa', 'Lankapura', 'Dimbulagala', 'Welikanda'],
+  'Thambuththegama': ['Rajanganaya', 'Thambuttegama', 'Thalawa', 'Galnewa'],
 };
 
 /* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own

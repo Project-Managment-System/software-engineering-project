@@ -2,10 +2,10 @@
 // `slug` drives routing/DB values and should stay stable.
 export const BRANCHES = [
   { slug: 'design', label: 'Design' },
-  { slug: 'branch-a', label: 'Branch A' },
-  { slug: 'branch-b', label: 'Branch B' },
-  { slug: 'branch-c', label: 'Branch C' },
-  { slug: 'branch-d', label: 'Branch D' },
+  { slug: 'branch-a', label: 'Admin' },
+  { slug: 'branch-b', label: 'Accounts' },
+  { slug: 'branch-c', label: 'Works' },
+  { slug: 'branch-d', label: 'Procurements' },
 ];
 
 export const branchLabel = (slug) => BRANCHES.find((b) => b.slug === slug)?.label || slug;

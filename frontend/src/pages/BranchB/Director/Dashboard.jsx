@@ -237,7 +237,7 @@ const BranchBDirectorDashboard = () => {
             <div className="profile-photo"><Briefcase size={32} /></div>
             <div className="profile-info">
               <h3>Director</h3>
-              <p className="reg-number">Branch B</p>
+              <p className="reg-number">Accounts</p>
               <span className="role-title" style={{
                 fontSize: '0.68rem', color: '#ffffff', backgroundColor: 'var(--accent-primary)',
                 fontWeight: '800', padding: '3px 10px', borderRadius: '12px', marginTop: '6px',
