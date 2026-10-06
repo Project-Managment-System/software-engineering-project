@@ -4,6 +4,7 @@ import { ArrowLeft, Lock, User, ShieldAlert } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { loginUser } from '../api/api';
+import { playSound } from '../utils/sounds';
 // Component animation frames
 const formContainerVariants = {
   hidden: { opacity: 0, y: 30, scale: 0.98 },
@@ -51,7 +52,7 @@ export default function DivisionLogin() {
     setIsSubmitting(true);
 
     try {
-      const res = await axios.post('http://127.0.0.1:5000/api/auth/login', {
+      const res = await axios.post('https://pedncpgovlk.com/api/auth/login', {
         employeeId: username,
         password,
       });
@@ -77,6 +78,7 @@ export default function DivisionLogin() {
       localStorage.setItem('role', role);
       localStorage.setItem('profilePic', profilePic || '');
       if (division) localStorage.setItem('userDivision', division);
+      playSound('login');
 
       // Route based on the real role from the database
       if (role === 'admin' || role === 'clerk') {

@@ -1,6 +1,6 @@
 /* --- Global Layout Variables --- */
 :root {
-  --admin-color: #ef4444;    /* Red */
+  --admin-color: #f43f5e;    /* Rose-500 (matches index.css design tokens) */
   --engineer-color: #06b6d4; /* Cyan */
   --user-color: #10b981;     /* Emerald */
   --ops-color: #8b5cf6;      /* Violet */

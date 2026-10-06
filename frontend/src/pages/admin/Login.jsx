@@ -3,6 +3,7 @@ import { Lock, User, ShieldAlert, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../../api/api';
+import { playSound } from '../../utils/sounds';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function AdminLogin() {
         localStorage.setItem('profilePic', profilePic || '');
         if (division) localStorage.setItem('userDivision', division);
         localStorage.setItem('isAdmin', 'true'); // Required for route guards
+        playSound('login');
 
         navigate('/admin/dashboard', { replace: true });
       }

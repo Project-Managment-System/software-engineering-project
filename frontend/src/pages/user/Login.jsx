@@ -3,6 +3,7 @@ import { Lock, User, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../../api/api';
+import { playSound } from '../../utils/sounds';
 
 export default function UserLogin() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ export default function UserLogin() {
         localStorage.setItem('profilePic', profilePic || '');
         localStorage.setItem('isAuthenticated', 'true'); // Key check for UserDashboard
         if (division) localStorage.setItem('userDivision', division);
+        playSound('login');
 
         navigate('/user/dashboard', { replace: true });
       }

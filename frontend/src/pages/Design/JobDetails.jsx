@@ -87,13 +87,28 @@ const PersonCard = ({ icon: Icon, roleLabel, person, fallbackName }) => (
   </div>
 );
 
+// This page is reached from several different dashboards (division engineer, divisional
+// assistant, and every branch/design engineer or director), each of which now persists its
+// own independent theme under its own localStorage key. Since this page has no toggle of its
+// own, it just inherits whichever dashboard the user is currently in.
+const getScopedThemeKeys = () => {
+  const role = localStorage.getItem('role');
+  const branch = localStorage.getItem('userBranch');
+  if (role === 'engineer') return { theme: 'engineer-dashboard-theme', accent: 'engineer-dashboard-accentTheme' };
+  if (role === 'division_assistant') return { theme: 'divisional-assistant-dashboard-theme', accent: 'divisional-assistant-dashboard-accentTheme' };
+  if (role === 'branch_engineer' && branch) return { theme: `${branch}-engineer-dashboard-theme`, accent: `${branch}-engineer-dashboard-accentTheme` };
+  if (role === 'branch_director' && branch) return { theme: `${branch}-director-dashboard-theme`, accent: `${branch}-director-dashboard-accentTheme` };
+  return { theme: 'theme', accent: 'accentTheme' };
+};
+
 const JobDetailsPage = () => {
   const { jobNo } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const preloadedJob = location.state?.job;
-  const [isDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [themeKeys] = useState(getScopedThemeKeys);
+  const [isDark] = useState(() => localStorage.getItem(themeKeys.theme) === 'dark');
+  const [accentTheme] = useState(() => localStorage.getItem(themeKeys.accent) || 'violet');
   const [job, setJob] = useState(preloadedJob || null);
   const [divisionStaff, setDivisionStaff] = useState([]);
   const [loading, setLoading] = useState(!preloadedJob);

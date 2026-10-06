@@ -88,7 +88,7 @@ const generateEstimationNo = async ({ division, ministry, department, work, date
 // 1. Create a New Project (Admin)
 exports.createProject = async (req, res) => {
     try {
-        const { jobName, ministry, department, division, work, allocation, dateReq, ref, institute, deptIdNo, source, dsDivision, remark } = req.body;
+        const { jobName, ministry, department, division, work, allocation, dateReq, ref, institute, deptIdNo, source, dsDivision, remark, historyActor } = req.body;
         const jobNo = await generateJobNo();
         const workCode = work || 'N';
         const estimationNo = await generateEstimationNo({ division, ministry, department, work: workCode, dateReq });
@@ -96,7 +96,13 @@ exports.createProject = async (req, res) => {
         const newProject = new Project({
             jobNo, estimationNo, jobName, ministry, department, division, work: workCode, allocation, dateReq, ref, institute,
             deptIdNo: deptIdNo || '', source: source || '', dsDivision: dsDivision || '', remark: remark || '',
-            status: 'Pending'
+            status: 'Pending',
+            statusHistory: [{
+                event: 'Job created',
+                by: historyActor?.name || '',
+                byRole: historyActor?.role || '',
+                at: new Date()
+            }]
         });
 
         await newProject.save();
@@ -150,14 +156,26 @@ exports.getProjectByJobNo = async (req, res) => {
 exports.updateProjectStatus = async (req, res) => {
     try {
         const { jobNo } = req.params;
-        const { status } = req.body; 
-        
+        const { status, historyEvent, historyActor } = req.body;
+
+        const mongoUpdate = { $set: { status } };
+        if (historyEvent) {
+            mongoUpdate.$push = {
+                statusHistory: {
+                    event: historyEvent,
+                    by: historyActor?.name || '',
+                    byRole: historyActor?.role || '',
+                    at: new Date()
+                }
+            };
+        }
+
         const updatedProject = await Project.findOneAndUpdate(
-            { jobNo }, 
-            { status }, 
+            { jobNo },
+            mongoUpdate,
             { new: true }
         );
-        
+
         if (!updatedProject) return res.status(404).json({ message: "Job not found" });
         res.json({ message: `Status updated to ${status}! ✅`, project: updatedProject });
     } catch (error) {
@@ -188,7 +206,9 @@ exports.updateProject = async (req, res) => {
         const existing = await Project.findOne({ jobNo });
         if (!existing) return res.status(404).json({ message: "Job not found" });
 
-        const updates = { ...req.body };
+        // historyEvent/historyActor are metadata for the Job Tracking timeline, not real
+        // Project fields — pull them out before the rest of the body gets applied as-is.
+        const { historyEvent, historyActor, ...updates } = req.body;
         // Backfill Estimation No. for legacy jobs that predate this field
         if (!existing.estimationNo && !updates.estimationNo) {
             const { division, ministry, department, work, dateReq } = updates;
@@ -201,7 +221,19 @@ exports.updateProject = async (req, res) => {
             });
         }
 
-        const updatedProject = await Project.findOneAndUpdate({ jobNo }, updates, { new: true });
+        const mongoUpdate = { $set: updates };
+        if (historyEvent) {
+            mongoUpdate.$push = {
+                statusHistory: {
+                    event: historyEvent,
+                    by: historyActor?.name || '',
+                    byRole: historyActor?.role || '',
+                    at: new Date()
+                }
+            };
+        }
+
+        const updatedProject = await Project.findOneAndUpdate({ jobNo }, mongoUpdate, { new: true });
         if (!updatedProject) return res.status(404).json({ message: "Job not found" });
         res.json({ message: "Job Updated! ✅", project: updatedProject });
     } catch (error) {

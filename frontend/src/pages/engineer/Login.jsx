@@ -3,6 +3,7 @@ import { Lock, User, Wrench, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { loginUser } from '../../api/api';
+import { playSound } from '../../utils/sounds';
 
 export default function EngineerLogin() {
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function EngineerLogin() {
         localStorage.setItem('role', role);
         localStorage.setItem('profilePic', profilePic || '');
         if (division) localStorage.setItem('userDivision', division);
+        playSound('login');
 
         navigate('/engineer/dashboard', { replace: true });
         return;

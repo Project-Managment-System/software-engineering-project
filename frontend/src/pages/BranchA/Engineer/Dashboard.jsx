@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,7 +11,12 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import { playSound } from '../../../utils/sounds';
 import '../../shared/BranchDashboard.css';
+
+/* Below this window width the sidebar auto-collapses (e.g. two windows snapped
+   side by side); the menu button still opens it on demand. */
+const SIDEBAR_AUTO_HIDE_WIDTH = 1024;
 
 const pageVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -53,12 +58,51 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+/* ─── Theme persistence is scoped per-dashboard — each dashboard keeps its own
+   dark/light + accent choice, independent of every other dashboard ─── */
+const THEME_STORAGE_KEY = 'branch-a-engineer-dashboard-theme';
+const ACCENT_STORAGE_KEY = 'branch-a-engineer-dashboard-accentTheme';
+
 const BranchAEngineerDashboard = () => {
   const navigate = useNavigate();
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('theme') === 'dark');
-  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem('accentTheme') || 'violet');
+  const [isDark, setIsDark] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) === 'dark');
+  const [accentTheme, setAccentTheme] = useState(() => localStorage.getItem(ACCENT_STORAGE_KEY) || 'violet');
   const [activeTab, setActiveTab] = useState('Overview');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= SIDEBAR_AUTO_HIDE_WIDTH);
+  // Tracks whether the window was already narrow, so resize only auto-hides
+  // the sidebar on the wide→narrow crossing — not on every resize event while
+  // already narrow, which would fight a user who manually reopened it.
+  const wasNarrowRef = useRef(window.innerWidth < SIDEBAR_AUTO_HIDE_WIDTH);
+  useEffect(() => {
+    const handleResize = () => {
+      const isNarrow = window.innerWidth < SIDEBAR_AUTO_HIDE_WIDTH;
+      if (isNarrow && !wasNarrowRef.current) {
+        setIsSidebarOpen(false);
+      }
+      wasNarrowRef.current = isNarrow;
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Click-outside-to-close — only while the sidebar is acting as an overlay
+  // on a narrow window; on the wide desktop layout it stays open as part of
+  // the persistent page structure, so outside clicks shouldn't close it there.
+  const sidebarRef = useRef(null);
+  const sidebarToggleBtnRef = useRef(null);
+  useEffect(() => {
+    if (!isSidebarOpen || window.innerWidth >= SIDEBAR_AUTO_HIDE_WIDTH) return;
+    const handleClickOutside = (e) => {
+      if (
+        sidebarRef.current && !sidebarRef.current.contains(e.target) &&
+        sidebarToggleBtnRef.current && !sidebarToggleBtnRef.current.contains(e.target)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isSidebarOpen]);
 
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,14 +125,16 @@ const BranchAEngineerDashboard = () => {
   const toggleDarkMode = () => {
     const nextDark = !isDark;
     setIsDark(nextDark);
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
+    playSound('toggle');
   };
 
   const handleLogout = () => {
     if (!window.confirm('Are you sure you want to log out?')) return;
-    const savedTheme = localStorage.getItem('theme');
+    playSound('logout');
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
     localStorage.clear();
-    if (savedTheme) localStorage.setItem('theme', savedTheme);
+    if (savedTheme) localStorage.setItem(THEME_STORAGE_KEY, savedTheme);
     navigate('/');
   };
 
@@ -174,17 +220,17 @@ const BranchAEngineerDashboard = () => {
 
   return (
     <div id="cems-user-dashboard" className={`${isDark ? 'dark-mode' : 'light-mode'} theme-${accentTheme}`}>
-      <button className="sidebar-toggle-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? 'Collapse Menu' : 'Expand Menu'}>
+      <button ref={sidebarToggleBtnRef} className="sidebar-toggle-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)} title={isSidebarOpen ? 'Collapse Menu' : 'Expand Menu'}>
         <Menu size={20} />
       </button>
 
       <div className="user-dashboard-layout">
-        <aside className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <aside ref={sidebarRef} className={`sidebar ${isSidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
           <div className="profile-box">
             <div className="profile-photo"><HardHat size={32} /></div>
             <div className="profile-info">
               <h3>Engineer</h3>
-              <p className="reg-number">Branch A</p>
+              <p className="reg-number">Admin</p>
               <span className="role-title" style={{
                 fontSize: '0.68rem', color: '#ffffff', backgroundColor: 'var(--accent-primary)',
                 fontWeight: '800', padding: '3px 10px', borderRadius: '12px', marginTop: '6px',
@@ -414,7 +460,7 @@ const BranchAEngineerDashboard = () => {
                         onChange={(e) => {
                           const nextDark = e.target.value === 'Dark Mode';
                           setIsDark(nextDark);
-                          localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+                          localStorage.setItem(THEME_STORAGE_KEY, nextDark ? 'dark' : 'light');
                         }}
                         className="job-select-dropdown"
                       >
@@ -432,7 +478,7 @@ const BranchAEngineerDashboard = () => {
                             type="button"
                             onClick={() => {
                               setAccentTheme(theme.id);
-                              localStorage.setItem('accentTheme', theme.id);
+                              localStorage.setItem(ACCENT_STORAGE_KEY, theme.id);
                             }}
                             title={theme.label}
                             style={{

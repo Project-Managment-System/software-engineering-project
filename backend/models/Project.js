@@ -107,12 +107,23 @@ const ProjectSchema = new mongoose.Schema({
     engineerReviewedAt: { type: Date },
     engineerReviewNote: { type: String, default: '' },
 
-    // Optional: Keep track of who assigned it if needed, 
+    // Optional: Keep track of who assigned it if needed,
     // though the system handles this via division
     assignedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }
+    },
+
+    // Per-job audit trail for the "Job Tracking" tab — one entry per meaningful stage
+    // transition (created, submitted, reviewed, approved, etc.), across every dashboard
+    // that touches the job. Appended automatically by updateProject() whenever a request
+    // includes historyEvent/historyActor — see backend/controllers/projectController.js.
+    statusHistory: [{
+        event: { type: String, required: true },
+        by: { type: String, default: '' },
+        byRole: { type: String, default: '' },
+        at: { type: Date, default: Date.now }
+    }]
 }, { timestamps: true });
 
 // Every dashboard's division-scoped fetch (getProjectsByDivision, the chatbot's per-division
