@@ -52,7 +52,7 @@ export default function DivisionLogin() {
     setIsSubmitting(true);
 
     try {
-      const res = await axios.post('http://127.0.0.1:5000/api/auth/login', {
+      const res = await axios.post('https://pedncpgovlk.com/api/auth/login', {
         employeeId: username,
         password,
       });

@@ -4,7 +4,7 @@
    Loaded once globally (see index.js). Every rule here reads the
    #cems-user-dashboard.light-mode/.dark-mode custom properties
    (--bg-card, --accent-primary, --shadow-card, …) already defined
-   per dashboard in pages/*/Dashboard.css, so the existing accent
+   per dashboard in each pages/<role>/Dashboard.css, so the existing accent
    identity of every dashboard carries through automatically.
 
    Purely additive: nothing here renames or removes an existing
