@@ -434,11 +434,11 @@ const AdminDashboard = () => {
       const division = localStorage.getItem('userDivision');
       const isUnrestricted = UNRESTRICTED_DIVISION_EMPLOYEE_IDS.includes(employeeId);
       const jobsUrl = (!isUnrestricted && division)
-        ? `http://127.0.0.1:5000/api/projects/division/${encodeURIComponent(division)}`
-        : 'http://127.0.0.1:5000/api/projects/all';
+        ? ` https://pedncpgovlk.com/api/projects/division/${encodeURIComponent(division)}`
+        : ' https://pedncpgovlk.com/api/projects/all';
       const usersUrl = (!isUnrestricted && division)
-        ? `http://127.0.0.1:5000/api/users/division/${encodeURIComponent(division)}`
-        : 'http://127.0.0.1:5000/api/users';
+        ? ` https://pedncpgovlk.com/api/users/division/${encodeURIComponent(division)}`
+        : ' https://pedncpgovlk.com/api/users';
 
       const [jobsRes, usersRes] = await Promise.all([
         axios.get(jobsUrl),
@@ -490,7 +490,7 @@ const AdminDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       if (userId) {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/users/${userId}`);
         const user = res.data;
         if (user) {
           setProfileName(user.fullName || 'User');
@@ -532,7 +532,7 @@ const AdminDashboard = () => {
     if (!userId) return;
     const pollUnread = async () => {
       try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/messages/unread/${userId}`);
         const counts = res.data || {};
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
         setTotalUnread(total);
@@ -607,7 +607,7 @@ const AdminDashboard = () => {
         email: editEmail,
         phoneNo: editPhoneNo
       };
-      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      const res = await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, payload);
       if (res.data) {
         setProfileName(editProfileName);
         setRegNo(editRegNo);
@@ -660,7 +660,7 @@ const AdminDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
@@ -697,10 +697,10 @@ const AdminDashboard = () => {
     setIsSavingJob(true);
     try {
       if (editingId) {
-        await axios.put(`http://127.0.0.1:5000/api/projects/update/${editingId}`, formData);
+        await axios.put(` https://pedncpgovlk.com/api/projects/update/${editingId}`, formData);
         addToast('Job updated successfully!', 'success');
       } else {
-        await axios.post('http://127.0.0.1:5000/api/projects/add', { ...formData, historyActor: getHistoryActor() });
+        await axios.post(' https://pedncpgovlk.com/api/projects/add', { ...formData, historyActor: getHistoryActor() });
         addToast('New job created successfully!', 'success');
       }
       await fetchData();
@@ -723,7 +723,7 @@ const AdminDashboard = () => {
     if (window.confirm("Are you sure you want to delete this job?")) {
       setDeletingJobNo(jobNo);
       try {
-        await axios.delete(`http://127.0.0.1:5000/api/projects/delete/${jobNo}`);
+        await axios.delete(` https://pedncpgovlk.com/api/projects/delete/${jobNo}`);
         await fetchData();
         addToast('Job deleted successfully!', 'success');
       } catch (error) {
@@ -778,7 +778,7 @@ const AdminDashboard = () => {
       try {
         const userId = localStorage.getItem('userId');
         if (userId) {
-          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+          await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, {
             profilePic: base64Data
           });
           addToast("Profile photo updated successfully!", "success");
@@ -1041,27 +1041,27 @@ const AdminDashboard = () => {
                     <div className="input-row-group">
                       <label>Division <span style={{ color: 'var(--accent-primary)' }}>*</span></label>
                       <div style={{ position: 'relative' }}>
-                      <select
-                        name="division"
-                        value={formData.division}
-                        onChange={handleInputChange}
-                        className="job-select-dropdown" required
-                        disabled={jobFormDivisionOptions.length === 1}
-                        style={hasUnrestrictedDivisionAccess
-                          ? { appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none', paddingRight: '38px' }
-                          : { appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
-                      >
-                        <option value="" disabled>Select Division</option>
-                        {jobFormDivisionOptions.map((div) => (
-                          <option key={div} value={div}>{div}</option>
-                        ))}
-                      </select>
-                      {hasUnrestrictedDivisionAccess && (
-                        <ChevronDown
-                          size={16}
-                          style={{ position: 'absolute', top: '50%', right: '14px', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }}
-                        />
-                      )}
+                        <select
+                          name="division"
+                          value={formData.division}
+                          onChange={handleInputChange}
+                          className="job-select-dropdown" required
+                          disabled={jobFormDivisionOptions.length === 1}
+                          style={hasUnrestrictedDivisionAccess
+                            ? { appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none', paddingRight: '38px' }
+                            : { appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none', backgroundImage: 'none' }}
+                        >
+                          <option value="" disabled>Select Division</option>
+                          {jobFormDivisionOptions.map((div) => (
+                            <option key={div} value={div}>{div}</option>
+                          ))}
+                        </select>
+                        {hasUnrestrictedDivisionAccess && (
+                          <ChevronDown
+                            size={16}
+                            style={{ position: 'absolute', top: '50%', right: '14px', transform: 'translateY(-50%)', color: 'var(--text-secondary)', pointerEvents: 'none' }}
+                          />
+                        )}
                       </div>
                     </div>
 

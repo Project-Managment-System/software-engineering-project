@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin'], requiredBranch }) 
       try {
         // Confirm this user actually exists in the DB and really has the allowed role,
         // rather than trusting whatever localStorage happens to say.
-        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/users/${userId}`);
         const roleOk = allowedRoles.includes(res.data.role);
         const branchOk = !requiredBranch || res.data.branch === requiredBranch;
         if (roleOk && branchOk) {

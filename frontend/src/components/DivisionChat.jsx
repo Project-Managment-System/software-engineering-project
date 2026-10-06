@@ -23,7 +23,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
   const fetchChatUsers = async () => {
     if (!currentDivision) return;
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/users/division/${currentDivision}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/users/division/${currentDivision}`);
       // Filter out ourselves
       const filtered = res.data.filter(u => u._id !== myId);
       setChatUsers(filtered);
@@ -36,7 +36,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
   const fetchUnreadCounts = async () => {
     if (!myId) return;
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${myId}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/messages/unread/${myId}`);
       setUnreadCounts(res.data || {});
     } catch (err) {
       console.error("Error fetching unread counts:", err);
@@ -47,7 +47,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
   const fetchConversations = async () => {
     if (!myId) return;
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/messages/conversations/${myId}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/messages/conversations/${myId}`);
       setConversations(res.data || {});
     } catch (err) {
       console.error("Error fetching conversation previews:", err);
@@ -58,7 +58,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
   const fetchChatMessages = async (targetUserId) => {
     if (!myId || !targetUserId) return;
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/messages/${myId}/${targetUserId}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/messages/${myId}/${targetUserId}`);
       setChatMessages(res.data || []);
     } catch (err) {
       console.error("Error fetching chat messages:", err);
@@ -69,7 +69,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
   const markMessagesAsRead = async (senderId) => {
     if (!myId || !senderId) return;
     try {
-      await axios.put(`http://127.0.0.1:5000/api/messages/read/${senderId}/${myId}`);
+      await axios.put(` https://pedncpgovlk.com/api/messages/read/${senderId}/${myId}`);
       fetchUnreadCounts();
     } catch (err) {
       console.error("Error marking messages as read:", err);
@@ -90,7 +90,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
     };
 
     try {
-      const res = await axios.post("http://127.0.0.1:5000/api/messages", payload);
+      const res = await axios.post(" https://pedncpgovlk.com/api/messages", payload);
       setChatMessages(prev => [...prev, res.data]);
       setChatInput("");
       setReplyingTo(null);
@@ -134,7 +134,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
     if (!myId) return;
     if (!window.confirm("Delete this message?")) return;
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/messages/${messageId}?userId=${myId}`);
+      await axios.delete(` https://pedncpgovlk.com/api/messages/${messageId}?userId=${myId}`);
       setChatMessages(prev => prev.filter(m => m._id !== messageId));
       if (replyingTo?._id === messageId) setReplyingTo(null);
       fetchConversations();
@@ -318,7 +318,7 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
                   >
                     <div className={`chat-message-bubble ${isSent ? "sent" : "received"}`}>
                       {msg.replyTo && (
-                        <div 
+                        <div
                           className="replied-message-quote"
                           onClick={() => {
                             const el = document.getElementById(`msg-${msg.replyTo._id || msg.replyTo}`);
@@ -393,9 +393,9 @@ export default function DivisionChat({ myId, currentDivision, myRole }) {
                   <div className="reply-preview-title">Replying to {replyingTo.senderName}</div>
                   <div className="reply-preview-text">{replyingTo.content}</div>
                 </div>
-                <button 
-                  type="button" 
-                  className="reply-preview-close" 
+                <button
+                  type="button"
+                  className="reply-preview-close"
                   onClick={() => setReplyingTo(null)}
                 >
                   <X size={16} />

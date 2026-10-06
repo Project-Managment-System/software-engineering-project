@@ -334,7 +334,7 @@ const UserDashboard = () => {
     try {
       const division = localStorage.getItem('userDivision');
       if (division) {
-        const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/projects/division/${division}`);
         // A newer fetchData() call has been issued since this one started — its response
         // will supersede ours, so skip applying this now-stale data.
         if (requestId !== fetchRequestIdRef.current) return;
@@ -405,7 +405,7 @@ const UserDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       if (userId) {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/users/${userId}`);
         const user = res.data;
         if (user) {
           setProfileName(user.fullName || 'User');
@@ -449,7 +449,7 @@ const UserDashboard = () => {
     if (!userId) return;
     const pollUnread = async () => {
       try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/messages/unread/${userId}`);
         const counts = res.data || {};
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
         setTotalUnread(total);
@@ -498,7 +498,7 @@ const UserDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
@@ -537,7 +537,7 @@ const UserDashboard = () => {
         email: editEmail,
         phoneNo: editPhoneNo
       };
-      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      const res = await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, payload);
       if (res.data) {
         setProfileName(editProfileName);
         setRegNo(editRegNo);
@@ -628,7 +628,7 @@ const UserDashboard = () => {
   const handleDownloadDrawing = async (jobNo) => {
     setDownloadingDrawingJobNo(jobNo);
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/projects/job/${jobNo}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/projects/job/${jobNo}`);
       const fileUrl = res.data?.drawingFileUrl;
       if (!fileUrl) { addToast('Drawing file not found.', 'error'); return; }
       const link = document.createElement('a');
@@ -658,7 +658,7 @@ const UserDashboard = () => {
       return;
     }
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${selectedJobId}`, {
         fieldVisitedDate: visitDate,
         estimateSubmitted: true,
         estimateSubmittedAt: new Date().toISOString(),
@@ -690,7 +690,7 @@ const UserDashboard = () => {
   const handleUndoEstimate = async () => {
     if (!selectedJobId) return;
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${selectedJobId}`, {
         estimateSubmitted: false,
         estimateSubmittedAt: null,
         drawingWorkflowStatus: 'NotRequested',
@@ -710,7 +710,7 @@ const UserDashboard = () => {
     // of waiting on the network round-trip (fetchData() below still reconciles with the server).
     setJobData(prev => prev.map(j => j.jobNo === selectedJobId ? { ...j, drawingNeeded: value } : j));
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${selectedJobId}`, {
         drawingNeeded: value
       });
       fetchData();
@@ -728,7 +728,7 @@ const UserDashboard = () => {
       return;
     }
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${selectedJobId}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${selectedJobId}`, {
         // In the "drawing not needed" path this is the only submit action, so persist the
         // confirmed field-visited date here too — otherwise it only ever lives in local
         // state and reopening the job later shows it blurred again as if never confirmed.
@@ -790,7 +790,7 @@ const UserDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       if (userId) {
-        await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+        await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, {
           profilePic: croppedDataUrl
         }, {
           onUploadProgress: (evt) => {
@@ -1117,73 +1117,73 @@ const UserDashboard = () => {
                 ? myJobs
                 : myJobs.filter(job => (job.status || 'Pending') === jobStatusFilter);
               return (
-              <motion.section key="my-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
-                <div className="field-card" style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>
-                        My Division Allocated Jobs{jobStatusFilter !== 'all' ? ` — ${jobStatusFilter}` : ''}
-                      </h3>
-                      {jobStatusFilter !== 'all' && (
-                        <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
-                          Clear filter
-                        </button>
+                <motion.section key="my-jobs" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="project-table-section">
+                  <div className="field-card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '20px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Briefcase size={20} style={{ color: 'var(--accent-primary)' }} />
+                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>
+                          My Division Allocated Jobs{jobStatusFilter !== 'all' ? ` — ${jobStatusFilter}` : ''}
+                        </h3>
+                        {jobStatusFilter !== 'all' && (
+                          <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
+                            Clear filter
+                          </button>
+                        )}
+                      </div>
+                      {renderExportButtons(
+                        "My Division Allocated Jobs",
+                        ["Serial No", "Estimation Number", "Job Name", "Allocation", "Assign Date", "Timeline Limit", "Status"],
+                        filteredMyJobs.map((job, index) => [index + 1, job.estimationNo || '—', job.jobName, job.allocation, job.assignDate, job.deadline, job.status || 'Pending'])
                       )}
                     </div>
-                    {renderExportButtons(
-                      "My Division Allocated Jobs",
-                      ["Serial No", "Estimation Number", "Job Name", "Allocation", "Assign Date", "Timeline Limit", "Status"],
-                      filteredMyJobs.map((job, index) => [index + 1, job.estimationNo || '—', job.jobName, job.allocation, job.assignDate, job.deadline, job.status || 'Pending'])
-                    )}
-                  </div>
-                  <div className="table-scroll-wrapper">
-                    <table className="project-table">
-                      <thead>
-                        <tr>
-                          <th>Serial No</th>
-                          <th>Estimation Number</th>
-                          <th>Job Name</th>
-                          <th>Allocation</th>
-                          <th>Assign Date</th>
-                          <th>Timeline Limit</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredMyJobs.length === 0 ? (
+                    <div className="table-scroll-wrapper">
+                      <table className="project-table">
+                        <thead>
                           <tr>
-                            <td colSpan={7}>
-                              <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
-                                <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                <span>{jobStatusFilter === 'all' ? 'No jobs assigned to you yet.' : `No ${jobStatusFilter.toLowerCase()} jobs.`}</span>
-                              </div>
-                            </td>
+                            <th>Serial No</th>
+                            <th>Estimation Number</th>
+                            <th>Job Name</th>
+                            <th>Allocation</th>
+                            <th>Assign Date</th>
+                            <th>Timeline Limit</th>
+                            <th>Status</th>
                           </tr>
-                        ) : (
-                          filteredMyJobs.map((job, index) => (
-                            <tr key={job.jobNo}>
-                              <td>{index + 1}</td>
-                              <td className="font-mono">{job.estimationNo || '—'}</td>
-                              <td className="font-bold">{job.jobName}</td>
-                              <td>{job.allocation}</td>
-                              <td>{job.assignDate}</td>
-                              <td>
-                                <span className="deadline-tag">{job.deadline}</span>
-                              </td>
-                              <td>
-                                <span className={`status-badge status-${(job.status || 'Pending').toLowerCase()}`}>
-                                  {job.status || 'Pending'}
-                                </span>
+                        </thead>
+                        <tbody>
+                          {filteredMyJobs.length === 0 ? (
+                            <tr>
+                              <td colSpan={7}>
+                                <div className="placeholder-content" style={{ height: '120px', border: 'none' }}>
+                                  <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                  <span>{jobStatusFilter === 'all' ? 'No jobs assigned to you yet.' : `No ${jobStatusFilter.toLowerCase()} jobs.`}</span>
+                                </div>
                               </td>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                          ) : (
+                            filteredMyJobs.map((job, index) => (
+                              <tr key={job.jobNo}>
+                                <td>{index + 1}</td>
+                                <td className="font-mono">{job.estimationNo || '—'}</td>
+                                <td className="font-bold">{job.jobName}</td>
+                                <td>{job.allocation}</td>
+                                <td>{job.assignDate}</td>
+                                <td>
+                                  <span className="deadline-tag">{job.deadline}</span>
+                                </td>
+                                <td>
+                                  <span className={`status-badge status-${(job.status || 'Pending').toLowerCase()}`}>
+                                    {job.status || 'Pending'}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              </motion.section>
+                </motion.section>
               );
             })()}
 

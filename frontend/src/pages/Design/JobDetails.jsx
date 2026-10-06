@@ -123,7 +123,7 @@ const JobDetailsPage = () => {
     const fetchJob = async () => {
       if (!preloadedJob) setLoading(true);
       try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/projects/job/${jobNo}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/projects/job/${jobNo}`);
         if (res.data) setJob(res.data);
         else if (!preloadedJob) { setJob(null); setError('Job not found.'); }
       } catch (err) {
@@ -141,7 +141,7 @@ const JobDetailsPage = () => {
     if (!job?.division) return;
     const fetchStaff = async () => {
       try {
-        const staffRes = await axios.get(`http://127.0.0.1:5000/api/users/division/${encodeURIComponent(job.division)}`);
+        const staffRes = await axios.get(` https://pedncpgovlk.com/api/users/division/${encodeURIComponent(job.division)}`);
         setDivisionStaff(staffRes.data || []);
       } catch (staffErr) {
         console.error('Error loading division staff:', staffErr);

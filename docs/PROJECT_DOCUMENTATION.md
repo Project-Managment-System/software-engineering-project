@@ -117,7 +117,7 @@ API over HTTP/JSON, and the API reads and writes MongoDB through Mongoose.
 
 ```mermaid
 flowchart LR
-    B[Browser<br/>React SPA :3000] -- "HTTP JSON (axios)<br/>http://127.0.0.1:5000/api/*" --> S
+    B[Browser<br/>React SPA :3000] -- "HTTP JSON (axios)<br/> https://pedncpgovlk.com/api/*" --> S
 
     subgraph S[Express server :5000 — backend/server.js]
         direction TB
@@ -139,7 +139,7 @@ flowchart LR
 
 Key points:
 
-- **The API base URL is hard-coded** in the frontend as `http://127.0.0.1:5000` (most
+- **The API base URL is hard-coded** in the frontend as ` https://pedncpgovlk.com` (most
   pages) or `http://localhost:5000/api` ([api/api.js](../frontend/src/api/api.js)). No
   environment variable is used for it.
 - **Nothing is pushed from the server in real time.** Dashboards poll: unread-message
@@ -251,7 +251,7 @@ Create `backend/.env` (this file is git-ignored):
 | `PORT` | No (default `5000`) | [server.js](../backend/server.js) | `5000` |
 | `JWT_SECRET` | Present in `.env`, **but no code reads it** | — | `change-me` |
 
-> Keep the port at **5000**. The frontend has `http://127.0.0.1:5000` hard-coded.
+> Keep the port at **5000**. The frontend has ` https://pedncpgovlk.com` hard-coded.
 
 Start the server. There is no `start` script in `package.json`, so run Node directly:
 
@@ -952,7 +952,7 @@ configuration exists in the repository.
    `0.0.0.0:$PORT`. Use a process manager (e.g. pm2) to keep it running; this is not configured in the repo.
 3. **Frontend:** `cd frontend && npm run build`, then serve `frontend/build/` from any
    static host. Configure SPA fallback so that every path serves `index.html`, because the app uses `BrowserRouter`.
-4. **Before deploying**, change the hard-coded `http://127.0.0.1:5000` /
+4. **Before deploying**, change the hard-coded ` https://pedncpgovlk.com` /
    `http://localhost:5000` API URLs in the frontend. As written, a deployed frontend calls
    the *visitor's own* machine. The recommended approach is an environment variable such as `REACT_APP_API_URL`.
 5. Fix the security items in [section 14](#14-security) before exposing the system publicly.

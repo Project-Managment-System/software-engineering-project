@@ -296,7 +296,7 @@ const DivisionalAssistantDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       if (userId) {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/users/${userId}`);
         const user = res.data;
         if (user) {
           const fetchedProfile = {
@@ -338,7 +338,7 @@ const DivisionalAssistantDashboard = () => {
   const fetchUsers = async () => {
     if (!currentDivision) return;
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/users/division/${encodeURIComponent(currentDivision)}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/users/division/${encodeURIComponent(currentDivision)}`);
       setDivisionUsers(res.data);
     } catch (err) {
       console.error('Error fetching users:', err);
@@ -352,7 +352,7 @@ const DivisionalAssistantDashboard = () => {
 
   const fetchJobs = async () => {
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${encodeURIComponent(currentDivision)}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/projects/division/${encodeURIComponent(currentDivision)}`);
       setDivisionJobs(res.data);
     } catch (err) {
       console.error('Error fetching jobs:', err);
@@ -385,7 +385,7 @@ const DivisionalAssistantDashboard = () => {
 
   const handleDrawingApprove = async (jobNo) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingDaStatus: 'Approved',
         drawingDaReviewedAt: new Date().toISOString(),
         drawingDaNote: '',
@@ -404,7 +404,7 @@ const DivisionalAssistantDashboard = () => {
     const note = window.prompt('Add a review note for the user (optional):', '');
     if (note === null) return; // cancelled
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingDaStatus: 'Rejected',
         drawingDaReviewedAt: new Date().toISOString(),
         drawingDaNote: note,
@@ -421,7 +421,7 @@ const DivisionalAssistantDashboard = () => {
 
   const handleDrawingUndo = async (jobNo) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingDaStatus: 'Pending',
         drawingDaReviewedAt: null,
         drawingDaNote: ''
@@ -436,7 +436,7 @@ const DivisionalAssistantDashboard = () => {
 
   const handleForwardDrawing = async (jobNo) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingWorkflowStatus: 'PendingDirectorAssignment',
         daDrawingForwardedAt: new Date().toISOString(),
         historyEvent: 'Drawing forwarded to Design Director',
@@ -456,7 +456,7 @@ const DivisionalAssistantDashboard = () => {
 
   const handleDaEstimateApprove = async (jobNo) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         daReviewStatus: 'Approved',
         daReviewedAt: new Date().toISOString(),
         daReviewNote: '',
@@ -476,7 +476,7 @@ const DivisionalAssistantDashboard = () => {
     const note = window.prompt('Add a review note for the user (optional):', '');
     if (note === null) return; // cancelled
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         daReviewStatus: 'Rejected',
         daReviewedAt: new Date().toISOString(),
         daReviewNote: note,
@@ -494,7 +494,7 @@ const DivisionalAssistantDashboard = () => {
 
   const handleDaEstimateUndo = async (jobNo) => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         daReviewStatus: 'Pending',
         daReviewedAt: null,
         daReviewNote: '',
@@ -528,7 +528,7 @@ const DivisionalAssistantDashboard = () => {
     if (!userId) return;
     const pollUnread = async () => {
       try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/messages/unread/${userId}`);
         const counts = res.data || {};
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
         setTotalUnread(total);
@@ -545,7 +545,7 @@ const DivisionalAssistantDashboard = () => {
       const userId = localStorage.getItem('userId');
       if (!userId) { addToast('User session not found', 'error'); return; }
       const payload = { fullName: profileForm.name, email: profileForm.email, phoneNo: profileForm.phone };
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, payload);
       setProfileData(profileForm);
       localStorage.setItem('fullName', profileForm.name);
       localStorage.setItem('email', profileForm.email);
@@ -575,7 +575,7 @@ const DivisionalAssistantDashboard = () => {
       try {
         const userId = localStorage.getItem('userId');
         if (userId) {
-          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, { profilePic: base64Data });
+          await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, { profilePic: base64Data });
           addToast('Profile photo updated!', 'success');
         }
       } catch (err) {
@@ -600,7 +600,7 @@ const DivisionalAssistantDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/change-password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/change-password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });

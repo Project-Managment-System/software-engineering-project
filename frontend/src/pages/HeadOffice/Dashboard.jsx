@@ -153,7 +153,7 @@ const HeadOfficeDashboard = () => {
   const handleSaveEditUser = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://127.0.0.1:5000/api/users/${editingUser._id}`, {
+      await axios.put(` https://pedncpgovlk.com/api/users/${editingUser._id}`, {
         fullName: editUserForm.fullName,
         email: editUserForm.email,
         phoneNo: editUserForm.phoneNo
@@ -167,7 +167,7 @@ const HeadOfficeDashboard = () => {
   const handleDeleteUser = async (user) => {
     if (!window.confirm(`Remove ${user.fullName} (${user.employeeId}) from the system? This cannot be undone.`)) return;
     try {
-      await axios.delete(`http://127.0.0.1:5000/api/users/${user._id}`);
+      await axios.delete(` https://pedncpgovlk.com/api/users/${user._id}`);
       await fetchData();
     } catch (err) {
       alert(err.response?.data?.error || 'Delete failed.');
@@ -198,7 +198,7 @@ const HeadOfficeDashboard = () => {
       role: branchFormData.role
     };
     try {
-      await axios.post('http://127.0.0.1:5000/api/users/branch-add', payload);
+      await axios.post(' https://pedncpgovlk.com/api/users/branch-add', payload);
       setBranchFormMessage({ type: 'success', text: 'Branch staff account created — they can now log in.' });
       setBranchFormData({ employeeId: '', firstName: '', secondName: '', email: '', phoneNo: '', password: '', branch: '', role: '' });
       await fetchData();
@@ -212,8 +212,8 @@ const HeadOfficeDashboard = () => {
     setLoading(true);
     try {
       const [jobsRes, usersRes] = await Promise.all([
-        axios.get('http://127.0.0.1:5000/api/projects/all'),
-        axios.get('http://127.0.0.1:5000/api/users'),
+        axios.get(' https://pedncpgovlk.com/api/projects/all'),
+        axios.get(' https://pedncpgovlk.com/api/users'),
       ]);
       setJobs(jobsRes.data || []);
       setUsers(usersRes.data || []);
@@ -265,7 +265,7 @@ const HeadOfficeDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
@@ -409,37 +409,37 @@ const HeadOfficeDashboard = () => {
 
           {/* ─── Stat Cards ─── */}
           {activeTab !== 'Branches' && activeTab !== 'BranchUsers' && (
-          <motion.div
-            className="stat-cards-grid"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            {statCards.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={cardVariant}
-                className="field-card"
-                style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: '10px',
-                    background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
-                  }}>
-                    <stat.icon size={20} />
+            <motion.div
+              className="stat-cards-grid"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
+              {statCards.map((stat) => (
+                <motion.div
+                  key={stat.label}
+                  variants={cardVariant}
+                  className="field-card"
+                  style={{ padding: '20px', cursor: 'default', position: 'relative', overflow: 'hidden' }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{
+                      width: '38px', height: '38px', borderRadius: '10px',
+                      background: `color-mix(in srgb, ${stat.color} 12%, transparent)`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', color: stat.color
+                    }}>
+                      <stat.icon size={20} />
+                    </div>
                   </div>
-                </div>
-                <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
-                  {stat.value}
-                </div>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                  <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.85rem', fontWeight: 900, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '4px' }}>
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           )}
 
           <AnimatePresence mode="wait">
@@ -702,77 +702,77 @@ const HeadOfficeDashboard = () => {
                   {BRANCHES
                     .filter(({ slug }) => !branchFilter.branch || branchFilter.branch === slug)
                     .map(({ slug, label }) => {
-                    const engineers = users.filter(u => u.branch === slug && u.role === 'branch_engineer');
-                    const director = users.find(u => u.branch === slug && u.role === 'branch_director');
-                    const showDirector = branchFilter.position !== 'branch_engineer';
-                    const showEngineers = branchFilter.position !== 'branch_director';
+                      const engineers = users.filter(u => u.branch === slug && u.role === 'branch_engineer');
+                      const director = users.find(u => u.branch === slug && u.role === 'branch_director');
+                      const showDirector = branchFilter.position !== 'branch_engineer';
+                      const showEngineers = branchFilter.position !== 'branch_director';
 
-                    const branchUserCount = (director ? 1 : 0) + engineers.length;
+                      const branchUserCount = (director ? 1 : 0) + engineers.length;
 
-                    return (
-                      <div key={slug} className={`field-card branch-card ${selectedBranchSlug === slug ? 'branch-card-selected' : ''}`}>
-                        <button
-                          type="button"
-                          className="branch-card-header branch-card-header-btn"
-                          onClick={() => { setSelectedBranchSlug(slug); setActiveTab('BranchUsers'); }}
-                          title="View all users in this branch"
-                        >
-                          <div className="branch-card-icon"><Building2 size={19} /></div>
-                          <span className="branch-card-title">{label}</span>
-                          {branchUserCount > 0 && <span className="branch-role-count branch-card-count">{branchUserCount}</span>}
-                        </button>
+                      return (
+                        <div key={slug} className={`field-card branch-card ${selectedBranchSlug === slug ? 'branch-card-selected' : ''}`}>
+                          <button
+                            type="button"
+                            className="branch-card-header branch-card-header-btn"
+                            onClick={() => { setSelectedBranchSlug(slug); setActiveTab('BranchUsers'); }}
+                            title="View all users in this branch"
+                          >
+                            <div className="branch-card-icon"><Building2 size={19} /></div>
+                            <span className="branch-card-title">{label}</span>
+                            {branchUserCount > 0 && <span className="branch-role-count branch-card-count">{branchUserCount}</span>}
+                          </button>
 
-                        <div className="branch-card-body">
-                          {showDirector && (
-                            <div className="branch-role-block">
-                              <div className="branch-role-icon is-director"><Landmark size={16} /></div>
-                              <div className="branch-role-content">
-                                <div className="branch-role-label">Director</div>
-                                {director ? (
-                                  <div className="branch-person-card">
-                                    <div className="branch-person-name">
-                                      {director.fullName}
-                                      <span className="employee-id-tag">{director.employeeId}</span>
-                                    </div>
-                                    <div className="branch-person-meta"><Mail size={11} /> {director.email || '—'}</div>
-                                    <div className="branch-person-meta"><Phone size={11} /> {director.phoneNo || '—'}</div>
-                                  </div>
-                                ) : (
-                                  <div className="branch-unassigned">No director assigned</div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                          {showEngineers && (
-                            <div className="branch-role-block">
-                              <div className="branch-role-icon is-engineer"><HardHat size={16} /></div>
-                              <div className="branch-role-content">
-                                <div className="branch-role-label">
-                                  Engineers
-                                  {engineers.length > 0 && <span className="branch-role-count">{engineers.length}</span>}
-                                </div>
-                                {engineers.length === 0 ? (
-                                  <div className="branch-unassigned">No engineers assigned</div>
-                                ) : (
-                                  engineers.map(eng => (
-                                    <div key={eng._id} className="branch-person-card">
+                          <div className="branch-card-body">
+                            {showDirector && (
+                              <div className="branch-role-block">
+                                <div className="branch-role-icon is-director"><Landmark size={16} /></div>
+                                <div className="branch-role-content">
+                                  <div className="branch-role-label">Director</div>
+                                  {director ? (
+                                    <div className="branch-person-card">
                                       <div className="branch-person-name">
-                                        {eng.fullName}
-                                        <span className="employee-id-tag">{eng.employeeId}</span>
+                                        {director.fullName}
+                                        <span className="employee-id-tag">{director.employeeId}</span>
                                       </div>
-                                      <div className="branch-person-meta"><Mail size={11} /> {eng.email || '—'}</div>
-                                      <div className="branch-person-meta"><Phone size={11} /> {eng.phoneNo || '—'}</div>
+                                      <div className="branch-person-meta"><Mail size={11} /> {director.email || '—'}</div>
+                                      <div className="branch-person-meta"><Phone size={11} /> {director.phoneNo || '—'}</div>
                                     </div>
-                                  ))
-                                )}
+                                  ) : (
+                                    <div className="branch-unassigned">No director assigned</div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+
+                            {showEngineers && (
+                              <div className="branch-role-block">
+                                <div className="branch-role-icon is-engineer"><HardHat size={16} /></div>
+                                <div className="branch-role-content">
+                                  <div className="branch-role-label">
+                                    Engineers
+                                    {engineers.length > 0 && <span className="branch-role-count">{engineers.length}</span>}
+                                  </div>
+                                  {engineers.length === 0 ? (
+                                    <div className="branch-unassigned">No engineers assigned</div>
+                                  ) : (
+                                    engineers.map(eng => (
+                                      <div key={eng._id} className="branch-person-card">
+                                        <div className="branch-person-name">
+                                          {eng.fullName}
+                                          <span className="employee-id-tag">{eng.employeeId}</span>
+                                        </div>
+                                        <div className="branch-person-meta"><Mail size={11} /> {eng.email || '—'}</div>
+                                        <div className="branch-person-meta"><Phone size={11} /> {eng.phoneNo || '—'}</div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </motion.section>
             )}

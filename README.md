@@ -76,7 +76,7 @@ flowchart LR
     S -- Mongoose --> DB[(MongoDB<br/>users · projects · messages)]
 ```
 
-- The frontend calls the API at a **hard-coded** `http://127.0.0.1:5000` (or
+- The frontend calls the API at a **hard-coded** ` https://pedncpgovlk.com` (or
   `http://localhost:5000/api`). There is no environment variable for it.
 - There are no WebSockets. Dashboards poll for updates (unread messages every 4–6 s,
   the Admin dashboard's job data every 8 s).
