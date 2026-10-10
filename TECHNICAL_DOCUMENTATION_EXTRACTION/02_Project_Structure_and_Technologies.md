@@ -2,22 +2,27 @@
 
 ## 2.1 Repository Layout
 
-The repository has **137 tracked files**. Excluding vendored and saved-webpage artefacts, lock files and binary images, it contains about **33,100 lines** of JS/JSX/CSS/MD. It is a **two-application monorepo** (separate `backend/` and `frontend/` npm projects) with no shared workspace tooling.
+After R1 the repository has **5,417 tracked files**: **5,258 of them are `backend/node_modules/`** (force-added in `ab2ba6e` even though `.gitignore` lists `backend/node_modules/`), 19 are this documentation folder, and **140 are project files**. Excluding vendored and saved-webpage artefacts, lock files and binary images, the application source is about **33,100 lines** of JS/JSX/CSS (unchanged by R1), plus about 1,700 lines of team Markdown documentation. It is a **two-application monorepo** (separate `backend/` and `frontend/` npm projects) with no shared workspace tooling.
 
 ```
 software-engineering-project/
 ├── .gitignore                    # ignores node_modules, .env (root/backend/frontend), *.log, build/, dist/
 ├── .vscode/launch.json           # Chrome debug config targeting http://localhost:8080 (unused by CRA's default port 3000)
-├── README.md                     # one-line placeholder ("# software-engineering-project")
+├── README.md                     # (R1) full README: features, setup, default accounts table (PLAINTEXT PASSWORDS), roles,
+│                                 #      workflow, API overview, testing, deployment, security notes, troubleshooting
 ├── dummy.gif                     # stray binary, not referenced
+├── TECHNICAL_DOCUMENTATION_EXTRACTION/  # this audit package (committed in ec38c1d)
 ├── docs/
-│   └── RISK_INTELLIGENCE.md      # only design document in repo: methodology for rule-based risk score
+│   ├── PROJECT_DOCUMENTATION.md  # (R1) team-written technical documentation, 20 sections incl. "Open questions"
+│   └── RISK_INTELLIGENCE.md      # methodology for the rule-based risk score
 ├── layouts/
 │   └── MainLayout.js             # DEAD CODE — imports non-existent ../components/Sidebar; not used
 ├── backend/                      # Node.js + Express 5 REST API
 │   ├── server.js                 # ENTRY POINT — middleware stack, route mounting, error handler, listen()
 │   ├── package.json              # deps; scripts: { test: "jest" } (no start script)
 │   ├── .env                      # UNTRACKED — MONGODB_URI, JWT_SECRET, PORT (names only disclosed)
+│   ├── .env.example              # (R1) tracked template with EMPTY values + comments (safe)
+│   ├── node_modules/             # (R1) COMMITTED — 5,258 files, despite .gitignore
 │   ├── config/
 │   │   ├── db.js                 # mongoose.connect(MONGODB_URI); exits process on failure
 │   │   └── riskConfig.js         # risk-engine weights, thresholds, saturation constants
@@ -197,7 +202,9 @@ Module system: CommonJS (`"type": "commonjs"`).
 | File | Purpose | Notes |
 |---|---|---|
 | `backend/.env` (untracked) | `MONGODB_URI`, `JWT_SECRET`, `PORT` | `JWT_SECRET` is unused |
-| `frontend/.env` | None present | No `REACT_APP_*` variables are used anywhere |
+| `backend/.env.example` (R1, tracked) | Template: the same three keys with **empty values**, plus comments (local and Atlas URI formats; "keep PORT at 5000"; "JWT_SECRET not used by the code yet") | Good practice. Contains no secrets (Verified) |
+| `frontend/.env` | None present | No `REACT_APP_*` variables are used anywhere. The production API URL is hard-coded instead |
+| `frontend/build.zip` (R1, tracked) | 3.97 MB zip of a CRA production build (112 files incl. 30 `.map` source maps), built 2026-10-06 10:03 | **Stale**: its dashboards call `127.0.0.1:5000` (see `11`) |
 | `frontend/tailwind.config.js` | `content: ["./src/**/*.{js,jsx,ts,tsx}"]` | A duplicate exists at `frontend/src/tailwind.config.js` |
 | `frontend/postcss.config.js` | Tailwind + autoprefixer | A duplicate exists at `frontend/src/postcss.config.js` |
 | `frontend/src/.babelr.json` | Misspelled (`.babelrc`?) and therefore ignored | Inferred |
@@ -209,13 +216,13 @@ Module system: CommonJS (`"type": "commonjs"`).
 
 | Metric | Value (from `git`) |
 |---|---|
-| Total commits (current branch) | 332 |
-| Merge commits | 174 (GitHub PRs up to at least #112) |
-| Commit identities | Kasunika Lakmali (153), Dinujaya-Senanayake (60), Wandana-wdh (42), sandagomi (37), Wandana Herath (18), RashmiTharu2001 (17), hatharasinghe2001 (16) |
+| Total commits (reachable from `HEAD` after merging `main`) | 347 |
+| Merge commits | 183 (GitHub PRs up to at least #118) |
+| Commit identities (`git shortlog -sn HEAD`) | Kasunika Lakmali (162), Dinujaya-Senanayake (60), Wandana-wdh (37), sandagomi (36), Wandana Herath (19), RashmiTharu2001 (17), hatharasinghe2001 (16). "Wandana-wdh" and "Wandana Herath" are probably one person (Inferred) |
 | Remote branches | `main`, `legacy-backup`, plus two personal dev branches per member (`<name>_dev`, `<name>1_dev`) |
 | Workflow | Feature branches → GitHub Pull Requests → `main` |
-| Commits per month | Jan 2026: 1, Feb: 2, Mar: 4, **Jun: 122, Jul: 170**, Aug: 27, Sep: 6 |
+| Commits per month | Jan 2026: 1, Feb: 2, Mar: 4, **Jun: 122, Jul: 170**, Aug: 27, Sep: 9, Oct: 12 |
 | First commit | 2026-01-28 "Initial commit" |
-| Latest commit | 2026-09-29 |
+| Latest application-code commit | 2026-10-06 (`f5b02c7`, production API URL switch); latest commit overall 2026-10-10 (merge of `main`) |
 
 Many commit messages are copied `git status` output (e.g. "modified: frontend/src/..."), which limits how well the history documents intent. See `17_Source_Code_Evidence_Index.md` §17.4 for dated milestones.

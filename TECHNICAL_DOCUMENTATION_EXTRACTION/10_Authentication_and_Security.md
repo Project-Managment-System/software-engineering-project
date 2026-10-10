@@ -64,7 +64,7 @@ Frontend: 15 protected routes (see `08` §8.2). Backend: **none**.
 |---|---|
 | Password hashes | Never returned (`.select('-password')`) |
 | `.env` | Git-ignored. The backend copy exists locally with `MONGODB_URI`, `JWT_SECRET`, `PORT`. Values were not inspected beyond the host domain |
-| Default credentials | `seedDefaultUsers.js` commits **short, predictable default passwords** for the 8 engineer accounts and the admin account. The file's own comment says they should be changed. → Treat as **compromised** if the seed was run in production. **REQUIRES TEAM CONFIRMATION** that they were rotated |
+| Default credentials | `seedDefaultUsers.js` commits **short, predictable default passwords** for the 8 engineer accounts and the admin account. The file's own comment says they should be changed. **Since R1 the README goes further: its "Default accounts" table lists every seeded Employee ID with its password in plain text** (`README.md`, "Default accounts" section), plus a worked `resetPassword.js` example that uses a real ID/password pair. The README warns that they are "for development only". The API is now pointed at a public production domain, so these must be treated as **compromised** wherever the seed was run. **REQUIRES TEAM CONFIRMATION** that they were rotated in production |
 | Hard-coded privileged ID | One employee ID gets unrestricted division access by name match (`admin/Dashboard.jsx:84`) |
 | PII exposure | `GET /api/users` and `/users/division/:d` return every user's name, e-mail, phone, role and profile photo **without authentication**. The chatbot "team" intent prints e-mails and employee IDs |
 | Login enumeration | Unknown ID → 404 `USER_NOT_FOUND` vs 401 `INVALID_PASSWORD` |
@@ -91,7 +91,9 @@ Files are stored as base64 in the DB, so nothing executable is ever written to t
 | `MONGODB_URI` | `config/db.js`, `seedDefaultUsers.js`, `resetPassword.js` | DB connection |
 | `PORT` | `server.js:53` | Listen port (default 5000) |
 | `JWT_SECRET` | **nobody** | Intended for token auth (planned) |
-| (frontend) | none | The API base URL is hard-coded rather than taken from `REACT_APP_API_URL` |
+| (frontend) | none | The API base URL is hard-coded (`https://pedncpgovlk.com` since R1) rather than taken from `REACT_APP_API_URL` |
+
+A tracked template, `backend/.env.example`, was added in R1. It has the same three keys with empty values and explanatory comments; no secrets (Verified).
 
 ## 10.13 Implemented Security Controls (summary)
 
@@ -104,15 +106,16 @@ Files are stored as base64 in the DB, so nothing executable is ever written to t
 7. Client-side route guards with live DB re-verification and login-gateway role segregation.
 8. Message attachment size limit enforced on the server (413).
 9. Large binaries excluded from list endpoints (reduces accidental data exposure and load).
-10. Secrets kept out of git (`.gitignore`).
+10. Secrets kept out of git (`.gitignore`); an empty `.env.example` template is provided (R1).
+11. The frontend calls the API over **HTTPS** (`https://pedncpgovlk.com`, R1). TLS is presumably terminated by the hosting layer; its configuration is not in the repository.
 
 ## 10.14 Security Limitations (evidence-based)
 
 | ID | Limitation | Severity (assessor's view) | Evidence |
 |---|---|---|---|
-| SEC-1 | No API authentication or authorisation; every endpoint is public | **Critical** | `server.js:41-45`, no middleware |
+| SEC-1 | No API authentication or authorisation; every endpoint is public. **Since R1 the frontend targets a public internet domain (`https://pedncpgovlk.com/api`)**, so if that deployment is live, anyone on the internet can read, modify or delete all jobs, users and messages | **Critical** | `server.js:41-45`, no middleware; production URL in 21 frontend files |
 | SEC-2 | Identity and role trusted from client-supplied IDs and history actor | High | `utils/jobTracking.js:6-9`; message delete |
-| SEC-3 | Weak default credentials committed in the repository | High | `seedDefaultUsers.js:36-52` |
+| SEC-3 | Weak default credentials committed in the repository **and published as a plaintext table in the README (R1)** | High | `seedDefaultUsers.js:36-52`; `README.md` "Default accounts" |
 | SEC-4 | CORS allow-all | Medium (High once auth uses cookies) | `server.js:14` |
 | SEC-5 | Unescaped user input in `RegExp` | Medium | `userRoutes.js:121`, `chatbotController.js:423` |
 | SEC-6 | Possible NoSQL operator injection on login | Medium (needs a test) | `authController.js:89` |
@@ -122,7 +125,9 @@ Files are stored as base64 in the DB, so nothing executable is ever written to t
 | SEC-10 | No server-side workflow transition validation | Medium (integrity) | `projectController.js:203-242` |
 | SEC-11 | User enumeration through distinct login errors | Low | `authController.js:90-107` |
 | SEC-12 | Stored XSS code path in chatbot rendering (unescaped `dangerouslySetInnerHTML`); possible XSS through attachment data URLs | Medium–High | `engineer/Dashboard.jsx:287-297, 2423` |
-| SEC-13 | HTTP base URL hard-coded (no TLS from the browser to the API as coded) | Depends on deployment | 109 occurrences |
+| SEC-13 | ~~HTTP base URL hard-coded (no TLS)~~ **Resolved in R1**: the source now uses `https://`. Residual issue: the base URL is still hard-coded and the committed `build.zip` still contains `http://127.0.0.1:5000` | Low | 109 occurrences; `frontend/build.zip` |
+| SEC-14 | Production build artefact committed **with source maps** (30 `.map` files in `frontend/build.zip`), which expose the full original source if served publicly | Low (the code is already in the repository; relevant if the repository is private) | `frontend/build.zip` (R1) |
+| SEC-15 | Team documentation overstates a control: the README's "Security notes" list "regex-escaped chatbot input", but `escapeRegex` is imported and **never called** (`chatbotController.js:3, 423`; `userRoutes.js:121`) | Documentation accuracy | `README.md` "Security notes" |
 
 ## 10.15 Recommended Future Improvements (not implemented)
 
@@ -130,7 +135,7 @@ Files are stored as base64 in the DB, so nothing executable is ever written to t
 2. Enforce workflow transitions on the server (a state-machine table) and write `statusHistory` on the server from the authenticated actor.
 3. Restrict CORS to the production frontend origin; serve over HTTPS; move the base URL to `REACT_APP_API_URL`.
 4. Validate with Joi or express-validator. Enable `mongoose.set('sanitizeFilter', true)` and `runValidators: true`. Apply the existing `escapeRegex`.
-5. Rotate all seeded passwords, enforce a password policy, and add a secure reset flow (e-mail or admin-issued).
+5. Rotate all seeded passwords, **remove the plaintext password table from the README** (and consider rewriting git history if the repository is public), enforce a password policy, and add a secure reset flow (e-mail or admin-issued).
 6. Move files to object storage (e.g. S3, GridFS) with MIME and size validation. Lower the JSON limit to about 1 MB except on upload routes.
 7. Return a uniform login error message. Return generic error responses and log details on the server.
 8. Add audit logging and monitoring (e.g. morgan + persistent logs).

@@ -1,6 +1,6 @@
 # 07 — Backend and API Documentation
 
-**Base URL (as coded in the frontend):** `http://127.0.0.1:5000/api`
+**Base URL (as coded in the frontend after R1):** `https://pedncpgovlk.com/api`. Before R1 it was `http://127.0.0.1:5000/api`. For local development the server listens on `http://<host>:PORT/api` (PORT default 5000).
 **Format:** JSON request and response bodies (`express.json`, 50 MB limit).
 **Authentication:** **None on any endpoint.** "Authorized Roles" below lists the roles whose dashboard calls the endpoint (UI convention); it is **not** enforced by the server. Rate limiting applies only to `/api/auth/*` (30 requests / 15 min / IP; the 429 body is `{"error":"Too many attempts. Please try again later."}`).
 

@@ -30,7 +30,7 @@ flowchart LR
   DIV --> GW
   HO --> GW
   GW --> DB1 --> SH
-  FE -- "REST/JSON over HTTP (axios)" --> MW --> RT --> CT
+  FE -- "REST/JSON over HTTPS (axios)<br/>https://pedncpgovlk.com/api" --> MW --> RT --> CT
   CT -- "Mongoose 9" --> C1 & C2 & C3
 ```
 *Evidence:* `App.js`, `server.js`, `models/*`. *Explanation:* a three-tier MERN application. Note there is no auth service; the gateways only route users.
@@ -74,23 +74,24 @@ flowchart TB
   MR --> M_M
 ```
 
-## D-03 Deployment Diagram (as supported by committed code)
+## D-03 Deployment Diagram (as evidenced by committed code after R1)
 
 ```mermaid
 flowchart TB
-  subgraph Node1["Host machine"]
-    BR["Web browser"]
-    FEs["Static SPA build / CRA dev server (:3000)"]
-    API["node server.js — Express :5000 (0.0.0.0)"]
+  BR["Web browser"]
+  FEs["Static SPA build<br/>(host/URL: REQUIRES TEAM CONFIRMATION)"]
+  subgraph Prod["pedncpgovlk.com"]
+    PX["HTTPS :443 → /api<br/>(proxy / hosting layer — inferred, not in repo)"]
+    API["node server.js — Express :PORT (default 5000)"]
   end
   ATLAS[("MongoDB Atlas<br/>*.mongodb.net")]
   MEDIA["Pexels / Unsplash CDN"]
   BR --> FEs
-  BR -- "http://127.0.0.1:5000/api" --> API
+  BR -- "https://pedncpgovlk.com/api" --> PX --> API
   API -- "MONGODB_URI" --> ATLAS
   BR -. "background media" .-> MEDIA
 ```
-*Note:* the production topology is **REQUIRES TEAM CONFIRMATION** (`11`). D-12 shows the recommended target.
+*Note:* only the API domain is evidenced (frontend source, R1). The frontend host, proxy and TLS set-up are **REQUIRES TEAM CONFIRMATION** (`11`). D-12 shows the recommended target. Before R1 the code supported only a single-machine set-up (`http://127.0.0.1:5000`).
 
 ## D-04 Data Flow Diagram — Level 0 (Context)
 

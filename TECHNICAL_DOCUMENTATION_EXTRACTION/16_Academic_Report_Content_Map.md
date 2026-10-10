@@ -4,8 +4,8 @@ This map tells the documentation specialist **where the supporting material for 
 
 | # | Report chapter | Source documents (sections) | Claimable facts (verified) | Must NOT claim / needs confirmation |
 |---|---|---|---|---|
-| 1 | Introduction | 01 §1.1–1.5 | Web-based, role-based job and workflow management system for a provincial civil-engineering organisation with a Head Office and 8 divisions; MERN stack | Official system name and client organisation (**confirm**) |
-| 2 | Project Background | 01 §1.2; 02 §2.5 | Year-long group project; GitHub organisation with PR-based workflow; 332 commits by 7 identities; first commit 2026-01-28, last 2026-09-29 | Original manual process, stakeholder interviews (**confirm**) |
+| 1 | Introduction | 01 §1.1–1.5 | Web-based, role-based job and workflow management system for a provincial civil-engineering organisation with a Head Office and 8 divisions; MERN stack; named **CEMS — Civil Engineering Management System** in the team README (R1) | Whether to use "CEMS" or the UI brand "CivilPro Max"; client organisation (**confirm**) |
+| 2 | Project Background | 01 §1.2; 02 §2.5 | Year-long group project; GitHub organisation with PR-based workflow; 347 commits by 7 identities; first commit 2026-01-28, last code commit 2026-10-06 | Original manual process, stakeholder interviews (**confirm**) |
 | 3 | Problem Statement | 01 §1.2 | Inferred from features: manual multi-party approval chain, lack of tracking, drawing requests between division and Head Office | Quantified problem (delays, costs): **no data** |
 | 4 | Objectives | 03 §3.1 | Digitise job registration → approval → assignment → drawing → estimate review; audit trail; analytics; secure login; communication | — |
 | 5 | Scope | 01 §1.3, 03 §3.1, 13 §13.8 | In scope: modules M1–M22. Out of scope / not implemented: construction-progress tracking (Ongoing/Completed), self-registration, password reset, branch A–D workflows, server notifications | Do not present schema-only statuses as features |
@@ -19,13 +19,15 @@ This map tells the documentation specialist **where the supporting material for 
 | 13 | API Design | 07 | 31 routes, request/response shapes, middleware | Do not claim secured endpoints |
 | 14 | Business Process Workflows | 09; 15 D-07–D-09 | WF-1…WF-11 with state machines and sequence diagrams | Do not claim e-mail or push notifications |
 | 15 | Authentication & Security | 10 | Implemented controls §10.13; limitations §10.14 | **Must disclose** the absence of API authentication |
-| 16 | Deployment & Hosting | 11 | Build commands; env variables; Atlas; reproducible procedure | Hosting provider, URL, HTTPS, the localhost conflict (**confirm**) |
+| 16 | Deployment & Hosting | 11 | Build commands; env variables (`.env.example`); Atlas; **production API domain `https://pedncpgovlk.com`** (R1); deployment commits of 2026-10-06; reproducible procedure | Hosting provider, frontend URL, proxy/TLS set-up, which build is live (`build.zip` is stale) (**confirm**). Do not present `build.zip` as the deployed artefact |
 | 17 | Testing & Validation | 12 | Jest results 10/2/1 with root cause; proposed test plan | Do not claim UAT, integration, load or responsive testing unless the team supplies evidence |
-| 18 | Technical Challenges | 13 §13.1 | 16 code- or commit-evidenced challenges with solutions | Do not invent team difficulties |
+| 18 | Technical Challenges | 13 §13.1 | 18 code- or commit-evidenced challenges with solutions | Do not invent team difficulties |
 | 19 | System Limitations | 13 §13.2–13.9 | Architectural, security, DB and scalability limits | — |
 | 20 | Future Enhancements | 13 §13.10; 10 §10.15; `docs/RISK_INTELLIGENCE.md` "Future work"; 15 D-12 | Prioritised roadmap | — |
 | 21 | Conclusion | MASTER summary | All core division→Head Office workflows implemented end-to-end, with audit trail, analytics and explainable risk scoring; security hardening and deployment configuration remain the main gaps | — |
 | 22 | Technical Appendices | 06 (data dictionary), 07 (API), 15 (diagrams), 17 (evidence index), 14 (screenshots) | — | — |
+
+> **Other team-written sources (R1):** `README.md` and `docs/PROJECT_DOCUMENTATION.md` broadly agree with this package (roles, workflow, API, the absence of API auth, the test status). Where they disagree, **this package reflects the current code**: localhost URLs vs the production domain; "regex-escaped chatbot input" (not true); "keep port 5000 because it is hard-coded" (no longer true). Never copy the README's default-accounts table (plaintext passwords) into the report.
 
 ## 16.1 Suggested "Key Technical Highlights" for the presentation
 

@@ -43,7 +43,9 @@ The fixtures build dates relative to a fixed `NOW = 2026-08-07` (`riskService.te
 
 **Conclusion:** these are **test-fixture defects (time-dependent tests), not risk-engine defects**. The tests would have passed when run on 2026-08-07, the date the suite was committed (git). The fix is to pass `NOW` as the third argument in those two tests. It was not applied, because the audit is read-only.
 
-> → **REQUIRES TEAM CONFIRMATION:** whether the team ran the suite at commit time and has any record of the results.
+> **R1 update:** re-run after merging `main` (2026-10-10, `1200b68`) → **identical result: 10 passed, 2 failed, 1 todo** (no backend or test code changed). The team's new README independently records the same status ("Current status (2026-10-06): 10 passed, 2 failed, 1 todo") and the same root cause and fix. This corroborates the finding; the fixtures have not yet been fixed.
+>
+> → **REQUIRES TEAM CONFIRMATION:** whether the team ran the suite at commit time (2026-08-07) and has any record of the results.
 
 ## 12.3 Validation Logic Present in Code (acts as defensive QA)
 
@@ -97,7 +99,9 @@ The fixtures build dates relative to a fixed `NOW = 2026-08-07` (`riskService.te
 | PT-SEC-01 | Security | Job name `<img src=x onerror=alert(1)>`, then chatbot lookup | **Should not execute script** (documents SEC-12) | — | PROPOSED — NOT EXECUTED | `engineer/Dashboard.jsx:2423` |
 | PT-UI-01 | Responsive | Each dashboard at 375 / 768 / 1280 px | No overflow; sidebar collapses below 1024 | — | PROPOSED — NOT EXECUTED | CSS `@media` |
 | PT-UI-02 | Export | PDF/CSV/Print on the Admin job table | Files contain the filtered rows | — | PROPOSED — NOT EXECUTED | `handleExport` |
-| PT-DEP-01 | Deployment | Open the deployed frontend from a second machine | API calls succeed (**fails with the committed code**) | — | PROPOSED — NOT EXECUTED | 109 hard-coded URLs |
+| PT-DEP-01 | Deployment | Open the deployed frontend from a second machine; log in and open each dashboard | All API calls go to `https://pedncpgovlk.com/api` and succeed | — | PROPOSED — NOT EXECUTED | 109 URLs in source (R1) |
+| PT-DEP-02 | Deployment | Serve the committed `frontend/build.zip` and log in | **Expected to fail after login** ("Couldn't reach the server"), because the build's dashboards call `127.0.0.1:5000`. Documents the stale-artefact finding | — | PROPOSED — NOT EXECUTED | `11` §11.2 |
+| PT-DEP-03 | Deployment / security | Unauthenticated `GET https://pedncpgovlk.com/api/users` from outside the organisation | **Currently expected to return all users** (documents SEC-1 on the public domain). Run only with the team's permission | — | PROPOSED — NOT EXECUTED | SEC-1 |
 
 ## 12.5 Quality Observations
 

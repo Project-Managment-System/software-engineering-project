@@ -104,7 +104,8 @@ App
 
 ## 8.7 API Communication
 
-- Direct `axios.get/post/put/patch/delete` calls with **absolute hard-coded URLs** (`http://127.0.0.1:5000/api/...`, 109 occurrences in 19 files). No axios interceptors, no auth headers, no central API module (except the legacy `api/api.js`, which uses `localhost:5000`).
+- Direct `axios.get/post/put/patch/delete` calls with **absolute hard-coded URLs**. Since R1 (`f5b02c7`, 2026-10-06) the base is `https://pedncpgovlk.com/api/...`; before that it was `http://127.0.0.1:5000/api/...`. There are 109 occurrences in 21 files. No axios interceptors, no auth headers, no central API module (except the legacy `api/api.js`, which still uses `http://localhost:5000/api`).
+- **Code-quality note (R1):** 107 of the 109 URL literals begin with a stray space, e.g. `` ` https://pedncpgovlk.com/api/projects/all` ``. This is consistent with a find-and-replace that replaced `http://127.0.0.1:5000` with ` https://pedncpgovlk.com`. Only the two login calls (`DivisionLogin.js:55`, `HeadOffice/Login.jsx:59`) are clean. Browsers' URL parsing strips leading spaces, so the calls very likely still work (**Inferred, not executed**), but this is fragile and should be cleaned up with a single `REACT_APP_API_URL` constant.
 - Pattern: the handler performs the mutation, then calls `fetchData()` again (no optimistic updates, except `drawingNeeded`).
 - Polling intervals: unread messages every 4 s (Admin, Engineer, DA) and 6 s (User); the User's 6 s poll also refreshes jobs; Admin refreshes jobs every 8 s; chat polls every 4 s.
 

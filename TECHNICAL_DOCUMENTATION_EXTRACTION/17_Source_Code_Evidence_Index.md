@@ -1,7 +1,7 @@
 # 17 — Source Code Evidence Index
 
 Confidence: **V** = Verified (read in source / executed) · **I** = Inferred · **RC** = Requires Confirmation.
-Paths are relative to the repository root. Line numbers refer to commit `4d374ae`.
+Paths are relative to the repository root. Line numbers were taken at commit `4d374ae` and **re-checked after merging `main` (`1200b68`)**. Every changed source file kept the same line count (R1 changed only URL strings and indentation), so all line references remain valid.
 
 ## 17.1 Backend Evidence
 
@@ -97,7 +97,8 @@ Paths are relative to the repository root. Line numbers refer to commit `4d374ae
 | F-33 | History actor from localStorage; role labels | `frontend/src/utils/jobTracking.js` | `getHistoryActor`, `ROLE_LABELS` | 6-22 | V |
 | F-34 | Client-side notification inference | `frontend/src/utils/notifications.js` | `inferNotificationMeta` | 1-28 | V |
 | F-35 | Risk panel renders server data only | `frontend/src/components/RiskIntelligencePanel.jsx` | `fetchSummary` | 5-40 | V |
-| F-36 | 109 hard-coded `127.0.0.1:5000` URLs | 19 files | — | grep | V |
+| F-36 | 109 hard-coded API URLs: `https://pedncpgovlk.com` since R1 (107 with a leading space); previously `http://127.0.0.1:5000` | 21 files | — | grep | V |
+| F-36b | Legacy axios instance still `http://localhost:5000/api` | `frontend/src/api/api.js` | `API` | 3-5 | V |
 | F-37 | Dead code (AuthContext, ThemeContext, Header, Navbar, MainLayout, buttonEffects) | various | — | import graph | V |
 | F-38 | Product name "CivilPro Max" | `frontend/public/index.html` | `<title>` | 31 | V |
 
@@ -110,7 +111,14 @@ Paths are relative to the repository root. Line numbers refer to commit `4d374ae
 | C-03 | No deployment or CI files on any branch | `git ls-tree` across branches | V |
 | C-04 | `.env` and `build/` are git-ignored | `.gitignore` | V |
 | C-05 | Installed versions | `node_modules/*/package.json` | V |
-| C-06 | Production hosting, URL, HTTPS | — | RC |
+| C-06 | Production hosting provider, frontend URL, TLS/proxy set-up | — | RC |
+| C-07 | Production API origin `https://pedncpgovlk.com` | 21 frontend files (R1, `f5b02c7`) | V (source); live status not tested |
+| C-08 | `backend/.env.example`: 3 keys, empty values | `backend/.env.example` (R1) | V |
+| C-09 | `frontend/build.zip`: 2 production URLs, 107 `127.0.0.1:5000` URLs, 30 source maps | archive contents (R1, `3aed28f`) | V |
+| C-10 | `backend/node_modules/` committed (5,258 files) despite `.gitignore` | `git ls-files`, `ab2ba6e` | V |
+| C-11 | README names the system "CEMS — Civil Engineering Management System" and lists default credentials in plain text | `README.md` (R1, `1433a7e`) | V |
+| C-12 | README claims "regex-escaped chatbot input"; the code never calls `escapeRegex` | `README.md` vs `chatbotController.js:3, 423` | V |
+| C-13 | Team documentation `docs/PROJECT_DOCUMENTATION.md` (20 sections, incl. 13 open questions) | (R1, `a818fb7`) | V |
 
 ## 17.4 Development Milestones from Git History (dated evidence)
 
@@ -133,6 +141,11 @@ Paths are relative to the repository root. Line numbers refer to commit `4d374ae
 | 2026-08-07 | Rule-based Risk Intelligence service and Jest tests | first-add dates |
 | 2026-08-08 | Job Tracking timeline component | first-add date |
 | 2026-09-20 | Latest edits to the Head Office, Design Director and DA dashboards | last-modified |
-| 2026-09-29 | Branch labels finalised (Admin/Accounts/Works/Procurements); `resetPassword.js` | `4d374ae`, `e0b8a3b` |
+| 2026-09-29 | Branch labels finalised (Admin/Accounts/Works/Procurements); `resetPassword.js`; team project documentation added | `4d374ae`, `e0b8a3b`, `a818fb7` |
+| 2026-10-06 13:44 | Production build archived (`frontend/build.zip`); login pages switched to `https://pedncpgovlk.com` | `3aed28f` (PR #115) |
+| 2026-10-06 13:56 | Full README and `backend/.env.example` | `1433a7e` (PR #116) |
+| 2026-10-06 14:28 | `backend/node_modules` committed | `ab2ba6e` |
+| 2026-10-06 14:39 | All remaining API URLs switched to the production domain ("npm run build cmmd") | `f5b02c7` (PR #118) |
+| 2026-10-10 | This documentation package committed; `main` merged into `wandana1_dev` | `ec38c1d`, `1200b68` |
 
-Commit volume: June 122 and July 170 commits (the main implementation period).
+Commit volume: June 122 and July 170 commits (the main implementation period); October 12 (deployment preparation).

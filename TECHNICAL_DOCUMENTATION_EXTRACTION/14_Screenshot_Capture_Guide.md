@@ -4,11 +4,13 @@ Every screenshot listed here is for a feature **verified in the codebase**. Capt
 
 ## 14.0 Preparation (do this before capturing)
 
+0. **(R1) Which environment?** The current source talks to the **production API** (`https://pedncpgovlk.com`), even when run locally with `npm start`. Creating demonstration data from a local run therefore writes to **production data**. Agree with the team whether to capture on production with a clearly labelled demo division, or to temporarily point a local copy at a test database. Do **not** use the committed `frontend/build.zip`; it is stale and its dashboards will not load (see `11` §11.2).
+
 1. **Use a demonstration dataset**, not real government data. Create, through the UI:
    - 1 Division (e.g. Kekirawa) with: Engineer (seeded), Clerk, Divisional Assistant, and 2 Users (field officers).
    - Design branch: 1 Director and 2 Design Engineers. Branch A: 1 Director and 1 Engineer.
    - About 8–12 jobs spread across ministries, departments and work types N/R, with statuses Pending, Approved and Rejected. At least one job taken through the **full drawing pipeline** and **final estimate review**. At least one job **older than 60 days** so the risk panel shows HIGH or CRITICAL (only if such data exists; never back-date data just to fake a result).
-2. **Hide or blur:** employee IDs of real staff, passwords (never type them on screen), real e-mail addresses and phone numbers, profile photos of real people, and request-letter references if real. Hide the browser's localStorage panel. Hide the `.env` file. Hide MongoDB Atlas connection strings, cluster names and IP access lists.
+2. **Hide or blur:** the README's "Default accounts" table if any GitHub screenshot shows it, employee IDs of real staff, passwords (never type them on screen), real e-mail addresses and phone numbers, profile photos of real people, and request-letter references if real. Hide the browser's localStorage panel. Hide the `.env` file. Hide MongoDB Atlas connection strings, cluster names and IP access lists.
 3. Use the same browser, 1920×1080 window and zoom (100 %) for all screenshots. Capture **light mode** for the main set and add 1–2 **dark mode** screenshots to show theming.
 4. Sequences marked "multi" should be captured with the **same job** so the Job No. and Estimation No. stay consistent across the workflow.
 
@@ -74,7 +76,8 @@ Every screenshot listed here is for a feature **verified in the codebase**. Capt
 | TE-08 | Postman: `GET /api/projects/risk/summary?division=…` JSON | — |
 | TE-09 | MongoDB Atlas / Compass: one `projects` document showing `statusHistory` (collapse `drawingFileUrl`) | Cluster name, connection string, any personal data |
 | TE-10 | Compass: the indexes tab of `projects` and `messages` | Cluster name |
-| TE-11 | Production hosting dashboard(s): **only if they exist** (see `11`) | Account e-mails, env values, URLs if private |
+| TE-11 | Production evidence (R1): (a) the live site in a browser with the address bar visible; (b) DevTools → Network showing a request to `https://pedncpgovlk.com/api/...` returning 200; (c) hosting control panel / Node app settings / TLS certificate, **only if they exist** (see `11`) | Account e-mails, env values, cookies, the `userId` in URLs and responses |
+| TE-13 | (R1) GitHub commit `f5b02c7` diff showing the switch to the production API URL: deployment milestone evidence | Personal e-mails |
 | TE-12 | GitHub: merged Pull Requests list / network graph | Personal e-mails |
 
 ## 14.D Capture Order (efficient run-through)

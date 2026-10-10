@@ -24,6 +24,8 @@ These are engineering problems the team visibly identified and solved. Each one 
 | CH-14 | Chatbot intent shadowing (e.g. "report" matching summary first) | Ordered intent list with comments | `chatbotController.js:12-56` |
 | CH-15 | Legacy jobs without an Estimation No. | Lazy backfill on update | `projectController.js:212-222` |
 | CH-16 | Login-gateway bugs | Commit "fix bug in head office login portals" (2026-08-05); "fix authentication problem when login" (2026-06-13) | git log |
+| CH-17 | Moving from a localhost-only configuration to a production domain (R1) | API URLs switched to `https://pedncpgovlk.com` in two steps (`3aed28f`, then `f5b02c7`, 2026-10-06), and a production build was produced. The switch was a text replacement, not a configuration mechanism, so it left stray spaces and a stale build archive (see §13.5) | git log |
+| CH-18 | Missing onboarding documentation (R1) | README rewritten with setup, default accounts, troubleshooting and contribution conventions; `.env.example` template; `docs/PROJECT_DOCUMENTATION.md` | `1433a7e`, `a818fb7` |
 
 ## 13.2 Architectural Limitations
 
@@ -33,7 +35,7 @@ These are engineering problems the team visibly identified and solved. Each one 
 | AR-2 | No real-time channel; polling every 4–8 s | `setInterval` in 5 files | Network and DB load grow linearly with open sessions |
 | AR-3 | Monolithic page components (1,000–2,500 lines) | file sizes | Hard to test and maintain |
 | AR-4 | 8 duplicated Branch A–D dashboards | `diff` shows only key and name changes | Each change must be made 8 times |
-| AR-5 | No API client abstraction; base URL repeated 109× | grep | Deployment friction |
+| AR-5 | No API client abstraction; base URL repeated 109× (now the production domain, R1) | grep | Changing environments means editing 21 files; local development points at production |
 | AR-6 | Inconsistent error response shapes (`{error}`, `{message,error}`, codes) | controllers | Client handling is ad hoc |
 | AR-7 | Notifications exist only in the client and are not persisted on the server | `utils/notifications.js:1-2` comment | Missed while offline; not shared across devices |
 
@@ -61,7 +63,11 @@ See `10_Authentication_and_Security.md` §10.14 (SEC-1 … SEC-13). The most sig
 | Schema fields never written (`assignedBy`, `fieldEstimateAmount`) and fields written but not in the schema (`isVerified`, `lastLogin`) | §06 |
 | Copied `git status` text used as commit messages | git log |
 | `manifest.json` still the CRA sample ("Create React App Sample") | `public/manifest.json` |
-| README is a one-line placeholder | `README.md` |
+| ~~README is a one-line placeholder~~ **Resolved in R1** (full README). New issue: the README publishes the default passwords in plain text, and parts of it are out of date with the code (localhost URLs, "keep port 5000", "regex-escaped chatbot input") | `README.md` |
+| (R1) `frontend/build.zip` committed: a binary build artefact (3.97 MB, with source maps) that is **stale** relative to the source | `3aed28f`; `11` §11.2 |
+| (R1) `backend/node_modules/` committed (5,258 files) although `.gitignore` excludes it | `ab2ba6e` |
+| (R1) 107 API URL literals begin with a stray space (`' https://…'`) after a find-and-replace | `f5b02c7` |
+| (R1) Find-and-replace also altered prose in `docs/PROJECT_DOCUMENTATION.md`, producing contradictory sentences | `f5b02c7` |
 
 ## 13.6 Database Limitations
 
@@ -88,15 +94,16 @@ Drawing upload type and size; workflow transition legality; password strength at
 
 ## 13.9 Deployment Constraints
 
-Hard-coded `127.0.0.1` API URL; no deployment configuration or CI; no start script; no health endpoint; dependence on external media CDNs (see `11`).
+Hard-coded API origin (now `https://pedncpgovlk.com`, R1) with no environment switch; stale committed build; committed `node_modules`; no deployment configuration or CI; no start script; no health endpoint; dependence on external media CDNs (see `11`).
 
 ## 13.10 Recommended Improvements (prioritised)
 
 | Priority | Improvement | Addresses |
 |---|---|---|
 | P1 | JWT or session auth + role/division middleware on every route; server-derived actor for `statusHistory` | SEC-1, SEC-2, AR-1 |
-| P1 | `REACT_APP_API_URL` + a single axios instance with interceptors | AR-5, deployment |
-| P1 | Rotate the seeded credentials; enforce a password policy | SEC-3, SEC-7 |
+| P1 | `REACT_APP_API_URL` + a single axios instance with interceptors (also removes the stray-space URLs) | AR-5, deployment |
+| P1 | Rotate the seeded credentials; remove the plaintext password table from the README; enforce a password policy | SEC-3, SEC-7 |
+| P1 | Remove `frontend/build.zip` and `backend/node_modules/` from git (`git rm -r --cached`); keep the build artefact on the host or in releases | Repository hygiene, §11.2 |
 | P1 | Escape chatbot HTML (or render markdown safely) | SEC-12 |
 | P2 | Server-side workflow state machine (allowed transitions per role) and `runValidators` | AR-1, data integrity |
 | P2 | Store `assigneeId` (ObjectId) instead of a name; normalise division names into a reference collection | DB limitations |
@@ -106,4 +113,4 @@ Hard-coded `127.0.0.1` API URL; no deployment configuration or CI; no start scri
 | P3 | Refactor dashboards into per-tab components; make one generic branch dashboard parameterised by `branch` | AR-3, AR-4 |
 | P3 | Pagination on list endpoints; atomic counters for Job No. and Estimation No. | Scalability |
 | P3 | Integration tests (Supertest + mongodb-memory-server), frontend tests (React Testing Library), GitHub Actions CI; fix the date-dependent tests | QA |
-| P3 | Remove dead code, artefacts and unused dependencies; write a README | Maintainability |
+| P3 | Remove dead code, artefacts and unused dependencies; bring the README and `docs/PROJECT_DOCUMENTATION.md` in line with the current code | Maintainability |

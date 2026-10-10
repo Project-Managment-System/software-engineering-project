@@ -1,23 +1,38 @@
 # 01 — Project Overview
 
-> **Extraction scope:** Repository `software-engineering-project` (GitHub organisation `Project-Managment-System`), branch `wandana1_dev` at commit `4d374ae` (2026-09-29). Analysis date: 2026-10-10.
+> **Extraction scope:** Repository `software-engineering-project` (GitHub organisation `Project-Managment-System`), branch `wandana1_dev` **after merging `main` (commit `1200b68`, 2026-10-10)**. The first pass audited `4d374ae` (2026-09-29). The changes brought in from `main` were then reviewed; see *Revision R1* below. Analysis date: 2026-10-10.
 > **Confidence legend:** **Verified** = read directly in source; **Inferred** = reasonable deduction from source; **Requires Confirmation** = cannot be established from the repository.
 
+### Revision R1 — changes merged from `main` (2026-09-29 → 2026-10-06)
+
+| Change | Commit(s) | Effect on this documentation |
+|---|---|---|
+| All 109 frontend API calls switched from `http://127.0.0.1:5000` to **`https://pedncpgovlk.com`**. 107 of the strings start with a stray space (`' https://…'`). Legacy `api/api.js` still uses `http://localhost:5000` | `3aed28f` (2 login pages), `f5b02c7` (all other files) | Deployment, architecture and security sections updated |
+| `frontend/build.zip` committed: a production build, **made before the full URL switch**. Its 2 login calls use the production domain; its 107 dashboard calls still use `127.0.0.1:5000`. Includes source maps | `3aed28f` | New deployment finding (11) |
+| `backend/node_modules/` committed (5,258 files), force-added although `.gitignore` excludes it | `ab2ba6e` | Repository hygiene (02, 13) |
+| `README.md` rewritten (≈430 lines). It names the system **"CEMS — Civil Engineering Management System"**, and **publishes the default seed passwords in plain text** | `1433a7e` | Name resolved (§1.1); security finding (10) |
+| `backend/.env.example` added (placeholder values only) | `1433a7e` | Configuration (02, 11) |
+| `docs/PROJECT_DOCUMENTATION.md` added (≈1,050 lines; team-written technical documentation) | `a818fb7`, `f5b02c7` | Listed as an existing documentation source |
+| Re-indentation only in several dashboards (no logic change; **line counts of every changed file are unchanged**, so the line references in these documents remain valid) | `f5b02c7` | None |
+| **No backend source, schema, route or test changes** | — | Backend, DB and API findings unchanged |
 ---
 
 ## 1.1 Official Project Name
 
-The repository does not contain a single authoritative project name. Three names are used in the code:
+After R1, the team's own documentation gives the name **"CEMS — Civil Engineering Management System"** (`README.md:1`, `docs/PROJECT_DOCUMENTATION.md:1`). The UI still brands itself "CivilPro Max". Names in use:
 
 | Name | Where it appears | Evidence | Confidence |
 |---|---|---|---|
+| **CEMS — Civil Engineering Management System** | README title, project documentation title | `README.md:1`, `docs/PROJECT_DOCUMENTATION.md:1` | **Verified (team documentation)** |
+
+| Name | Where it appears | Evidence | Confidence |
 | **CivilPro Max** — "Infrastructure Project Management System" | Browser tab title; login gateway heading; footer social links (`civilpromax`) | `frontend/public/index.html:31`, `frontend/src/components/Footer/Footer.jsx` | Verified |
-| **CEMS** (expansion not stated in code; likely "Civil Engineering Management System") | Backend console logs (`>>> CEMS DATABASE SYNCED`), chatbot name "CEMS AI Assistant", seeded placeholder e-mail domain `@cems.local` | `backend/config/db.js:11`, `backend/controllers/chatbotController.js:263`, `backend/seedDefaultUsers.js:70` | Verified (expansion = Inferred) |
+| **CEMS** (expansion confirmed by README as "Civil Engineering Management System") | Backend console logs (`>>> CEMS DATABASE SYNCED`), chatbot name "CEMS AI Assistant", seeded placeholder e-mail domain `@cems.local` | `backend/config/db.js:11`, `backend/controllers/chatbotController.js:263`, `backend/seedDefaultUsers.js:70` | Verified |
 | `civil-engineering-frontend` / `backend` | npm package names | `frontend/package.json:2`, `backend/package.json:2` | Verified |
 
 The task brief calls the product the **"Civil Engineering Site Management System"**. That exact phrase does not occur in the source code.
 
-**Convention used in these documents:** "the System" or **CivilPro Max (CEMS)**. → **REQUIRES TEAM CONFIRMATION**: the official name and what CEMS stands for.
+**Convention used in these documents:** "the System" or **CEMS (Civil Engineering Management System)**, with "CivilPro Max" noted as the UI brand. → **REQUIRES TEAM CONFIRMATION**: whether the report should use "CEMS" or "CivilPro Max" as the product name, and how it relates to "Civil Engineering Site Management System".
 
 ---
 
@@ -29,6 +44,8 @@ The code shows the System as a workflow and record-keeping platform for a **prov
 - Government ministries and departments send building or repair requests ("jobs") to a Division. Each request has an allocation (budget) and a request-letter reference.
 - Before the System, each job had to pass by hand through several people: a clerk records it, the Division Engineer approves it and assigns a field officer, the field officer visits the site and prepares an estimate, a structural drawing may be needed from the Head Office Design branch, and the Divisional Assistant and Engineer review the final estimate.
 - The System digitises this pipeline. It provides role-specific dashboards, explicit workflow states, a per-job audit trail ("Job Tracking"), in-division messaging, PDF/CSV reporting and a rule-based risk score for each job.
+
+The production domain `pedncpgovlk.com` (R1) reads naturally as "**P**rovincial **E**ngineering **D**epartment – **N**orth **C**entral **P**rovince – **gov.lk**". This is consistent with the division and ministry evidence, but it is **Inferred** only: the domain is a `.com`, not an official `.gov.lk` domain. The team documentation (README, `docs/PROJECT_DOCUMENTATION.md`) says only "a provincial engineering organization".
 
 → **REQUIRES TEAM CONFIRMATION**: the client organisation's real name, the original manual process, and the stakeholder problem statement. These are not documented in the repository.
 
@@ -149,7 +166,7 @@ Full details are in `02_Project_Structure_and_Technologies.md`.
 
 ## 1.8 Component Relationships (one-paragraph view)
 
-The browser loads a React single-page application (SPA). Each dashboard calls the Express REST API over HTTP with axios, using the **hard-coded base URL `http://127.0.0.1:5000`** (109 occurrences). Express routes go to controllers or inline handlers, which use Mongoose models (`User`, `Project`, `Message`) on a MongoDB database. Rule-based logic lives in backend services (`riskService`) and the chatbot controller. Files (drawings, chat attachments, profile photos) are stored **inline as base64 data-URL strings inside MongoDB documents**; there is no file server or object store. Session state is kept only in the browser's `localStorage`.
+The browser loads a React single-page application (SPA). Each dashboard calls the Express REST API over HTTPS with axios, using the **hard-coded production base URL `https://pedncpgovlk.com`** (109 occurrences in 21 files, after R1; previously `http://127.0.0.1:5000`). Express routes go to controllers or inline handlers, which use Mongoose models (`User`, `Project`, `Message`) on a MongoDB database. Rule-based logic lives in backend services (`riskService`) and the chatbot controller. Files (drawings, chat attachments, profile photos) are stored **inline as base64 data-URL strings inside MongoDB documents**; there is no file server or object store. Session state is kept only in the browser's `localStorage`.
 
 ---
 
@@ -158,8 +175,8 @@ The browser loads a React single-page application (SPA). Each dashboard calls th
 | Aspect | Finding | Confidence |
 |---|---|---|
 | Feature completeness | All core division and drawing workflows are implemented end-to-end in UI and API | Verified |
-| Last code change | 2026-09-29 (`4d374ae`, adds `resetPassword.js`) | Verified (git) |
-| Development activity | 332 commits by 7 author identities, 174 merge commits; peak activity June–July 2026 | Verified (git) |
+| Last code change | 2026-10-06 (`f5b02c7`, production API URL switch); last backend logic change 2026-09-29 (`4d374ae`, adds `resetPassword.js`) | Verified (git) |
+| Development activity | 347 commits reachable from `HEAD` by 7 author identities, 183 merge commits; peak activity June–July 2026 | Verified (git) |
 | Automated tests | 1 Jest suite (risk engine). On 2026-10-10 it gives **10 passed, 2 failed, 1 todo**. The failures are date-dependent test fixtures, not engine defects (see `12_Testing_and_Validation.md`) | Verified (executed) |
-| Deployment | The team states the system is deployed. **The repository has no deployment configuration** (no Vercel/Netlify/Render/Docker/CI files on any branch). All frontend API calls are hard-coded to `127.0.0.1:5000`, so the committed frontend can only reach a backend on the same machine as the browser | Verified (absence); **REQUIRES TEAM CONFIRMATION** for hosting details |
+| Deployment | **Production API domain evidenced:** all frontend source calls `https://pedncpgovlk.com/api/...` (R1). There is still **no deployment configuration** (no Vercel/Netlify/Render/Docker/CI files). Hosting provider, frontend URL and server set-up are not in the repository. The committed `frontend/build.zip` is **stale and inconsistent** (dashboards still call `127.0.0.1:5000`), so it must not be presented as the deployed artefact unless confirmed | Domain: Verified (source). Hosting details: **REQUIRES TEAM CONFIRMATION** |
 | Database | Local `.env` (untracked) contains `MONGODB_URI` with a standard `mongodb://` connection string whose host is under the `mongodb.net` domain, i.e. **MongoDB Atlas (cloud)** | Verified (scheme only; value not disclosed) |

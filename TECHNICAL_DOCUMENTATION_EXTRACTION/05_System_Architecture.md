@@ -33,7 +33,7 @@ flowchart LR
   subgraph DB["MongoDB Atlas"]
     U[(users)]; P[(projects<br/>incl. base64 drawings)]; M[(messages<br/>incl. base64 attachments)]
   end
-  SPA -- "HTTP JSON (axios)<br/>http://127.0.0.1:5000/api/*" --> MW
+  SPA -- "HTTPS JSON (axios)<br/>https://pedncpgovlk.com/api/*" --> MW
   SPA -. "media GET" .-> PX
   MW --> R1 & R2 & R3 & R4 & R5
   R2 --> SVC
@@ -65,7 +65,7 @@ index.js
 ```
 
 - **State management:** local component state only (`useState`/`useRef`/`useMemo`). `localStorage` is the cross-page store (session identity, theme, accent colour, notifications, "seen" sets). `sessionStorage` holds minor UI state. Unused `AuthContext`/`ThemeContext` files exist but are not wired into the app.
-- **API layer:** none in practice. Components call `axios` directly with absolute URLs. `api/api.js` is used only by the three legacy login pages.
+- **API layer:** none in practice. Components call `axios` directly with absolute URLs (`https://pedncpgovlk.com/api/...` since R1, repeated 109 times, mostly with a stray leading space). `api/api.js` is used only by the three legacy login pages.
 - **Styling:** about 10,300 lines of hand-written CSS spread across per-dashboard files plus `premium-system.css` (theme tokens, dark mode). Tailwind is used mainly on the portal and login pages.
 
 ## 5.4 Backend Architecture
@@ -139,17 +139,20 @@ Implications: each MongoDB document is capped at 16 MB (BSON limit), and base64 
 
 ## 5.11 Deployment Architecture
 
-Production hosting is **not evidenced in the repository** (see `11_Deployment_and_Hosting.md`). The only architecture the code supports is:
+After R1, the frontend source hard-codes the production API origin **`https://pedncpgovlk.com`** (paths `/api/...`). There is no port in the URL, so the Express app (listening on `PORT`, default 5000) must sit behind something that terminates HTTPS on port 443 and forwards `/api` to Node, e.g. a reverse proxy or a hosting control panel's Node.js app feature. **None of that configuration is in the repository.** Hosting provider, the frontend's own URL, and whether frontend and API share the domain are **REQUIRES TEAM CONFIRMATION** (`11_Deployment_and_Hosting.md`).
 
 ```mermaid
 flowchart LR
-  subgraph Host["Single machine (browser + API co-located, as coded)"]
-    B["Browser → CRA dev server :3000 or static build"]
-    N["node backend/server.js :5000 (0.0.0.0)"]
+  B["Browser"]
+  FE["Static SPA build<br/>(host/URL: REQUIRES TEAM CONFIRMATION)"]
+  subgraph Prod["pedncpgovlk.com (as referenced by frontend source)"]
+    RP["HTTPS termination / proxy :443<br/>(not in repo — inferred)"]
+    N["node backend/server.js<br/>Express :PORT (default 5000)"]
   end
   A[("MongoDB Atlas cluster")]
-  B -- "http://127.0.0.1:5000/api" --> N
-  N -- "mongodb:// (TLS per Atlas defaults)" --> A
+  B --> FE
+  B -- "https://pedncpgovlk.com/api/*" --> RP --> N
+  N -- "MONGODB_URI (mongodb://…mongodb.net)" --> A
 ```
 
-→ **REQUIRES TEAM CONFIRMATION**: the actual production frontend host, backend host and domain, and how the hard-coded `127.0.0.1` URLs were handled in the deployed build.
+Local development still works only by temporarily changing the hard-coded URLs back (or by running against the production API). The legacy `api/api.js` still points to `http://localhost:5000/api`.
