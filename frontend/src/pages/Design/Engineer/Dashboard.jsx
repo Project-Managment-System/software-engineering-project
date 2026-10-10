@@ -224,7 +224,7 @@ const DesignEngineerDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
+      const res = await axios.get(' https://pedncpgovlk.com/api/projects/all');
       const list = res.data || [];
       setJobs(list);
 
@@ -263,7 +263,7 @@ const DesignEngineerDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) return;
-      const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/users/${userId}`);
       const user = res.data;
       if (user) {
         const fetchedProfile = {
@@ -341,7 +341,7 @@ const DesignEngineerDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
@@ -417,7 +417,7 @@ const DesignEngineerDashboard = () => {
     setSendingJobNo(jobNo);
     try {
       const dataUrl = await readFileAsDataUrl(file);
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingFileUrl: dataUrl,
         drawingWorkflowStatus: 'PendingDirectorDesign',
         drawingAttachedAt: new Date().toISOString(),
@@ -440,7 +440,7 @@ const DesignEngineerDashboard = () => {
   const handleRecallDrawing = async (jobNo) => {
     setRecallingJobNo(jobNo);
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingWorkflowStatus: 'PendingEngineerDesign',
         drawingFileUrl: '',
         drawingAttachedAt: null
@@ -459,7 +459,7 @@ const DesignEngineerDashboard = () => {
       const userId = localStorage.getItem('userId');
       if (!userId) { setProfileMessage({ type: 'error', text: 'User session not found.' }); return; }
       const payload = { fullName: profileForm.name, email: profileForm.email, phoneNo: profileForm.phone };
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, payload);
       setProfileData(profileForm);
       localStorage.setItem('fullName', profileForm.name);
       localStorage.setItem('email', profileForm.email);
@@ -486,7 +486,7 @@ const DesignEngineerDashboard = () => {
       try {
         const userId = localStorage.getItem('userId');
         if (userId) {
-          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, { profilePic: base64Data });
+          await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, { profilePic: base64Data });
           setProfileMessage({ type: 'success', text: 'Profile photo updated!' });
         }
       } catch (err) {

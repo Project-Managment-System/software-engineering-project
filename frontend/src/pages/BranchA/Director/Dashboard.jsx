@@ -116,7 +116,7 @@ const BranchADirectorDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
+      const res = await axios.get(' https://pedncpgovlk.com/api/projects/all');
       setJobs(res.data || []);
     } catch (err) {
       console.error('Error loading director design dashboard data:', err);
@@ -164,7 +164,7 @@ const BranchADirectorDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });

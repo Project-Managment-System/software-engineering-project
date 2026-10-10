@@ -28,8 +28,8 @@ export default function RiskIntelligencePanel({ division }) {
     setError(null);
     try {
       const url = division
-        ? `http://127.0.0.1:5000/api/projects/risk/summary?division=${encodeURIComponent(division)}`
-        : 'http://127.0.0.1:5000/api/projects/risk/summary';
+        ? ` https://pedncpgovlk.com/api/projects/risk/summary?division=${encodeURIComponent(division)}`
+        : ' https://pedncpgovlk.com/api/projects/risk/summary';
       const res = await axios.get(url);
       setSummary(res.data);
     } catch (err) {

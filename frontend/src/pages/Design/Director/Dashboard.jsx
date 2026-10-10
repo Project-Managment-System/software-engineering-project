@@ -131,7 +131,7 @@ const DesignDirectorDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/projects/all');
+      const res = await axios.get(' https://pedncpgovlk.com/api/projects/all');
       const list = res.data || [];
       setJobs(list);
 
@@ -185,7 +185,7 @@ const DesignDirectorDashboard = () => {
 
   const fetchDesignEngineers = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:5000/api/users');
+      const res = await axios.get(' https://pedncpgovlk.com/api/users');
       const engineers = (res.data || []).filter(u => u.role === 'branch_engineer' && u.branch === 'design');
       setDesignEngineers(engineers);
     } catch (err) {
@@ -197,7 +197,7 @@ const DesignDirectorDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) return;
-      const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/users/${userId}`);
       const user = res.data;
       if (user) {
         const fetchedProfile = {
@@ -275,7 +275,7 @@ const DesignDirectorDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
@@ -329,7 +329,7 @@ const DesignDirectorDashboard = () => {
     const engineer = designEngineers.find(e => e._id === engineerId);
     setAssigningJobNo(jobNo);
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingWorkflowStatus: 'PendingEngineerDesign',
         assignedDesignEngineerId: engineerId,
         assignedDesignEngineerName: engineer?.fullName || '',
@@ -358,7 +358,7 @@ const DesignDirectorDashboard = () => {
     const engineer = designEngineers.find(e => e._id === engineerId);
     setReassigningJobNo(jobNo);
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         assignedDesignEngineerId: engineerId,
         assignedDesignEngineerName: engineer?.fullName || '',
         assignedDesignEngineerAt: new Date().toISOString()
@@ -505,7 +505,7 @@ const DesignDirectorDashboard = () => {
   const viewJobAttachment = async (jobNo) => {
     setLoadingAttachmentJobNo(jobNo);
     try {
-      const res = await axios.get(`http://127.0.0.1:5000/api/projects/job/${jobNo}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/projects/job/${jobNo}`);
       if (res.data?.drawingFileUrl) {
         openAttachment(res.data.drawingFileUrl);
       } else {
@@ -522,7 +522,7 @@ const DesignDirectorDashboard = () => {
   const handleApprove = async (jobNo) => {
     setApprovingJobNo(jobNo);
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         drawingWorkflowStatus: 'Completed',
         directorApprovedAt: new Date().toISOString(),
         drawingReceived: true,
@@ -544,7 +544,7 @@ const DesignDirectorDashboard = () => {
       const userId = localStorage.getItem('userId');
       if (!userId) { setProfileMessage({ type: 'error', text: 'User session not found.' }); return; }
       const payload = { fullName: profileForm.name, email: profileForm.email, phoneNo: profileForm.phone };
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, payload);
       setProfileData(profileForm);
       localStorage.setItem('fullName', profileForm.name);
       localStorage.setItem('email', profileForm.email);
@@ -571,7 +571,7 @@ const DesignDirectorDashboard = () => {
       try {
         const userId = localStorage.getItem('userId');
         if (userId) {
-          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, { profilePic: base64Data });
+          await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, { profilePic: base64Data });
           setProfileMessage({ type: 'success', text: 'Profile photo updated!' });
         }
       } catch (err) {

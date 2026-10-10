@@ -260,7 +260,7 @@ const EngineerDashboard = () => {
     setChatInput('');
     setChatLoading(true);
     try {
-      const res = await axios.post('http://127.0.0.1:5000/api/chatbot/query', { message, division });
+      const res = await axios.post(' https://pedncpgovlk.com/api/chatbot/query', { message, division });
       setChatMessages(prev => [...prev, { role: 'ai', text: res.data.response, time: formatChatTime() }]);
     } catch (err) {
       setChatMessages(prev => [...prev, { role: 'ai', text: '❌ Sorry, I could not reach the server. Please check your connection and try again.', time: formatChatTime() }]);
@@ -299,7 +299,7 @@ const EngineerDashboard = () => {
   const fetchData = async () => {
     try {
       const division = localStorage.getItem('userDivision');
-      const res = await axios.get(`http://127.0.0.1:5000/api/projects/division/${division}`);
+      const res = await axios.get(` https://pedncpgovlk.com/api/projects/division/${division}`);
       const data = res.data.map((item, index) => ({
         ...item,
         sNo: index + 1,
@@ -314,10 +314,10 @@ const EngineerDashboard = () => {
     try {
       const division = localStorage.getItem('userDivision');
       if (division) {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users/division/${division}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/users/division/${division}`);
         setAllSystemUsers(res.data);
       } else {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/users`);
         setAllSystemUsers(res.data);
       }
     } catch (err) { console.error("Error fetching users:", err); }
@@ -327,7 +327,7 @@ const EngineerDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       if (userId) {
-        const res = await axios.get(`http://127.0.0.1:5000/api/users/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/users/${userId}`);
         const user = res.data;
         if (user) {
           const fetchedProfile = {
@@ -373,7 +373,7 @@ const EngineerDashboard = () => {
     if (!userId) return;
     const pollUnread = async () => {
       try {
-        const res = await axios.get(`http://127.0.0.1:5000/api/messages/unread/${userId}`);
+        const res = await axios.get(` https://pedncpgovlk.com/api/messages/unread/${userId}`);
         const counts = res.data || {};
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
         setTotalUnread(total);
@@ -526,7 +526,7 @@ const EngineerDashboard = () => {
 
   const handleUpdate = async () => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${editForm.jobNo}`, editForm);
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${editForm.jobNo}`, editForm);
       setEditingJob(null);
       fetchData();
       addToast('Job updated successfully!', 'success');
@@ -538,7 +538,7 @@ const EngineerDashboard = () => {
   const handleDelete = async (jobNo) => {
     if (window.confirm("Are you sure you want to delete this job?")) {
       try {
-        await axios.delete(`http://127.0.0.1:5000/api/projects/delete/${jobNo}`);
+        await axios.delete(` https://pedncpgovlk.com/api/projects/delete/${jobNo}`);
         fetchData();
         addToast('Job deleted successfully!', 'success');
       } catch (err) {
@@ -550,7 +550,7 @@ const EngineerDashboard = () => {
   const handleDeleteUser = async (userId) => {
     if (window.confirm("Are you sure you want to remove this user?")) {
       try {
-        await axios.delete(`http://127.0.0.1:5000/api/users/${userId}`);
+        await axios.delete(` https://pedncpgovlk.com/api/users/${userId}`);
         setAllSystemUsers(prevUsers => prevUsers.filter(user => user._id !== userId));
         addToast('User deleted successfully!', 'success');
       } catch (err) {
@@ -567,7 +567,7 @@ const EngineerDashboard = () => {
 
   const handleUpdateUser = async () => {
     try {
-      await axios.put(`http://127.0.0.1:5000/api/users/${editingUser}`, editUserForm);
+      await axios.put(` https://pedncpgovlk.com/api/users/${editingUser}`, editUserForm);
       setEditingUser(null);
       fetchUsers();
       addToast('User updated successfully!', 'success');
@@ -579,7 +579,7 @@ const EngineerDashboard = () => {
 
   const handleApprove = async (jobNo, status) => {
     try {
-      await axios.patch(`http://127.0.0.1:5000/api/projects/status/${jobNo}`, {
+      await axios.patch(` https://pedncpgovlk.com/api/projects/status/${jobNo}`, {
         status,
         historyEvent: status === 'Approved' ? 'Approved by Engineer' : 'Rejected by Engineer',
         historyActor: getHistoryActor()
@@ -593,7 +593,7 @@ const EngineerDashboard = () => {
 
   const handleUndoApproval = async (jobNo) => {
     try {
-      await axios.patch(`http://127.0.0.1:5000/api/projects/undo/${jobNo}`);
+      await axios.patch(` https://pedncpgovlk.com/api/projects/undo/${jobNo}`);
       fetchData();
       addToast('Status reset to Pending', 'info');
     } catch (error) { console.error("Error undoing status:", error); }
@@ -607,7 +607,7 @@ const EngineerDashboard = () => {
       engineerReviewNote = note;
     }
     try {
-      await axios.put(`http://127.0.0.1:5000/api/projects/update/${jobNo}`, {
+      await axios.put(` https://pedncpgovlk.com/api/projects/update/${jobNo}`, {
         engineerReviewStatus,
         engineerReviewedAt: new Date().toISOString(),
         engineerReviewNote,
@@ -623,7 +623,7 @@ const EngineerDashboard = () => {
 
   const handleUndoEngineerReview = async (jobNo) => {
     try {
-      await axios.patch(`http://127.0.0.1:5000/api/projects/undo-engineer-review/${jobNo}`);
+      await axios.patch(` https://pedncpgovlk.com/api/projects/undo-engineer-review/${jobNo}`);
       fetchData();
       addToast('Engineer review reset to Pending', 'info');
     } catch (error) {
@@ -634,7 +634,7 @@ const EngineerDashboard = () => {
 
   const handleAssigneeChange = async (jobNo, newAssignee) => {
     try {
-      await axios.patch(`http://127.0.0.1:5000/api/projects/assign/${jobNo}`, { assignee: newAssignee });
+      await axios.patch(` https://pedncpgovlk.com/api/projects/assign/${jobNo}`, { assignee: newAssignee });
       await fetchData();
       addToast(`Assigned to ${newAssignee}`, 'success');
     } catch (error) { console.error("Failed to update:", error); }
@@ -652,7 +652,7 @@ const EngineerDashboard = () => {
         email: profileForm.email,
         phoneNo: profileForm.phone
       };
-      const res = await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, payload);
+      const res = await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, payload);
       if (res.data) {
         setProfileData(profileForm);
         localStorage.setItem('fullName', profileForm.name);
@@ -687,7 +687,7 @@ const EngineerDashboard = () => {
       try {
         const userId = localStorage.getItem('userId');
         if (userId) {
-          await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/profile`, {
+          await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/profile`, {
             profilePic: base64Data
           });
           addToast("Profile photo updated successfully!", "success");
@@ -719,7 +719,7 @@ const EngineerDashboard = () => {
       role: userFormData.role
     };
     try {
-      await axios.post('http://127.0.0.1:5000/api/users/add', payload);
+      await axios.post(' https://pedncpgovlk.com/api/users/add', payload);
       addToast('User saved! They can now log in.', 'success');
       setUserFormData({
         employeeId: '',
@@ -755,7 +755,7 @@ const EngineerDashboard = () => {
     setIsChangingPassword(true);
     try {
       const userId = localStorage.getItem('userId');
-      await axios.patch(`http://127.0.0.1:5000/api/users/${userId}/password`, {
+      await axios.patch(` https://pedncpgovlk.com/api/users/${userId}/password`, {
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword
       });
@@ -1070,196 +1070,196 @@ const EngineerDashboard = () => {
               ].filter(d => d.value > 0);
 
               return (
-              <motion.div key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                <motion.div key="overview" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
 
-                {/* ── Charts Row ── */}
-                <motion.div
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '24px' }}
-                >
-                  {/* Donut: Division status breakdown */}
-                  <motion.div variants={cardVariant} whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                      <Activity size={18} style={{ color: 'var(--accent-primary)' }} />
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Division Status Breakdown</h3>
-                    </div>
-                    {totalDivisionJobs === 0 ? (
-                      <div className="placeholder-content" style={{ height: '240px', border: 'none' }}>
-                        <BarChart3 size={28} style={{ opacity: 0.35 }} />
-                        <span>No jobs found for your division yet.</span>
+                  {/* ── Charts Row ── */}
+                  <motion.div
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '24px' }}
+                  >
+                    {/* Donut: Division status breakdown */}
+                    <motion.div variants={cardVariant} whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                        <Activity size={18} style={{ color: 'var(--accent-primary)' }} />
+                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Division Status Breakdown</h3>
                       </div>
-                    ) : (
-                      <div style={{ position: 'relative', width: '100%', height: 260 }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={statusSlices}
-                              cx="50%" cy="45%"
-                              innerRadius={58} outerRadius={86}
-                              paddingAngle={4} dataKey="value"
-                              isAnimationActive animationDuration={700}
-                            >
-                              {statusSlices.map((entry, i) => (
-                                <Cell key={`ov-status-cell-${i}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <RechartsTooltip content={<CustomTooltip />} />
-                            <Legend verticalAlign="bottom" height={36}
-                              formatter={(value) => (
-                                <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem' }}>{value}</span>
-                              )}
-                            />
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div style={{ position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                          <div style={{ fontSize: '1.9rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
-                            {totalDivisionJobs}
-                          </div>
-                          <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '3px' }}>
-                            Total Jobs
+                      {totalDivisionJobs === 0 ? (
+                        <div className="placeholder-content" style={{ height: '240px', border: 'none' }}>
+                          <BarChart3 size={28} style={{ opacity: 0.35 }} />
+                          <span>No jobs found for your division yet.</span>
+                        </div>
+                      ) : (
+                        <div style={{ position: 'relative', width: '100%', height: 260 }}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={statusSlices}
+                                cx="50%" cy="45%"
+                                innerRadius={58} outerRadius={86}
+                                paddingAngle={4} dataKey="value"
+                                isAnimationActive animationDuration={700}
+                              >
+                                {statusSlices.map((entry, i) => (
+                                  <Cell key={`ov-status-cell-${i}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <RechartsTooltip content={<CustomTooltip />} />
+                              <Legend verticalAlign="bottom" height={36}
+                                formatter={(value) => (
+                                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.82rem' }}>{value}</span>
+                                )}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div style={{ position: 'absolute', top: '42%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                            <div style={{ fontSize: '1.9rem', fontWeight: 900, fontFamily: "'Outfit',sans-serif", color: 'var(--text-primary)', lineHeight: 1 }}>
+                              {totalDivisionJobs}
+                            </div>
+                            <div style={{ fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-label)', marginTop: '3px' }}>
+                              Total Jobs
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
-                    {statusSlices.length > 0 && (
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginTop: '4px' }}>
-                        {statusSlices.map((s) => (
-                          <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
-                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{s.name}</span>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.color }}>
-                              - {s.value} ({totalDivisionJobs > 0 ? Math.round((s.value / totalDivisionJobs) * 100) : 0}%)
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </motion.div>
-                </motion.div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-
-                  {/* Left Column: Team & Resource Directory */}
-                  <motion.div variants={cardVariant} initial="hidden" animate="visible" whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Users size={20} style={{ color: 'var(--accent-primary)' }} />
-                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Team Resource Summary</h3>
-                      </div>
-                      {renderExportButtons(
-                        "Team Resource Summary",
-                        ["Serial No", "User Name", "Position", "Division", "Active Jobs"],
-                        usersWithJobs.map((u, index) => [index + 1, u.displayName, formatRoleName(u.role), u.division || 'Head Office', u.jobCount])
                       )}
-                    </div>
-                    <div className="table-scroll-wrapper">
-                      <table className="project-table">
-                        <thead>
-                          <tr>
-                            <th>Serial No</th>
-                            <th>User Name</th>
-                            <th>Position</th>
-                            <th>Division</th>
-                            <th style={{ minWidth: '140px' }}>Active Jobs</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {usersWithJobs.length === 0 ? (
-                            <tr>
-                              <td colSpan={5}>
-                                <div className="placeholder-content" style={{ height: '100px', border: 'none' }}>
-                                  <span>No system users registered.</span>
-                                </div>
-                              </td>
-                            </tr>
-                          ) : (
-                            (showAllTeam ? usersWithJobs : usersWithJobs.slice(0, TEAM_PREVIEW_COUNT)).map((user, index) => (
-                              <tr key={user._id}>
-                                <td>{index + 1}</td>
-                                <td className="font-bold">{user.displayName}</td>
-                                <td>
-                                  <span className={`status-badge ${getRoleBadgeClass(user.role)}`}>
-                                    {formatRoleName(user.role)}
-                                  </span>
-                                </td>
-                                <td>{user.division || 'Head Office'}</td>
-                                <td>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <div style={{ flex: 1, height: '5px', borderRadius: '99px', background: 'var(--border-base)', minWidth: '52px' }}>
-                                      <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(user.jobCount / maxWorkload) * 100}%` }}
-                                        transition={{ duration: 0.6, ease: 'easeOut' }}
-                                        style={{ height: '100%', borderRadius: '99px', background: 'var(--accent-primary)' }}
-                                      />
-                                    </div>
-                                    <span style={{ fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.85rem', minWidth: '16px', textAlign: 'right' }}>{user.jobCount}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                    {usersWithJobs.length > TEAM_PREVIEW_COUNT && (
-                      <button
-                        type="button"
-                        onClick={() => setShowAllTeam(v => !v)}
-                        style={{
-                          marginTop: '12px', width: '100%', padding: '10px', borderRadius: 'var(--radius-btn)',
-                          border: '1.5px solid var(--border-base)', background: 'var(--bg-input)',
-                          color: 'var(--accent-primary)', fontWeight: 700, fontSize: '0.82rem',
-                          fontFamily: "'Outfit', sans-serif", cursor: 'pointer',
-                        }}
-                      >
-                        {showAllTeam ? 'Show Less' : `View All ${usersWithJobs.length} Members`}
-                      </button>
-                    )}
-                  </motion.div>
-
-                  {/* Right Column: AI Suggestions */}
-                  <motion.div variants={cardVariant} initial="hidden" animate="visible" whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                      <Lightbulb size={20} style={{ color: '#d97706' }} />
-                      <h3 className="recent-jobs-title" style={{ margin: 0 }}>Allocation suggestions</h3>
-                    </div>
-                    <motion.div
-                      variants={staggerContainer}
-                      initial="hidden"
-                      animate="visible"
-                      style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
-                    >
-                      {recommendations.map((rec, index) => (
-                        <motion.div
-                          key={index}
-                          variants={cardVariant}
-                          whileHover={{ x: 3 }}
-                          className={`alert-banner alert-${rec.type === 'success' ? 'success' : rec.type === 'danger' ? 'error' : rec.type === 'warning' ? 'warning' : 'info'}`}
-                          style={{ margin: 0, padding: '16px', borderRadius: '12px', boxShadow: 'none' }}
-                        >
-                          <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                            <span style={{ fontSize: '1.25rem', lineHeight: '1' }}>
-                              {rec.type === 'success' && '🌱'}
-                              {rec.type === 'warning' && '💡'}
-                              {rec.type === 'info' && '⚠️'}
-                              {rec.type === 'danger' && '⏱️'}
-                            </span>
-                            <span style={{ flex: 1, fontSize: '0.86rem', lineHeight: '1.4', fontWeight: 500 }}>
-                              {rec.text}
-                            </span>
-                          </div>
-                        </motion.div>
-                      ))}
+                      {statusSlices.length > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '18px', flexWrap: 'wrap', marginTop: '4px' }}>
+                          {statusSlices.map((s) => (
+                            <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{s.name}</span>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: s.color }}>
+                                - {s.value} ({totalDivisionJobs > 0 ? Math.round((s.value / totalDivisionJobs) * 100) : 0}%)
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   </motion.div>
 
-                </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
 
-                <RiskIntelligencePanel division={currentDivision || undefined} />
-              </motion.div>
+                    {/* Left Column: Team & Resource Directory */}
+                    <motion.div variants={cardVariant} initial="hidden" animate="visible" whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <Users size={20} style={{ color: 'var(--accent-primary)' }} />
+                          <h3 className="recent-jobs-title" style={{ margin: 0 }}>Team Resource Summary</h3>
+                        </div>
+                        {renderExportButtons(
+                          "Team Resource Summary",
+                          ["Serial No", "User Name", "Position", "Division", "Active Jobs"],
+                          usersWithJobs.map((u, index) => [index + 1, u.displayName, formatRoleName(u.role), u.division || 'Head Office', u.jobCount])
+                        )}
+                      </div>
+                      <div className="table-scroll-wrapper">
+                        <table className="project-table">
+                          <thead>
+                            <tr>
+                              <th>Serial No</th>
+                              <th>User Name</th>
+                              <th>Position</th>
+                              <th>Division</th>
+                              <th style={{ minWidth: '140px' }}>Active Jobs</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {usersWithJobs.length === 0 ? (
+                              <tr>
+                                <td colSpan={5}>
+                                  <div className="placeholder-content" style={{ height: '100px', border: 'none' }}>
+                                    <span>No system users registered.</span>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              (showAllTeam ? usersWithJobs : usersWithJobs.slice(0, TEAM_PREVIEW_COUNT)).map((user, index) => (
+                                <tr key={user._id}>
+                                  <td>{index + 1}</td>
+                                  <td className="font-bold">{user.displayName}</td>
+                                  <td>
+                                    <span className={`status-badge ${getRoleBadgeClass(user.role)}`}>
+                                      {formatRoleName(user.role)}
+                                    </span>
+                                  </td>
+                                  <td>{user.division || 'Head Office'}</td>
+                                  <td>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <div style={{ flex: 1, height: '5px', borderRadius: '99px', background: 'var(--border-base)', minWidth: '52px' }}>
+                                        <motion.div
+                                          initial={{ width: 0 }}
+                                          animate={{ width: `${(user.jobCount / maxWorkload) * 100}%` }}
+                                          transition={{ duration: 0.6, ease: 'easeOut' }}
+                                          style={{ height: '100%', borderRadius: '99px', background: 'var(--accent-primary)' }}
+                                        />
+                                      </div>
+                                      <span style={{ fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.85rem', minWidth: '16px', textAlign: 'right' }}>{user.jobCount}</span>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      {usersWithJobs.length > TEAM_PREVIEW_COUNT && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAllTeam(v => !v)}
+                          style={{
+                            marginTop: '12px', width: '100%', padding: '10px', borderRadius: 'var(--radius-btn)',
+                            border: '1.5px solid var(--border-base)', background: 'var(--bg-input)',
+                            color: 'var(--accent-primary)', fontWeight: 700, fontSize: '0.82rem',
+                            fontFamily: "'Outfit', sans-serif", cursor: 'pointer',
+                          }}
+                        >
+                          {showAllTeam ? 'Show Less' : `View All ${usersWithJobs.length} Members`}
+                        </button>
+                      )}
+                    </motion.div>
+
+                    {/* Right Column: AI Suggestions */}
+                    <motion.div variants={cardVariant} initial="hidden" animate="visible" whileHover={{ y: -3 }} className="field-card" style={{ padding: '24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                        <Lightbulb size={20} style={{ color: '#d97706' }} />
+                        <h3 className="recent-jobs-title" style={{ margin: 0 }}>Allocation suggestions</h3>
+                      </div>
+                      <motion.div
+                        variants={staggerContainer}
+                        initial="hidden"
+                        animate="visible"
+                        style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+                      >
+                        {recommendations.map((rec, index) => (
+                          <motion.div
+                            key={index}
+                            variants={cardVariant}
+                            whileHover={{ x: 3 }}
+                            className={`alert-banner alert-${rec.type === 'success' ? 'success' : rec.type === 'danger' ? 'error' : rec.type === 'warning' ? 'warning' : 'info'}`}
+                            style={{ margin: 0, padding: '16px', borderRadius: '12px', boxShadow: 'none' }}
+                          >
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                              <span style={{ fontSize: '1.25rem', lineHeight: '1' }}>
+                                {rec.type === 'success' && '🌱'}
+                                {rec.type === 'warning' && '💡'}
+                                {rec.type === 'info' && '⚠️'}
+                                {rec.type === 'danger' && '⏱️'}
+                              </span>
+                              <span style={{ flex: 1, fontSize: '0.86rem', lineHeight: '1.4', fontWeight: 500 }}>
+                                {rec.text}
+                              </span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </motion.div>
+                    </motion.div>
+
+                  </div>
+
+                  <RiskIntelligencePanel division={currentDivision || undefined} />
+                </motion.div>
               );
             })()}
 
@@ -1290,73 +1290,73 @@ const EngineerDashboard = () => {
                       ? approvalData
                       : approvalData.filter(job => (job.status || 'Pending') === jobStatusFilter);
                     return (
-                    <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
-                      {jobStatusFilter !== 'all' && (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-                          <span className={`status-badge status-${jobStatusFilter.toLowerCase()}`}>
-                            Filtered — {jobStatusFilter}
-                          </span>
-                          <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
-                            Clear filter
-                          </button>
-                        </div>
-                      )}
-                      {renderExportButtons(
-                        "Approval Requests",
-                        ["No", "Estimation Number", "Job Name", "Date of Request", "Allocation", "Status"],
-                        filteredApprovalData.map((job, idx) => [idx + 1, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
-                      )}
-                      <div className="table-scroll-wrapper">
-                        <table className="project-table">
-                          <thead>
-                            <tr><th>No</th><th>Estimation Number</th><th>Job Name</th><th>Date of Request</th><th>Allocation</th><th>Approval</th></tr>
-                          </thead>
-                          <tbody>
-                            {filteredApprovalData.length === 0 ? (
-                              <tr>
-                                <td colSpan={6}>
-                                  <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
-                                    <AlertTriangle size={24} style={{ opacity: 0.35 }} />
-                                    <span>{jobStatusFilter === 'all' ? 'No approval requests found' : `No ${jobStatusFilter.toLowerCase()} jobs.`}</span>
-                                  </div>
-                                </td>
-                              </tr>
-                            ) : (
-                              filteredApprovalData.map((job, idx) => (
-                                <tr key={job.jobNo}>
-                                  <td>{idx + 1}</td>
-                                  <td className="font-mono">{job.estimationNo || '—'}</td>
-                                  <td className="font-bold">{job.jobName}</td>
-                                  <td>{formatDate(job.dateReq)}</td>
-                                  <td>{job.allocation}</td>
-                                  <td>
-                                    {job.status === 'Pending' ? (
-                                      <div style={{ display: 'flex', gap: '6px' }}>
-                                        <button className="approve-btn" onClick={() => handleApprove(job.jobNo, 'Approved')} title="Approve">
-                                          <Check size={15} />
-                                        </button>
-                                        <button className="reject-btn" onClick={() => handleApprove(job.jobNo, 'Rejected')} title="Reject">
-                                          <X size={15} />
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
-                                          {job.status}
-                                        </span>
-                                        <button className="edit-btn" onClick={() => handleUndoApproval(job.jobNo)} title="Reset" style={{ padding: '4px 8px', minWidth: 'auto' }}>
-                                          <Undo size={13} />
-                                        </button>
-                                      </div>
-                                    )}
+                      <motion.div key="approvals" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                        {jobStatusFilter !== 'all' && (
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+                            <span className={`status-badge status-${jobStatusFilter.toLowerCase()}`}>
+                              Filtered — {jobStatusFilter}
+                            </span>
+                            <button className="cancel-btn" onClick={() => setJobStatusFilter('all')}>
+                              Clear filter
+                            </button>
+                          </div>
+                        )}
+                        {renderExportButtons(
+                          "Approval Requests",
+                          ["No", "Estimation Number", "Job Name", "Date of Request", "Allocation", "Status"],
+                          filteredApprovalData.map((job, idx) => [idx + 1, job.estimationNo || '—', job.jobName, formatDate(job.dateReq), job.allocation, job.status || 'Pending'])
+                        )}
+                        <div className="table-scroll-wrapper">
+                          <table className="project-table">
+                            <thead>
+                              <tr><th>No</th><th>Estimation Number</th><th>Job Name</th><th>Date of Request</th><th>Allocation</th><th>Approval</th></tr>
+                            </thead>
+                            <tbody>
+                              {filteredApprovalData.length === 0 ? (
+                                <tr>
+                                  <td colSpan={6}>
+                                    <div className="placeholder-content" style={{ height: '140px', border: 'none' }}>
+                                      <AlertTriangle size={24} style={{ opacity: 0.35 }} />
+                                      <span>{jobStatusFilter === 'all' ? 'No approval requests found' : `No ${jobStatusFilter.toLowerCase()} jobs.`}</span>
+                                    </div>
                                   </td>
                                 </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </motion.div>
+                              ) : (
+                                filteredApprovalData.map((job, idx) => (
+                                  <tr key={job.jobNo}>
+                                    <td>{idx + 1}</td>
+                                    <td className="font-mono">{job.estimationNo || '—'}</td>
+                                    <td className="font-bold">{job.jobName}</td>
+                                    <td>{formatDate(job.dateReq)}</td>
+                                    <td>{job.allocation}</td>
+                                    <td>
+                                      {job.status === 'Pending' ? (
+                                        <div style={{ display: 'flex', gap: '6px' }}>
+                                          <button className="approve-btn" onClick={() => handleApprove(job.jobNo, 'Approved')} title="Approve">
+                                            <Check size={15} />
+                                          </button>
+                                          <button className="reject-btn" onClick={() => handleApprove(job.jobNo, 'Rejected')} title="Reject">
+                                            <X size={15} />
+                                          </button>
+                                        </div>
+                                      ) : (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          <span className={`status-badge status-${job.status ? job.status.toLowerCase() : 'pending'}`}>
+                                            {job.status}
+                                          </span>
+                                          <button className="edit-btn" onClick={() => handleUndoApproval(job.jobNo)} title="Reset" style={{ padding: '4px 8px', minWidth: 'auto' }}>
+                                            <Undo size={13} />
+                                          </button>
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </motion.div>
                     );
                   })()}
 
