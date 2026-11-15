@@ -7,3 +7,26 @@ frontend/.env
 *.log
 build/
 dist/
+coverage/
+
+# ── OS / editor junk ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Archives (build bundles, zipped doc exports) ─────────────
+*.zip
+*.rar
+*.7z
+
+# ── "Save page as" browser dumps accidentally saved into src ─
+frontend/src/**/*_files/
+
+# ── Unused / placeholder images ──────────────────────────────
+dummy.gif
+frontend/src/logo.svg
+frontend/public/civil_engineering_bg.png
+
+# ── Generated documentation drafts (kept locally, not in repo)
+TECHNICAL_DOCUMENTATION_EXTRACTION/
+docs/user-documentation-extraction/
